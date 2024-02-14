@@ -27,6 +27,7 @@ python = ">=3.10"
 
 pytest = { version = ">=6", optional = true }
 pytest-cov = { version = ">=3", optional = true }
+pandas = "^2.2.0"
 
 [tool.poetry.dev-dependencies]
 pytest = ">= 6"
@@ -97,4 +98,3 @@ unfixable = [
   "F841",   # Would remove unused variables
 ]
 flake8-unused-arguments.ignore-variadic-names = true  # allow unused *args/**kwargs
-

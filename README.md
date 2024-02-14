@@ -13,7 +13,7 @@ python -m pip install acbm
 ```
 
 From source:
-```bash 
+```bash
 git clone https://github.com/alan-turing-institute/acbm
 cd acbm
 poetry install
