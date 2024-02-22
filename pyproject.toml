@@ -28,6 +28,7 @@ python = ">=3.10"
 pytest = { version = ">=6", optional = true }
 pytest-cov = { version = ">=3", optional = true }
 pandas = "^2.2.0"
+uatk-spc = {git = "https://github.com/alan-turing-institute/uatk-spc.git", rev = "55-output-formats-python", subdirectory = "python"}
 
 [tool.poetry.dev-dependencies]
 pytest = ">= 6"
