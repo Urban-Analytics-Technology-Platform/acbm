@@ -151,13 +151,17 @@ def num_adult_child_hh(
     Returns
     -------
     data: pandas DataFrame
-        The original dataframe with 4 new columns: is'adult', 'num_adults', 'is_child', 'num_children'
+        The original dataframe with these new columns: is'adult', 'num_adults', 'is_child', 'num_children', 'is_pension_age', 'num_pension_age'
     """
     data = data.assign(
         is_adult=(data[age_col] >= 16).astype(int),
         num_adults=lambda df: df.groupby(group_col)["is_adult"].transform("sum"),
         is_child=(data[age_col] < 16).astype(int),
         num_children=lambda df: df.groupby(group_col)["is_child"].transform("sum"),
+        is_pension_age=(data[age_col] >= 65).astype(int),
+        num_pension_age=lambda df: df.groupby(group_col)["is_pension_age"].transform(
+            "sum"
+        ),
     )
 
     return data
