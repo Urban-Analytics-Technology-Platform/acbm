@@ -235,3 +235,66 @@ def truncate_values(x: int, lower: int = None, upper: int = None) -> int:
         if x < lower:
             return lower
     return x
+
+
+def match_coverage_col(
+    data: pd.DataFrame, id_x: str, id_y: str, column: str
+) -> pd.DataFrame:
+    """
+    Calculate the number of matched rows for each unique value in a column
+    e.g.
+
+    Input:
+
+    | hid | HouseholdId | 'num_adults' |
+    |-----|-------------|--------------|
+    | 1   | 2           | 2            |
+    | 2   | 5           | 1            |
+    | 3   | 5           | 1            |
+    | 4   | NA          | 5            |
+    | 5   | NA          | 2            |
+
+    Output:
+
+    num_adults | Total | Matched | Percentage Matched
+    1          | 2     | 2       | 100
+    2          | 2     | 1       | 50
+    5          | 1     | 0       | 0
+
+    Parameters
+    ----------
+    data: pandas DataFrame
+        The df to get matching stats from. It is the output of matching two dfs
+    id_x: str
+        Unique identifier from the first df
+    id_y: str
+        Unique identifier from the second df
+    column: str
+        the column that we want to calculate matching stats for. It is one of the columns
+        that we matched on
+
+    Returns
+    -------
+    pandas DataFrame
+        A DataFrame with the total number of rows, matched rows
+        and the percentage of matched rows for a specific column
+
+    """
+
+    data_hist = data.assign(
+        count=(data.groupby(id_x)[id_y].transform("count"))
+    ).drop_duplicates(subset=id_x)
+
+    total = data_hist.groupby(column)["count"].size()
+    matched = data_hist[data_hist["count"] >= 1].groupby(column).size()
+
+    # Calculate percentage of matched rows
+    percentage_matched = round(matched / total * 100)
+
+    # combined total, matched in one df
+    total_matched = pd.concat(
+        [total, matched, percentage_matched],
+        axis=1,
+        keys=["Total", "Matched", "Percentage Matched"],
+    )
+    return total_matched
