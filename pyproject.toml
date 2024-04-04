@@ -30,6 +30,8 @@ pytest-cov = { version = ">=3", optional = true }
 pandas = "^2.2.0"
 uatk-spc = {git = "https://github.com/alan-turing-institute/uatk-spc.git", rev = "55-output-formats-python", subdirectory = "python"}
 geopandas = "^0.14.3"
+matplotlib = "^3.8.3"
+scikit-learn = "^1.4.1.post1"
 
 [tool.poetry.dev-dependencies]
 pytest = ">= 6"
@@ -38,6 +40,9 @@ pytest-cov = ">= 3"
 [tool.poetry.extras]
 test = ["pytest", "pytest-cov"]
 dev = ["pytest", "pytest-cov"]
+
+[tool.poetry.group.dev.dependencies]
+ipykernel = "^6.29.4"
 
 [tool.pytest.ini_options]
 minversion = "6.0"

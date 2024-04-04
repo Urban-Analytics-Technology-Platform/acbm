@@ -23,7 +23,7 @@ def match_psm(df1: pd.DataFrame, df2: pd.DataFrame, matching_columns: list) -> d
         A dictionary with the matched row indeces from the two DataFrames {df1: df2}
     """
 
-    # Initialize an empty dic to store the matches
+    # Initialize an empty dict to store the matches
     matches = {}
 
     # Matching without replacement
@@ -44,12 +44,12 @@ def match_psm(df1: pd.DataFrame, df2: pd.DataFrame, matching_columns: list) -> d
         # Get the corresponding row in df2
         closest_df2_index = closest_indices[min_distance_index]
 
-        # Get the hid from df1 and df2
-        hid_df1 = df1.index[min_distance_index]
-        hid_df2 = df2.index[closest_df2_index]
+        # Get the row id from df1 and df2
+        row_id_df1 = df1.index[min_distance_index]
+        row_id_df2 = df2.index[closest_df2_index]
 
         # Store the match in the dictionary
-        matches[hid_df1] = hid_df2
+        matches[row_id_df1] = row_id_df2
 
         # Remove the matched rows from df1 and df2
         df1 = df1.drop(df1.index[min_distance_index])
@@ -65,10 +65,11 @@ def match_individuals(
     df1_id: str,
     df2_id: str,
     matches_hh: dict,
+    show_progress: bool = False,
 ) -> dict:
     """
-    Apply a matching function iteratively to members of each household. 
-    In each iteration, filter df1 and df2 to the household ids of item i 
+    Apply a matching function iteratively to members of each household.
+    In each iteration, filter df1 and df2 to the household ids of item i
     in matches_hh, and then apply the matching function to the filtered DataFrames.
 
     Parameters
@@ -85,6 +86,8 @@ def match_individuals(
         The household_id from the second DataFrame
     matches_hh: dict
         A dictionary with the matched household ids {df1_id: df2_id}
+    show_progress: bool
+        Whether to print the progress of the matching to the console
 
     Returns
     -------
@@ -94,6 +97,8 @@ def match_individuals(
     """
     # Initialize an empty dic to store the matches
     matches = {}
+    # Remove all unmateched households 
+    matches_hh = {key: value for key, value in matches_hh.items() if not pd.isna(value)}
 
     # loop over all rows in the matches_hh dictionary
     for i, (key, value) in enumerate(matches_hh.items(), 1):
@@ -101,8 +106,9 @@ def match_individuals(
         rows_df1 = df1[df1[df1_id] == key]
         rows_df2 = df2[df2[df2_id] == int(value)]
 
-        # Print the iteration number and the number of keys in the dict
-        print(f"Matching for household {i} out of: {len(matches_hh)}")
+        if show_progress:
+            # Print the iteration number and the number of keys in the dict
+            print(f"Matching for household {i} out of: {len(matches_hh)}")
 
         # apply the matching
         match = match_psm(rows_df1, rows_df2, matching_columns)
