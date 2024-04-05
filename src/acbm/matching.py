@@ -2,6 +2,82 @@ import numpy as np
 import pandas as pd
 from sklearn.neighbors import NearestNeighbors
 
+# categorical (exact) matching
+
+
+def match_categorical(
+    df_pop: pd.DataFrame,
+    df_pop_cols: list,
+    df_pop_id: str,
+    df_sample: pd.DataFrame,
+    df_sample_cols: list,
+    df_sample_id: str,
+    chunk_size: int,
+    show_progress=True,
+) -> dict:
+    """
+    Match the rows in two DataFrames based on specified columns.
+    The function matches the rows in df_pop to the rows in df_sample based
+    on the columns in df_pop_cols and df_sample_cols. The matching is done
+    in chunks to avoid memory issues.
+
+    Parameters
+    ----------
+    df_pop: pandas DataFrame
+        The DataFrame to be matched on
+    df_pop_cols: list
+        The columns to be used for matching in df_pop
+    df_pop_id: str
+        The column name that contains the unique identifier in df_pop
+        It is the key in the final dictionary
+    df_sample: pandas DataFrame
+        The DataFrame to be matched with
+    df_sample_cols: list
+        The columns to be used for matching in df_sample
+    df_sample_id: str
+        The column name that contains the unique identifier in df_sample
+        It is the value in the final dictionary
+    chunk_size: int
+        The number of rows to process at a time
+    show_progress: bool
+        Whether to print the progress of the matching to the console
+
+    Returns
+    -------
+    results: dict
+        A dictionary with the matched rows {df_pop_id: [df_sample_id]}
+
+    """
+
+    # dictionary to store results
+    results = {}
+
+    # loop over the df_pop DataFrame in chunks
+    for i in range(0, df_pop.shape[0], chunk_size):
+        # filter the df_pop DataFrame to the current chunk
+        j = i + chunk_size
+        if show_progress:
+            print("matching rows ", i, "to", j, " out of ", df_pop.shape[0])
+
+        df_pop_chunk = df_pop.iloc[i:j]
+
+        # merge the df_pop_chunk with the df_sample DataFrame
+        df_matched_chunk = df_pop_chunk.merge(
+            df_sample, left_on=df_pop_cols, right_on=df_sample_cols, how="left"
+        )
+
+        # convert the matched df to a dictionary:
+        df_matched_dict_i = (
+            df_matched_chunk.groupby(df_pop_id)[df_sample_id].apply(list).to_dict()
+        )
+
+        # add the dictionary to results{}
+        results.update(df_matched_dict_i)
+    return results
+
+
+# propensity score matching
+
 
 def match_psm(df1: pd.DataFrame, df2: pd.DataFrame, matching_columns: list) -> dict:
     """
@@ -58,6 +134,8 @@ def match_psm(df1: pd.DataFrame, df2: pd.DataFrame, matching_columns: list) -> d
     return matches
 
 
+# TODO: parallelize the matching process. See this stackoverflow suggestion
+# for iterating over dict keys https://stackoverflow.com/a/30075659
 def match_individuals(
     df1: pd.DataFrame,
     df2: pd.DataFrame,
@@ -97,7 +175,7 @@ def match_individuals(
     """
     # Initialize an empty dic to store the matches
     matches = {}
-    # Remove all unmateched households 
+    # Remove all unmateched households
     matches_hh = {key: value for key, value in matches_hh.items() if not pd.isna(value)}
 
     # loop over all rows in the matches_hh dictionary
