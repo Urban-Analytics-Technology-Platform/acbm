@@ -362,7 +362,6 @@ ax[0].set_ylabel("Frequency")
 ax[1].hist(spc_edited["salary_yearly_hh"].fillna(0), bins=30)
 ax[1].set_title("Salary yearly (Households)")
 ax[1].set_xlabel("Salary yearly")
-plt.show()
 
 
 # statistics
@@ -449,7 +448,6 @@ ax[1].bar(
 )
 ax[1].set_title("NTS")
 ax[1].set_xlabel("Income Bracket - Household level")
-plt.show()
 
 # same as above but (%)
 fig, ax = plt.subplots(1, 2, figsize=(12, 6), sharey=True)
@@ -466,7 +464,6 @@ ax[1].bar(
 )
 ax[1].set_title("NTS")
 ax[1].set_xlabel("Income Bracket - Household level")
-plt.show()
 
 
 # get the % of households in each income bracket for the nts
@@ -577,7 +574,7 @@ ax[1].bar(
 )
 ax[1].set_title("NTS")
 ax[1].set_xlabel("Employment status - Household level")
-plt.show()
+
 
 # same as above but percentages
 fig, ax = plt.subplots(1, 2, figsize=(12, 6))
@@ -594,7 +591,6 @@ ax[1].bar(
 )
 ax[1].set_title("NTS")
 ax[1].set_xlabel("Employment status - Household level")
-plt.show()
 
 
 # #### Urban Rural Classification
@@ -1168,7 +1164,7 @@ for key in list(matching_dfs_dict.keys())[1:]:  # skip 1st key (hid)
     x.plot(kind="bar", ax=ax)
     plt.ylabel("% of households matched")
     plt.title("Matching coverage for " + key)
-    plt.show()
+
     # save the plot
     fig.savefig(f"../data/interim/matching/plots/matching_coverage_hh_{key}.png")
 
@@ -1198,7 +1194,7 @@ for key in list(matching_dfs_dict.keys())[1:]:  # skip 1st key (hid)
     x.plot(kind="bar", ax=ax)
     plt.ylabel("% of households matched")
     plt.title("Matching coverage for " + key)
-    plt.show()
+
     # save the plot
     fig.savefig(f"../data/interim/matching/plots/matching_coverage_hh_{key}.png")
 
