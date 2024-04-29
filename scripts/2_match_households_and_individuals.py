@@ -1,9 +1,11 @@
+import itertools
 import os
 import pickle as pkl
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from IPython.display import display
 from tqdm import trange
 
 from acbm.matching import match_categorical, match_individuals
@@ -871,7 +873,6 @@ matching_dfs_dict = {
         matching_ids, spc_matching, nts_matching
     )
 }
-matching_dfs_dict
 
 
 # #### Match on a subset of columns (exclude salary, tenure, and employment status)
@@ -1067,8 +1068,6 @@ matches_ind = match_individuals(
 # matches_ind
 
 
-import itertools
-
 # Output the first n items of the dictionary
 dict(itertools.islice(matches_ind.items(), 10))
 
@@ -1107,12 +1106,6 @@ for id in ids:
 # convert individual dfs to one df
 spc_rows_df = pd.concat(spc_rows)
 nts_rows_df = pd.concat(nts_rows)
-
-
-spc_rows_df
-
-
-from IPython.display import display
 
 display(
     spc_rows_df[
