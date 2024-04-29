@@ -1,25 +1,11 @@
-#!/usr/bin/env python
-
-# # Adding activity chains to synthetic populations
-#
-# The purpose of this script is to match each individual in the synthetic population to a respondant from the [National Travel Survey (NTS)](https://beta.ukdataservice.ac.uk/datacatalogue/studies/study?id=5340).
-#
-# ### Methods
-#
-# We will try two methods
-#
-# 1. categorical matching: joining on relevant socio-demographic variables
-# 2. statistical matching, as described in [An unconstrained statistical matching algorithm for combining individual and household level geo-specific census and survey data](https://doi.org/10.1016/j.compenvurbsys.2016.11.003).
-
 import os
 import pickle as pkl
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from tqdm import tqdm, trange
+from tqdm import trange
 
-# from tqdm.notebook import trange
 from acbm.matching import match_categorical, match_individuals
 from acbm.preprocessing import (
     count_per_group,
@@ -45,11 +31,8 @@ def get_interim_path(file_name: str, path: str = "../data/interim/matching/") ->
 # useful variables
 region = "west-yorkshire"
 
-
 # Read in the spc data (parquet format)
 spc = pd.read_parquet("../data/external/spc_output/" + region + "_people_hh.parquet")
-spc.head()
-
 
 # select columns
 spc = spc[
@@ -81,6 +64,7 @@ spc = spc[
 
 
 # temporary reduction of the dataset for quick analysis
+# TODO: check if this should be present?
 spc = spc.head(15000)
 # spc = spc.head(500000)
 
@@ -214,7 +198,9 @@ nts_trips = pd.read_csv(
 
 # #### Filter by year
 #
-# We will filter the NTS data to only include data from specific years. We can choose only 1 year, or multiple years to increase our sample size and the likelihood of a match with the spc
+# We will filter the NTS data to only include data from specific years. We can choose
+# only 1 year, or multiple years to increase our sample size and the likelihood of a
+# match with the spc.
 
 years = [2019, 2021, 2022]
 
@@ -225,7 +211,8 @@ nts_trips = nts_filter_by_year(nts_trips, psu, years)
 
 # #### Filter by geography
 #
-# I will not do this for categorical matching, as it reduces the sample significantly, and leads to more spc households not being matched
+# I will not do this for categorical matching, as it reduces the sample significantly,
+# and leads to more spc households not being matched
 
 # regions = ['Yorkshire and the Humber', 'North West']
 
@@ -333,7 +320,8 @@ dict_spc = {"pwkstat": employment_dict_spc, "tenure": tenure_dict_spc}
 
 # ## Step 2: Decide on matching variables
 #
-# We need to identify the socio-demographic characteristics that we will match on. The schema for the synthetic population can be found [here](https://github.com/alan-turing-institute/uatk-spc/blob/main/synthpop.proto).
+# We need to identify the socio-demographic characteristics that we will match on. The
+# schema for the synthetic population can be found [here](https://github.com/alan-turing-institute/uatk-spc/blob/main/synthpop.proto).
 #
 # Matching between the SPC and the NTS will happen in two steps:
 #
@@ -429,7 +417,8 @@ print(
 )
 
 
-# --- Recode column so that it matches the reported NTS values (Use income_dict_nts_hh dictionary for reference)
+# --- Recode column so that it matches the reported NTS values (Use income_dict_nts_hh
+# dictionary for reference)
 
 # Define the bins (first )
 bins = [0, 24999, 49999, np.inf]
@@ -454,7 +443,9 @@ spc_edited["salary_yearly_hh_cat"] = spc_edited["salary_yearly_hh_cat"].fillna(-
 spc_edited["salary_yearly_hh_cat"] = spc_edited["salary_yearly_hh_cat"].astype("int")
 
 
-# If we compare household income from the SPC and the NTS, we find that the SPC has many more households with no reported income (-8). This will create an issue when matching using household income
+# If we compare household income from the SPC and the NTS, we find that the SPC has many
+# more households with no reported income (-8). This will create an issue when matching
+# using household income
 
 # bar plot showing spc_edited.salary_yearly_hh_cat and nts_households.HHIncome2002_B02ID side by side
 fig, ax = plt.subplots(1, 2, figsize=(12, 6), sharey=True)
@@ -511,7 +502,9 @@ spc_edited = num_adult_child_hh(
 dict_spc["pwkstat"], dict_nts["HHoldEmploy_B01ID"]
 
 
-# The NTS only reports the number of Full time and Part time employees for each household. For the SPC we also need to get the number of full time and part time workers for each household.
+# The NTS only reports the number of Full time and Part time employees for each
+# household. For the SPC we also need to get the number of full time and part-time
+# workers for each household.
 #
 # Step 1: Create a column for Full time and a column for Part time
 
