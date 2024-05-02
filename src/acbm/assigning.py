@@ -1,3 +1,4 @@
+import geopandas as gpd
 import pandas as pd
 from pandarallel import pandarallel
 
@@ -192,7 +193,7 @@ def get_possible_zones_old(
 def get_possible_zones(
     activity_chains: pd.DataFrame,
     travel_times: pd.DataFrame,
-    list_of_times_of_day: list = ["morning", "afternoon", "evening", "night"],
+    # list_of_times_of_day: list = ["morning", "afternoon", "evening", "night"],
     time_tolerance: int = 0.2,
 ) -> dict:
     """
@@ -232,6 +233,8 @@ def get_possible_zones(
     day_types = activity_chains["weekday"].unique()
     # use map_time_to_day_part to add a column to activity
     activity_chains["time_of_day"] = activity_chains["tst"].apply(_map_time_to_day_part)
+    # get unique time_of_day values
+    list_of_times_of_day = activity_chains["time_of_day"].unique()
 
     # create an empty dictionary to store the results
     results = {}
@@ -334,7 +337,9 @@ def get_possible_zones(
                 # pandarallel.initialize(progress_bar=True)
                 possible_zones = activity_chains_filtered.parallel_apply(
                     lambda row: _get_possible_zones(
-                        row, travel_times_filtered_mode_time_day
+                        activity=row,
+                        travel_times=travel_times_filtered_mode_time_day,
+                        time_tolerance=0.1,
                     ),
                     axis=1,
                 )
@@ -411,3 +416,72 @@ def _get_possible_zones(
     )
 
     return possible_zones
+
+
+def get_activities_per_zone(
+    zones: gpd.GeoDataFrame, zone_id_col: str, activity_pts: gpd.GeoDataFrame
+) -> dict:
+    """
+    This funciton returns the total: (a) no. of activities and (b) floorspace for each unique activity type in the activity_pts layer
+
+    Parameters
+    ----------
+    zones: GeoDataFrame
+        The zones GeoDataFrame
+    zone_id_col: str
+        The column name that contains the unique identifier for each zone.
+        This column is used to group the data, and should be consistent with zone
+        columns used in other parts of the pipeline
+    activity_pts: GeoDataFrame
+        A point layer with the location of the activities. If produced from osmox, it should have floorspace as well
+
+    Returns
+    -------
+    dict
+        A dictionary where each element is a dataframe for an activity type with the following columns:
+
+        zone_id_col | {activity_type}_counts | {activity_type}_floor_area
+    """
+
+    # check the crs of the two spatial layers.
+
+    if zones.crs != activity_pts.crs:
+        error_message = "The CRS of 'zones' and 'activity_pts' must be the same."
+        raise ValueError(error_message)
+
+    # create a spatial join to identify which zone each point from activity_pts is in
+    activity_pts_joined = gpd.sjoin(
+        activity_pts, zones[[zone_id_col, "geometry"]], how="inner", predicate="within"
+    )
+
+    # get a list of all unique activities in activity_pts (I need this step because an entry could be ['work', 'shop'])
+    activity_pts_copy = activity_pts_joined["activities"].apply(
+        lambda x: [i.strip() for i in x.split(",")]
+    )
+    activity_types = activity_pts_copy.explode().unique()
+
+    # Iterate over each activity type, and create a new boolean column "has_{activity}" to indicate the presence of an activity
+    for activity in activity_types:
+        activity_pts_joined[f"has_{activity}"] = activity_pts_joined[
+            "activities"
+        ].apply(lambda x, activity=activity: activity in x)
+
+    # group the data by "has_{activity}" and the zone id, and get the number and floorspace of each activity type in each zone
+    # the output is a dictionary of dfs (one for each activity_type)
+    grouped_data = {
+        activity: (
+            activity_pts_joined[activity_pts_joined[f"has_{activity}"]]
+            .groupby(zone_id_col)
+            .agg({f"has_{activity}": "sum", "floor_area": "sum"})
+            .reset_index()
+            .rename(
+                columns={
+                    f"has_{activity}": f"{activity}_counts",
+                    "floor_area": f"{activity}_floor_area",
+                }
+            )
+        )
+        for activity in activity_types
+    }
+
+    return grouped_data
