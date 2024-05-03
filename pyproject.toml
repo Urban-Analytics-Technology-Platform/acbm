@@ -32,6 +32,7 @@ uatk-spc = {git = "https://github.com/alan-turing-institute/uatk-spc.git", rev =
 geopandas = "^0.14.3"
 matplotlib = "^3.8.3"
 scikit-learn = "^1.4.1.post1"
+tqdm = "^4.66.2"
 
 [tool.poetry.dev-dependencies]
 pytest = ">= 6"
@@ -69,7 +70,7 @@ port.exclude_lines = [
 [tool.ruff]
 src = ["src"]
 exclude = []
-line-length = 88  # how long you want lines to be
+line-length = 88 # how long you want lines to be
 
 [tool.ruff.format]
 docstring-code-format = true  # code snippets in docstrings will be formatted
@@ -96,9 +97,11 @@ select = [
   "YTT",         # flake8-2020
   "EXE",         # flake8-executable
 ]
+
 ignore = [
   "PLR",    # Design related pylint codes
   "ISC001", # Conflicts with formatter
+  "E501"    # Line too long
 ]
 unfixable = [
   "F401",   # Would remove unused imports

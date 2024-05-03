@@ -1,3 +1,5 @@
+from typing import Optional
+
 import numpy as np
 import pandas as pd
 
@@ -24,7 +26,7 @@ def nts_filter_by_year(
     if not set(years).issubset(unique_years):
         # If not, print the years that do exist and stop execution
         print(
-            f"At least one of the chosen year(s) do not exist in the PSU table. Years that exist in the PSU table are: {sorted(list(unique_years))}"
+            f"At least one of the chosen year(s) do not exist in the PSU table. Years that exist in the PSU table are: {sorted(unique_years)}"
         )
         return None
 
@@ -32,9 +34,7 @@ def nts_filter_by_year(
     psu_id_years = psu[psu["SurveyYear"].isin(years)]["PSUID"].unique()
 
     # Filter 'data' based on the chosen year
-    data_years = data[data["PSUID"].isin(psu_id_years)]
-
-    return data_years
+    return data[data["PSUID"].isin(psu_id_years)]
 
 
 def nts_filter_by_region(
@@ -80,7 +80,7 @@ def nts_filter_by_region(
     if not set(regions).issubset(unique_regions):
         # If not, print the years that do exist and stop execution
         print(
-            f"At least one of the chosen region(s) do not exist in the PSU table. Regions that exist in the PSU table are: {sorted(list(unique_regions))}"
+            f"At least one of the chosen region(s) do not exist in the PSU table. Regions that exist in the PSU table are: {sorted(unique_regions)}"
         )
         return None
 
@@ -89,9 +89,7 @@ def nts_filter_by_region(
     # Get the 'PSUID' values for the chosen year(s)
     psu_id_regions = psu[psu["region_name"].isin(regions)]["PSUID"].unique()
     # Filter 'data' based on the chosen year
-    data_regions = data[data["PSUID"].isin(psu_id_regions)]
-
-    return data_regions
+    return data[data["PSUID"].isin(psu_id_regions)]
 
 
 def transform_by_group(
@@ -122,8 +120,10 @@ def transform_by_group(
         try:
             data_copy[transform_col] = pd.to_numeric(data_copy[transform_col])
         # if transformation fails, return the original data_copy
-        except:
-            print(f"The column '{transform_col}' could not be transformed to numeric")
+        except Exception as e:
+            print(
+                f"The column '{transform_col}' could not be transformed to numeric with exception: {e}"
+            )
             return data_copy
     # Group the data by 'group_col' and apply the 'transformation_type' to the 'transform_col' for each group.
     # The result is stored in a new column called 'new_col'
@@ -153,7 +153,7 @@ def num_adult_child_hh(
     data: pandas DataFrame
         The original dataframe with these new columns: is'adult', 'num_adults', 'is_child', 'num_children', 'is_pension_age', 'num_pension_age'
     """
-    data = data.assign(
+    return data.assign(
         is_adult=(data[age_col] >= 16).astype(int),
         num_adults=lambda df: df.groupby(group_col)["is_adult"].transform("sum"),
         is_child=(data[age_col] < 16).astype(int),
@@ -163,8 +163,6 @@ def num_adult_child_hh(
             "sum"
         ),
     )
-
-    return data
 
 
 def count_per_group(
@@ -210,7 +208,9 @@ def count_per_group(
     return result
 
 
-def truncate_values(x: int, lower: int = None, upper: int = None) -> int:
+def truncate_values(
+    x: int, lower: Optional[int] = None, upper: Optional[int] = None
+) -> int:
     """
     Limit the value of x to the range [lower, upper]
 
@@ -228,12 +228,10 @@ def truncate_values(x: int, lower: int = None, upper: int = None) -> int:
     int
         The value of x, limited to the range [lower, upper]
     """
-    if upper is not None:
-        if x > upper:
-            return upper
-    if lower is not None:
-        if x < lower:
-            return lower
+    if upper is not None and x > upper:
+        return upper
+    if lower is not None and x < lower:
+        return lower
     return x
 
 
@@ -292,9 +290,8 @@ def match_coverage_col(
     percentage_matched = round(matched / total * 100)
 
     # combined total, matched in one df
-    total_matched = pd.concat(
+    return pd.concat(
         [total, matched, percentage_matched],
         axis=1,
         keys=["Total", "Matched", "Percentage Matched"],
     )
-    return total_matched
