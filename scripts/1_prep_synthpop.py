@@ -1,7 +1,13 @@
+import numpy as np
 from uatk_spc.builder import Builder
+
+SEED = 0
 
 
 def main():
+    # Seed RNG
+    np.ranmdom.seed(SEED)
+
     # Pick a region with SPC output saved
     path = "../data/external/spc_output/raw/"
     region = "west-yorkshire"

@@ -18,6 +18,10 @@ from acbm.preprocessing import (
     truncate_values,
 )
 
+# Seed RNG
+SEED = 0
+np.ranmdom.seed(SEED)
+
 pd.set_option("display.max_columns", None)
 
 
