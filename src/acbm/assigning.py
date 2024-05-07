@@ -193,12 +193,13 @@ def get_possible_zones_old(
 def get_possible_zones(
     activity_chains: pd.DataFrame,
     travel_times: pd.DataFrame,
-    # list_of_times_of_day: list = ["morning", "afternoon", "evening", "night"],
+    activities_per_zone: pd.DataFrame,
+    filter_by_activity: bool = False,
     time_tolerance: int = 0.2,
 ) -> dict:
     """
     Get possible zones for all activity chains in the dataset. This function loops over the travel_times dataframe and filters by mode, time of day and weekday/weekend.
-    At each loop it applies the get_possible_zones function to each row in the activity_chains dataframe.
+    At each loop it applies the _get_possible_zones function to each row in the activity_chains dataframe.
     The travel_times dataframe is big, so doing some initial filtering before applying _get_possible_zones makes the process faster as less filtering is done for each
     row when running _get_possible_zones.
 
@@ -208,8 +209,11 @@ def get_possible_zones(
         A dataframe with activity chains
     travel_times: pd.DataFrame
         A dataframe with travel times between zones
-    list_of_times_of_day: list
-        A list of times of day to consider
+    activities_per_zone: pd.DataFrame
+        A dataframe with the number of activities and floorspace for each zone. The columns are 'OA21CD', 'counts', 'floor_area', 'activity'
+        where 'activity' is the activity type as defined in the osmox config file
+    filter_by_activity: bool
+        If True, we will return a results that only includes destination zones that have an activity that matches the activity purpose
     time_tolerance: int
         The time tolerance is used to filter the travel_times dataframe to only include travel times within a certain range of the
         activity chain's travel time (which is stored in "TripTotalTime"). Allowable travel_times are those that fall in the range of:
@@ -315,6 +319,8 @@ def get_possible_zones(
                             lambda row: _get_possible_zones(
                                 activity=row,
                                 travel_times=travel_times_filtered_mode_time_day,
+                                activities_per_zone=activities_per_zone,
+                                filter_by_activity=filter_by_activity,
                                 time_tolerance=0.1,
                             ),
                             axis=1,
@@ -339,6 +345,8 @@ def get_possible_zones(
                     lambda row: _get_possible_zones(
                         activity=row,
                         travel_times=travel_times_filtered_mode_time_day,
+                        activities_per_zone=activities_per_zone,
+                        filter_by_activity=filter_by_activity,
                         time_tolerance=0.1,
                     ),
                     axis=1,
@@ -350,7 +358,11 @@ def get_possible_zones(
 
 
 def _get_possible_zones(
-    activity: pd.Series, travel_times: pd.DataFrame, time_tolerance: int = 0.2
+    activity: pd.Series,
+    travel_times: pd.DataFrame,
+    activities_per_zone: pd.DataFrame,
+    filter_by_activity: bool,
+    time_tolerance: int = 0.2,
 ) -> dict:
     """
     Get possible zones for a given activity chain
@@ -361,6 +373,11 @@ def _get_possible_zones(
         A row from the activity chains dataframe. It should contain the following columns: 'tst', 'TripTotalTime', 'mode', 'OA21CD'
     travel_times: pd.DataFrame
         A dataframe with travel times between zones
+    activities_per_zone: pd.DataFrame
+        A dataframe with the number of activities and floorspace for each zone. The columns are 'OA21CD', 'counts', 'floor_area', 'activity'
+        where 'activity' is the activity type as defined in the osmox config file
+    filter_by_activity: bool
+        If True, we will return a results that only includes destination zones that have an activity that matches the activity purpose
     time_tolerance: int
         The time tolerance is used to filter the travel_times dataframe to only include travel times within a certain range of the
         activity chain's travel time (which is stored in "TripTotalTime"). Allowable travel_times are those that fall in the range of:
@@ -377,16 +394,25 @@ def _get_possible_zones(
     travel_time = activity["TripTotalTime"]
     # get the origin zone
     origin_zone = activity["OA21CD"]
+    # get the activity purpose
+    activity_purpose = activity["dact"]
 
-    # filter the travel_times dataframe by trip_origin and mode
+    # filter the travel_times dataframe by trip_origin and activity_purpose
     travel_times_filtered_origin_mode = travel_times[
         travel_times["OA21CD_from"] == origin_zone
     ]
+    # do we include only zones that have an activity that matches the activity purpose?
+    if filter_by_activity:
+        filtered_activities_per_zone = activities_per_zone[
+            activities_per_zone["activity"].str.split("_").str[0] == activity_purpose
+        ]
 
-    # if the trip is being done by pt, we need to filter the travel_times data based on time_of_day and weekday/weekend
-    # if mode == "pt":
-    #     travel_times_filtered_origin_mode = get_travel_times_pt(activity,
-    #                                                             travel_times_filtered_origin_mode)
+        # keep only the zones that have the activity purpose
+        travel_times_filtered_origin_mode = travel_times_filtered_origin_mode[
+            travel_times_filtered_origin_mode["OA21CD_to"].isin(
+                filtered_activities_per_zone["OA21CD"]
+            )
+        ]
 
     # filter by reported trip time
     travel_times_filtered_time = travel_times_filtered_origin_mode[
