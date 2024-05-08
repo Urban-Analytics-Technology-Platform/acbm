@@ -1,11 +1,19 @@
+import logging
+from typing import Optional
+
 import geopandas as gpd
 import pandas as pd
 from pandarallel import pandarallel
 
+# Configure the root logger
+logging.basicConfig(level=logging.INFO)
+
 pandarallel.initialize(progress_bar=True)
 
 
-def _map_time_to_day_part(minutes: int, time_of_day_mapping: dict = None) -> str:
+def _map_time_to_day_part(
+    minutes: int, time_of_day_mapping: Optional[dict] = None
+) -> str:
     """
     Map time in minutes to part of the day. The mapping dictionary is defined internally
 
@@ -57,7 +65,7 @@ def _map_day_to_wkday_binary(day: int) -> int:
     # if day in range 1: 5, it is a weekday
     if day in [1, 2, 3, 4, 5]:
         return 1
-    elif day in [6, 7]:
+    if day in [6, 7]:
         return 0
     else:
         # if day is not in the range 1: 7, raise an error
@@ -316,9 +324,10 @@ def get_possible_zones(
                         # apply get_possible_zones to each row in activity_chains_filtered
                         # pandarallel.initialize(progress_bar=True)
                         possible_zones = activity_chains_filtered.parallel_apply(
-                            lambda row: _get_possible_zones(
+                            lambda row,
+                            tt=travel_times_filtered_mode_time_day: _get_possible_zones(
                                 activity=row,
-                                travel_times=travel_times_filtered_mode_time_day,
+                                travel_times=tt,
                                 activities_per_zone=activities_per_zone,
                                 filter_by_activity=filter_by_activity,
                                 time_tolerance=0.1,
@@ -342,9 +351,10 @@ def get_possible_zones(
                 # apply get_possible_zones to each row in activity_chains_filtered
                 # pandarallel.initialize(progress_bar=True)
                 possible_zones = activity_chains_filtered.parallel_apply(
-                    lambda row: _get_possible_zones(
+                    lambda row,
+                    tt=travel_times_filtered_mode_time_day: _get_possible_zones(
                         activity=row,
-                        travel_times=travel_times_filtered_mode_time_day,
+                        travel_times=tt,
                         activities_per_zone=activities_per_zone,
                         filter_by_activity=filter_by_activity,
                         time_tolerance=0.1,
@@ -445,7 +455,10 @@ def _get_possible_zones(
 
 
 def get_activities_per_zone(
-    zones: gpd.GeoDataFrame, zone_id_col: str, activity_pts: gpd.GeoDataFrame
+    zones: gpd.GeoDataFrame,
+    zone_id_col: str,
+    activity_pts: gpd.GeoDataFrame,
+    return_df: bool = False,
 ) -> dict:
     """
     This funciton returns the total: (a) no. of activities and (b) floorspace for each unique activity type in the activity_pts layer
@@ -460,6 +473,11 @@ def get_activities_per_zone(
         columns used in other parts of the pipeline
     activity_pts: GeoDataFrame
         A point layer with the location of the activities. If produced from osmox, it should have floorspace as well
+    return_df: bool
+        If True, the function will return a long dataframe with the columns: zone_id_col | counts | floor_area | activity
+        If False, the function will return a dictionary where each element is a dataframe for an activity type with the
+        following columns:
+        zone_id_col | {activity_type}_counts | {activity_type}_floor_area
 
     Returns
     -------
@@ -510,4 +528,194 @@ def get_activities_per_zone(
         for activity in activity_types
     }
 
-    return grouped_data
+    if return_df:
+        return _get_activities_per_zone_df(grouped_data)
+    else:
+        return grouped_data
+
+
+def _get_activities_per_zone_df(activities_per_zone: dict) -> pd.DataFrame:
+    """
+    This is an internal function to use inside the get_activities_per_zone function.
+    get_activities_per_zone returns a dictionary of dataframes. This function concatenates
+    the dataframes into a single dataframe for easier processing
+
+    Parameters
+    ----------
+    activities_per_zone: dict
+        A dictionary where each element is a dataframe for an activity type with the following columns:
+        zone_id_col | {activity_type}_counts | {activity_type}_floor_area
+
+    Returns
+    -------
+    pd.DataFrame
+        A long dataframe with the columns: zone_id_col | counts | floor_area | activity
+
+    """
+    # Create a long df with all the data (for filtering)
+
+    # For each df in activities per zone, rename the columns ending with "_counts" to counts
+    # and the columns ending with "_floor_area" to floor_area
+    for activity, df in activities_per_zone.items():
+        new_columns = []
+        for col in df.columns:
+            if "_counts" in col:
+                new_columns.append("counts")
+            elif "_floor_area" in col:
+                new_columns.append("floor_area")
+            else:
+                new_columns.append(col)
+        df.columns = new_columns
+        # add a column for the activity type
+        df["activity"] = activity
+
+    # concatenate all the dataframes in activities_per_zone
+    activities_per_zone_df = pd.concat(activities_per_zone.values())
+
+    return activities_per_zone_df
+
+
+def select_zone(
+    row: pd.Series,
+    possible_zones: dict,
+    activities_per_zone: pd.DataFrame,
+    weighting: str = "none",
+    zone_id_col: str = "OA21CD",
+) -> str:
+    """
+    Select a zone for an activity. For each activity, we have a list of possible zones
+    stored in the possible_zones dictionary. For each activity, the function will filter the
+    activities_per_zone_df to the zones that (a) are in possible_zones for that activity key,
+    and (b) have an activity that matches the activity in row["education_type"]. For example, if
+    the activity is "education_university", the function will filter the activities_per_zone_df to
+    only include zones with a university.
+    The funciton relaxes this constraint if no zones match the conditions
+
+    the next step is to sample a zone from the shortlisted zones. This is done based on the total
+    floor area of available facilities in the zone (that match the activity purpose). This is from
+    activities_per_zone_df["floor_area"]. Again, different options exist if floor area cannot be used
+
+    Parameters
+    ----------
+    row: pd.Series
+        the row that we are applying the funciton to
+    possible_zones: dict
+        a dictionary with keys as the index of the "row" and values as a nested dictionary
+        key: Origin Zone Id, values: List of possible destination zones
+    activities_per_zone: pd.DataFrame
+        a dataframe with columns: OA21CD | counts | floor_area | activity
+        activity is a category (e.g. work, education_school) from osm data labeling (through osmox)
+        counts and floor_area are totals for a specific activity and zone
+    weighting: str
+        options are: "floor_area", "counts", "none"
+        once we have a list of feasible zones, do we want to do weighted sampling based on
+        "floor_area" or "counts" or just random sampling "none"
+    zone_id: str
+        The column name of the zone id in activities_per_zone. The ids should also match the nested key in
+        possible_zones {key: {KEY: value}}
+
+    Returns
+    -------
+    str
+        The zone_id of the selected zone.
+    """
+
+    logger = logging.getLogger(__name__)
+
+    # Check if the input is in the list of allowed values
+    allowed_weightings = ["floor_area", "counts", "none"]
+    if weighting not in allowed_weightings:
+        raise ValueError(
+            f"Invalid value for weighting: {weighting}. Allowed values are {allowed_weightings}."
+        )
+
+    # get the values from possible_zones_school that match the index of the row
+    # use try/except as some activities might have no possible zones
+    try:
+        activity_i_options = list(possible_zones[row.name].values())
+        if not activity_i_options:  # Check if the list is empty
+            logger.info(f"Activity {row.name}: No zones available")
+            return "NA"
+        # log the number of options for the specific index
+        logger.debug(
+            f"Activity {row.name}: Initial number of options for activity = {len(activity_i_options[0])}"
+        )
+
+        # Attempt 1: filter activities_per_zone_df to only include possible_zones
+        options = activities_per_zone[
+            (activities_per_zone["activity"] == row["education_type"])
+            & (activities_per_zone[zone_id_col].isin(activity_i_options[0]))
+        ]
+        logger.debug(
+            f"Activity {row.name}: Number of options after filtering by education type: {len(options)}"
+        )
+
+        # Attempt 2: if no options meet the conditions, relax the constraint by considering all education types
+        # not just the education type that maps onto the person's age
+        if options.empty:
+            # print("No options available. Relaxing constraint")
+            options = activities_per_zone[
+                (activities_per_zone["activity"].str.contains("education"))
+                & (activities_per_zone[zone_id_col].isin(activity_i_options[0]))
+            ]
+            logger.debug(
+                f"Activity {row.name}: Number of options after first relaxation: {len(options)}"
+            )
+
+        # Attempt 3: if options is still empty, relax the constraint further by considering all possible zones
+        # regardless of activities
+        if options.empty:
+            logger.info(
+                f"Activity {row.name}: No zones with required facility type. Selecting from all possible zones"
+            )
+            options = activities_per_zone[
+                activities_per_zone[zone_id_col].isin(activity_i_options[0])
+            ]
+            logger.debug(
+                f"Activity {row.name}: Number of options after second relaxation: {len(options)}"
+            )
+
+        # Attempt 4: if options is still empty (there were no options in possible_zones), return NA
+        if options.empty:
+            logger.info(f"Activity {row.name}: No options available. Returning NA")
+            return "NA"
+
+        # Sample based on "weighting" argument
+        if weighting == "floor_area":
+            # check the sum of floor_area is not zero
+            if options["floor_area"].sum() != 0:
+                logger.debug(f"Activity {row.name}: sampling based on floor area")
+                selected_zone = options.sample(1, weights="floor_area")[
+                    zone_id_col
+                ].values[0]
+            elif options["counts"].sum() != 0:
+                logger.debug(
+                    f"Activity {row.name}: No floor area data. sampling based on counts"
+                )
+                selected_zone = options.sample(1, weights="counts")[zone_id_col].values[
+                    0
+                ]
+            else:
+                logger.debug(
+                    f"Activity {row.name}: No floor area or count data. sampling randomly"
+                )
+                selected_zone = options.sample(1)[zone_id_col].values[0]
+        elif weighting == "counts":
+            if options["counts"].sum() != 0:
+                logger.debug(f"Activity {row.name}: sampling based on counts")
+                selected_zone = options.sample(1, weights="counts")[zone_id_col].values[
+                    0
+                ]
+            else:
+                logger.debug(f"Activity {row.name}: No count data. sampling randomly")
+                selected_zone = options.sample(1)[zone_id_col].values[0]
+        else:
+            logger.debug(f"Activity {row.name}: sampling randomly")
+            selected_zone = options.sample(1)[zone_id_col].values[0]
+
+        return selected_zone
+
+    # Rest of your code here...
+    except KeyError:
+        logger.info(f"KeyError: Key {row.name} in possible_zones has no values")
+        return "NA"
