@@ -17,7 +17,7 @@ pd.set_option("display.max_columns", None)
 
 # Seed RNG
 SEED = 0
-np.ranmdom.seed(SEED)
+np.random.seed(SEED)
 
 # ## Step 1: Load in the datasets
 
