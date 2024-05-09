@@ -20,7 +20,7 @@ from acbm.preprocessing import (
 
 # Seed RNG
 SEED = 0
-np.ranmdom.seed(SEED)
+np.random.seed(SEED)
 
 pd.set_option("display.max_columns", None)
 
