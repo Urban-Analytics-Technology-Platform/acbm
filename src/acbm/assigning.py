@@ -330,7 +330,7 @@ def get_possible_zones(
                                 travel_times=tt,
                                 activities_per_zone=activities_per_zone,
                                 filter_by_activity=filter_by_activity,
-                                time_tolerance=0.1,
+                                time_tolerance=time_tolerance,
                             ),
                             axis=1,
                         )
@@ -357,7 +357,7 @@ def get_possible_zones(
                         travel_times=tt,
                         activities_per_zone=activities_per_zone,
                         filter_by_activity=filter_by_activity,
-                        time_tolerance=0.1,
+                        time_tolerance=time_tolerance,
                     ),
                     axis=1,
                 )
@@ -412,6 +412,10 @@ def _get_possible_zones(
         travel_times["OA21CD_from"] == origin_zone
     ]
     # do we include only zones that have an activity that matches the activity purpose?
+    # TODO: activity purpose is now generic (e.g. "education"). For education, we could 
+    # map age_group to specific education types (e.g. "education_school", 
+    # "education_university") to ensure that we have zones with the right facilities (e.g. 
+    # a 30 year old should have a zone with a university, not a school)
     if filter_by_activity:
         filtered_activities_per_zone = activities_per_zone[
             activities_per_zone["activity"].str.split("_").str[0] == activity_purpose
@@ -685,16 +689,12 @@ def select_zone(
             # check the sum of floor_area is not zero
             if options["floor_area"].sum() != 0:
                 logger.debug(f"Activity {row.name}: sampling based on floor area")
-                selected_zone = options.sample(1, weights="floor_area")[
-                    zone_id_col
-                ].values[0]
+                selected_zone = options.sample(1, weights="floor_area")[zone_id_col].values[0]
             elif options["counts"].sum() != 0:
                 logger.debug(
                     f"Activity {row.name}: No floor area data. sampling based on counts"
                 )
-                selected_zone = options.sample(1, weights="counts")[zone_id_col].values[
-                    0
-                ]
+                selected_zone = options.sample(1, weights="counts")[zone_id_col].values[0]
             else:
                 logger.debug(
                     f"Activity {row.name}: No floor area or count data. sampling randomly"
@@ -703,9 +703,7 @@ def select_zone(
         elif weighting == "counts":
             if options["counts"].sum() != 0:
                 logger.debug(f"Activity {row.name}: sampling based on counts")
-                selected_zone = options.sample(1, weights="counts")[zone_id_col].values[
-                    0
-                ]
+                selected_zone = options.sample(1, weights="counts")[zone_id_col].values[0]
             else:
                 logger.debug(f"Activity {row.name}: No count data. sampling randomly")
                 selected_zone = options.sample(1)[zone_id_col].values[0]
