@@ -100,6 +100,6 @@ Since the SPC currently uses 2011 OA11CD and MSOA11CD codes, 2011 boundaries wil
 
 #### TODO
 - edit `osmox` config to replace education_college with education_university. We should have mutually exclusive groups only and these two options serve the same age group
-- migrate logic for age_group_mapping from `select_zone()` to `get_possible_zones()`
+- DONE [here](https://github.com/Urban-Analytics-Technology-Platform/acbm/commit/6acecb928ea2b9bf26952eb45b86f2918a6dccdf): migrate logic for age_group_mapping from `select_zone()` to `get_possible_zones()`
 - edit `get_possible_zones()` to ensure it never returns an empty list of zones. See above for how to do this 
 
