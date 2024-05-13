@@ -124,80 +124,6 @@ def get_travel_times_pt(
     # TODO: if travel_times_filtered is empty, select the zones that are within the reported distance "TripDisIncSW"
 
 
-def get_possible_zones_old(
-    activity: pd.Series, travel_times: pd.DataFrame, time_tolerance: int = 0.2
-) -> dict:
-    """
-    Get possible zones for a given activity chain. It is applied on a single row from the activity dataframe.
-
-    Parameters
-    ----------
-    activity: pd.Series
-        A row from the activity chains dataframe. It should contain the following columns: 'tst', 'TripTotalTime', 'mode', 'OA21CD'
-    travel_times: pd.DataFrame
-        A dataframe with travel times between zones
-    time_tolerance: int
-        The time tolerance is used to filter the travel_times dataframe to only include travel times within a certain range of the
-        activity chain's travel time (which is stored in "TripTotalTime"). Allowable travel_times are those that fall in the range of:
-        travel_time_reported * (1 - time_tolerance) <= travel_time_reported <= travel_time_reported * (1 + time_tolerance)
-        Default = 0.2
-
-    Returns
-    -------
-    dict
-        A dictionary with the origin zone as the key and a list of possible destination zones as the value
-    """
-
-    # get the travel time
-    travel_time = activity["TripTotalTime"]
-    # get the mode
-    mode = activity["mode"]
-
-    # get the origin zone
-    origin_zone = activity["OA21CD"]
-
-    # filter the travel_times dataframe by trip_origin and mode
-    travel_times_filtered_origin_mode = travel_times[
-        (travel_times["OA21CD_from"] == origin_zone)
-        & (travel_times["combination"].apply(lambda x: x.split("_")[0]) == mode)
-    ]
-
-    # if the trip is being done by pt, we need to filter the travel_times data based on time_of_day and weekday/weekend
-    if mode == "pt":
-        travel_times_filtered_origin_mode = get_travel_times_pt(
-            activity, travel_times_filtered_origin_mode
-        )
-
-    # filter by reported trip time
-    travel_times_filtered_time = travel_times_filtered_origin_mode[
-        (
-            travel_times_filtered_origin_mode["travel_time_p50"]
-            >= travel_time - time_tolerance * travel_time
-        )
-        & (
-            travel_times_filtered_origin_mode["travel_time_p50"]
-            <= travel_time + time_tolerance * travel_time
-        )
-    ]
-
-    # if travel_times_filtered_time returns an empty df, select the row with the closest time to the reported time
-    if travel_times_filtered_time.empty:
-        travel_times_filtered_time = travel_times_filtered_origin_mode.iloc[
-            (travel_times_filtered_origin_mode["travel_time_p50"] - travel_time)
-            .abs()
-            .argsort()[:1]
-        ]
-
-    # create dictionary with key = origin_zone and values = list of travel_times_filtered.OA21CD_to
-    possible_zones = (
-        travel_times_filtered_time.groupby("OA21CD_from")["OA21CD_to"]
-        .apply(list)
-        .to_dict()
-    )
-
-    return possible_zones
-
-
 def get_possible_zones(
     activity_chains: pd.DataFrame,
     travel_times: pd.DataFrame,
@@ -412,9 +338,9 @@ def _get_possible_zones(
         travel_times["OA21CD_from"] == origin_zone
     ]
     # do we include only zones that have an activity that matches the activity purpose?
-    # TODO: activity purpose is now generic (e.g. "education"). For education, we could 
-    # map age_group to specific education types (e.g. "education_school", 
-    # "education_university") to ensure that we have zones with the right facilities (e.g. 
+    # TODO: activity purpose is now generic (e.g. "education"). For education, we could
+    # map age_group to specific education types (e.g. "education_school",
+    # "education_university") to ensure that we have zones with the right facilities (e.g.
     # a 30 year old should have a zone with a university, not a school)
     if filter_by_activity:
         filtered_activities_per_zone = activities_per_zone[
@@ -689,12 +615,16 @@ def select_zone(
             # check the sum of floor_area is not zero
             if options["floor_area"].sum() != 0:
                 logger.debug(f"Activity {row.name}: sampling based on floor area")
-                selected_zone = options.sample(1, weights="floor_area")[zone_id_col].values[0]
+                selected_zone = options.sample(1, weights="floor_area")[
+                    zone_id_col
+                ].values[0]
             elif options["counts"].sum() != 0:
                 logger.debug(
                     f"Activity {row.name}: No floor area data. sampling based on counts"
                 )
-                selected_zone = options.sample(1, weights="counts")[zone_id_col].values[0]
+                selected_zone = options.sample(1, weights="counts")[zone_id_col].values[
+                    0
+                ]
             else:
                 logger.debug(
                     f"Activity {row.name}: No floor area or count data. sampling randomly"
@@ -703,7 +633,9 @@ def select_zone(
         elif weighting == "counts":
             if options["counts"].sum() != 0:
                 logger.debug(f"Activity {row.name}: sampling based on counts")
-                selected_zone = options.sample(1, weights="counts")[zone_id_col].values[0]
+                selected_zone = options.sample(1, weights="counts")[zone_id_col].values[
+                    0
+                ]
             else:
                 logger.debug(f"Activity {row.name}: No count data. sampling randomly")
                 selected_zone = options.sample(1)[zone_id_col].values[0]
