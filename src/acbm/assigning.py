@@ -5,8 +5,20 @@ import geopandas as gpd
 import pandas as pd
 from pandarallel import pandarallel
 
-# Configure the root logger
-logging.basicConfig(level=logging.INFO)
+# Define logger at the module level
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
+# Create a handler that outputs to the console
+console_handler = logging.StreamHandler()
+
+# Create a formatter and add it to the handler
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+console_handler.setFormatter(formatter)
+
+# Add the handler to the logger
+logger.addHandler(console_handler)
+
 
 pandarallel.initialize(progress_bar=True)
 
@@ -128,6 +140,7 @@ def get_possible_zones(
     activity_chains: pd.DataFrame,
     travel_times: pd.DataFrame,
     activities_per_zone: pd.DataFrame,
+    activity_col: str,
     filter_by_activity: bool = False,
     time_tolerance: int = 0.2,
 ) -> dict:
@@ -256,6 +269,7 @@ def get_possible_zones(
                                 travel_times=tt,
                                 activities_per_zone=activities_per_zone,
                                 filter_by_activity=filter_by_activity,
+                                activity_col=activity_col,
                                 time_tolerance=time_tolerance,
                             ),
                             axis=1,
@@ -274,7 +288,7 @@ def get_possible_zones(
                 not travel_times_filtered_mode_time_day.empty
                 and not activity_chains_filtered.empty
             ):
-                # apply get_possible_zones to each row in activity_chains_filtered
+                # apply _get_possible_zones to each row in activity_chains_filtered
                 # pandarallel.initialize(progress_bar=True)
                 possible_zones = activity_chains_filtered.parallel_apply(
                     lambda row,
@@ -283,6 +297,7 @@ def get_possible_zones(
                         travel_times=tt,
                         activities_per_zone=activities_per_zone,
                         filter_by_activity=filter_by_activity,
+                        activity_col=activity_col,
                         time_tolerance=time_tolerance,
                     ),
                     axis=1,
@@ -298,6 +313,7 @@ def _get_possible_zones(
     travel_times: pd.DataFrame,
     activities_per_zone: pd.DataFrame,
     filter_by_activity: bool,
+    activity_col: str,
     time_tolerance: int = 0.2,
 ) -> dict:
     """
@@ -331,7 +347,7 @@ def _get_possible_zones(
     # get the origin zone
     origin_zone = activity["OA21CD"]
     # get the activity purpose
-    activity_purpose = activity["dact"]
+    activity_purpose = activity[activity_col]
 
     # filter the travel_times dataframe by trip_origin and activity_purpose
     travel_times_filtered_origin_mode = travel_times[
@@ -344,8 +360,13 @@ def _get_possible_zones(
     # a 30 year old should have a zone with a university, not a school)
     if filter_by_activity:
         filtered_activities_per_zone = activities_per_zone[
-            activities_per_zone["activity"].str.split("_").str[0] == activity_purpose
+            # activities_per_zone["activity"].str.split("_").str[0] == activity_purpose
+            activities_per_zone["activity"] == activity_purpose
         ]
+        logger.debug(
+            f"Activity {activity.id}: Number of zones with activity {activity_purpose}: \
+            {len(filtered_activities_per_zone)}"
+        )
 
         # keep only the zones that have the activity purpose
         travel_times_filtered_origin_mode = travel_times_filtered_origin_mode[
@@ -365,9 +386,17 @@ def _get_possible_zones(
             <= travel_time + time_tolerance * travel_time
         )
     ]
+    logger.debug(
+        f"Activity {activity.id}: Number of zones with activity {activity_purpose} within threshold of reported time {travel_time}: \
+            {len(travel_times_filtered_time)}"
+    )
 
     # if travel_times_filtered_time returns an empty df, select the row with the closest time to the reported time
     if travel_times_filtered_time.empty:
+        logger.debug(
+            f"Activity {activity.id}: NO zones match activity {activity_purpose} within threshold of reported time {travel_time}: \
+            Relaxing tolerance and getting matching zone that is closest to reported travel time"
+        )
         travel_times_filtered_time = travel_times_filtered_origin_mode.iloc[
             (travel_times_filtered_origin_mode["travel_time_p50"] - travel_time)
             .abs()
@@ -550,8 +579,6 @@ def select_zone(
         The zone_id of the selected zone.
     """
 
-    logger = logging.getLogger(__name__)
-
     # Check if the input is in the list of allowed values
     allowed_weightings = ["floor_area", "counts", "none"]
     if weighting not in allowed_weightings:
@@ -649,3 +676,81 @@ def select_zone(
     except KeyError:
         logger.info(f"KeyError: Key {row.name} in possible_zones has no values")
         return "NA"
+
+
+def select_activity(
+    row: pd.Series,
+    activities_pts: gpd.GeoDataFrame,
+    sample_col: str = "none",
+) -> pd.Series:
+    """
+    Select a suitable location for an activity based on the activity purpose and a specific zone
+    TODO: this function is specific to education locations. We can either
+        - Generalize it to other trip purposes
+        - Keep it specific to education and change it''s name
+        - Replace it with PAM
+
+    Parameters
+    ----------
+    row : pandas.Series
+        A row from the activity_chains DataFrame
+    activities_pts : geopandas.GeoDataFrame
+        A GeoDataFrame containing the activities to sample from
+    sample_col : str, optional
+        The column to sample from, by default 'none'.Options are: "floor_area", "none"
+
+
+    Returns
+    -------
+    activity_id : int
+        The id of the chosen activity
+    activity_geom : shapely.geometry
+        The geometry of the chosen activity
+
+    """
+    destination_zone = row["dzone"]
+
+    if destination_zone == "NA":
+        # log the error
+        logger.info(f"Destination zone is NA for row {row}")
+        return pd.Series([np.nan, np.nan])
+
+    # filter to activities in the dsired zone
+    activities_in_zone = activities_pts[activities_pts["OA21CD"] == destination_zone]
+
+    if activities_in_zone.empty:
+        logger.info(f"No activities in zone {destination_zone}")
+        return pd.Series([np.nan, np.nan])
+
+    # filter all rows in activities_in_zone where  activities includes the specific activity type
+    activities_valid = activities_in_zone[
+        activities_in_zone["activities"].apply(lambda x: row["education_type"] in x)
+    ]
+    # if no activities match the exact education type, relax the constraint to just "education"
+    if activities_valid.empty:
+        logger.info(
+            f"No activities in zone {destination_zone} with education type {row['education_type']},\
+                      Returning activities with education type 'education'"
+        )
+        activities_valid = activities_in_zone[
+            activities_in_zone["activities"].apply(lambda x: "education" in x)
+        ]
+        # if still no activities match the education type, return NA
+        if activities_valid.empty:
+            logger.info(
+                f"No activities in zone {destination_zone} with education type 'education'"
+            )
+            return pd.Series([np.nan, np.nan])
+
+    if sample_col == "floor_area":
+        # sample an activity from activities_valid based on the floor_area column
+        if activities_valid["floor_area"].sum() != 0:
+            activity = activities_valid.sample(
+                1, weights=activities_valid["floor_area"]
+            )
+        else:
+            activity = activities_valid.sample(1)
+    else:
+        activity = activities_valid.sample(1)
+
+    return pd.Series([activity["id"].values[0], activity["geometry"].values[0]])
