@@ -7,7 +7,8 @@ import numpy as np
 import pandas as pd
 from IPython.display import display
 from tqdm import trange
-
+from multiprocessing.pool import ThreadPool
+from multiprocessing import  cpu_count
 from acbm.matching import match_categorical, match_individuals
 from acbm.preprocessing import (
     count_per_group,
@@ -1163,20 +1164,39 @@ display(
 
 # iterate over all items in the matches_hh_level_sample_list and apply the match_individuals function to each
 
-matches_list_of_dict = []
-for i in trange(len(matches_hh_level_sample_list)):
+#matches_list_of_dict = []
+#for i in trange(len(matches_hh_level_sample_list)):
     # apply match_individuals function to each item in the list
-    matches_ind = match_individuals(
-        df1=spc_edited,
-        df2=nts_individuals,
-        matching_columns=["age_group", "sex"],
-        df1_id="hid",
-        df2_id="HouseholdID",
-        matches_hh=matches_hh_level_sample_list[i],
-        show_progress=False,
-    )
+    #matches_ind = match_individuals(
+        #df1=spc_edited,
+        #df2=nts_individuals,
+        #matching_columns=["age_group", "sex"],
+        #df1_id="hid",
+        #df2_id="HouseholdID",
+        #matches_hh=matches_hh_level_sample_list[i],
+        #show_progress=False,
+    #)
 
-    matches_list_of_dict.append(matches_ind)
+
+def work_func(i):
+    matches_ind = match_individuals(
+            df1=spc_edited,
+            df2=nts_individuals,
+            matching_columns=["age_group", "sex"],
+            df1_id="hid",
+            df2_id="HouseholdID",
+            matches_hh=matches_hh_level_sample_list[i],
+            show_progress=False,
+    )
+    return matches_ind
+matches_list_of_dict = []
+pool = ThreadPool(cpu_count())
+
+matches_ind = pool.map(work_func, range(0, len(matches_hh_level_sample_list)))
+matches_list_of_dict.append(matches_ind)
+
+
+
 
 
 # Save the results of individual matching
