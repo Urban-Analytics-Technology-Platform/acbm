@@ -11,14 +11,18 @@ logger.setLevel(logging.DEBUG)
 
 # Create a handler that outputs to the console
 console_handler = logging.StreamHandler()
+# Create a handler that outputs to a file
+file_handler = logging.FileHandler("log_assigning.log")
+
 
 # Create a formatter and add it to the handler
 formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 console_handler.setFormatter(formatter)
+file_handler.setFormatter(formatter)
 
 # Add the handler to the logger
 logger.addHandler(console_handler)
-
+logger.addHandler(file_handler)
 
 pandarallel.initialize(progress_bar=True)
 
@@ -354,10 +358,6 @@ def _get_possible_zones(
         travel_times["OA21CD_from"] == origin_zone
     ]
     # do we include only zones that have an activity that matches the activity purpose?
-    # TODO: activity purpose is now generic (e.g. "education"). For education, we could
-    # map age_group to specific education types (e.g. "education_school",
-    # "education_university") to ensure that we have zones with the right facilities (e.g.
-    # a 30 year old should have a zone with a university, not a school)
     if filter_by_activity:
         filtered_activities_per_zone = activities_per_zone[
             # activities_per_zone["activity"].str.split("_").str[0] == activity_purpose
@@ -374,6 +374,11 @@ def _get_possible_zones(
                 filtered_activities_per_zone["OA21CD"]
             )
         ]
+    # how many zones are reachable?
+    logger.debug(
+        f"Activity {activity.id}: Number of zones with activity {activity_purpose} \
+        that are reachable using reported mode: {len(travel_times_filtered_origin_mode)}"
+    )
 
     # filter by reported trip time
     travel_times_filtered_time = travel_times_filtered_origin_mode[
@@ -672,7 +677,6 @@ def select_zone(
 
         return selected_zone
 
-    # Rest of your code here...
     except KeyError:
         logger.info(f"KeyError: Key {row.name} in possible_zones has no values")
         return "NA"
@@ -754,3 +758,197 @@ def select_activity(
         activity = activities_valid.sample(1)
 
     return pd.Series([activity["id"].values[0], activity["geometry"].values[0]])
+
+
+def zones_to_time_matrix(
+    zones: gpd.GeoDataFrame,
+    id_col: str = None,
+    to_dict: bool = False,
+) -> dict:
+    """
+    Calculates the distance matrix between the centroids of the given zones and returns it as a DataFrame. The matrix also adds
+    a column for all the different modes, with travel time (seconds) based on approximate speeds
+
+    The function first converts the CRS of the zones to EPSG:27700 and calculates the centroids of the zones.
+    Then, it calculates the distance matrix between the centroids and reshapes it from a wide format to a long format.
+    If an id_col is specified, the function replaces the index values in the distance matrix with the corresponding id_col values from the zones.
+
+    Parameters
+    ----------
+    zones: (gpd.GeoDataFrame):
+        A GeoDataFrame containing the zones.
+    id_col (str, optional):
+        The name of the column in the zones GeoDataFrame to use as the ID. If None, the index values are used. Default is None.
+
+    Returns
+    -------
+    if to_dict = False
+        pd.DataFrame: A dataframe containing the distance matrix. The columns are:
+    '{id_col}_from', '{id_col}_to', 'distance', {time}_{mode} with a column for each mode in the dictionary
+    if to_dict = True
+        converts the data to a dictionary
+        keys: a tuple representing ({id_col}_from, {id_col}_to)
+        values: another dictionary with the following keys:
+            - 'distance': a float representing the distance between the two locations.
+            - 'time_car': a float representing the travel time by car between the two locations.
+            - 'time_pt': a float representing the travel time by public transport between the two locations.
+            - 'time_cycle': a float representing the travel time by bicycle between the two locations.
+            - 'time_walk': a float representing the travel time on foot between the two locations.
+            - 'time_average': a float representing the average travel time between the two locations.
+        a value can be accessed using eg: dict[({id_col}_from, {id_col}_to)]['time_car']
+    """
+
+    zones = zones.to_crs(epsg=27700)
+    centroids = zones.geometry.centroid
+
+    # get distance matrix (meters)
+    distances = centroids.apply(lambda g: centroids.distance(g))
+    # wide to long
+    distances = distances.stack().reset_index()
+    distances.columns = [f"{id_col}_from", f"{id_col}_to", "distance"]
+
+    # replace the index values with the id_col values if id_col is specified
+    if id_col is not None:
+        # create a mapping from index to id_col values
+        id_mapping = zones[id_col].to_dict()
+
+        # replace
+        distances[f"{id_col}_from"] = distances[f"{id_col}_from"].map(id_mapping)
+        distances[f"{id_col}_to"] = distances[f"{id_col}_to"].map(id_mapping)
+
+    # define speed by mode
+    mode_speeds_mps = {
+        "car": 20 * 1000 / 3600,
+        "pt": 15 * 1000 / 3600,
+        "cycle": 15 * 1000 / 3600,
+        "walk": 5 * 1000 / 3600,
+        "average": 15 * 1000 / 3600,
+    }
+
+    # add travel time estimates (per mode)
+    for mode, speed in mode_speeds_mps.items():
+        distances[f"time_{mode}"] = distances["distance"] / speed
+
+    if to_dict:
+        # convert to a dictionary
+        distances_dict = distances.set_index(
+            [f"{id_col}_from", f"{id_col}_to"]
+        ).to_dict("index")
+
+    return distances_dict
+
+
+def fill_missing_zones(
+    activity: pd.Series,
+    travel_times_est: dict,
+    activities_per_zone: pd.DataFrame,
+    activity_col: str,
+    use_mode: bool = False,
+):
+    """
+    This function fills in missing zones in the activity chains. It uses a travel time matrix based on euclidian distance instead of
+    the computed travel time matrix which is a sparse matrix.
+
+    Parameters
+    ----------
+    activity: pd.Series
+        A row from the activity chains dataframe
+    travel_times_est: dict
+        A dictionary with keys as tuples ({id_col}_from, {id_col}_to) and values as dictionaries containing time estimates.
+        It is the output of zones_to_time_matrix()
+    activities_per_zone: pd.DataFrame
+        A dataframe with the number of activities and floorspace for each zone. The columns are 'OA21CD', 'counts', 'floor_area', 'activity'
+        where 'activity' is the activity type as defined in the osmox config file
+    activity_col: str
+        The column name for the activity type
+    use_mode: bool
+        If True, the function will use the mode of transportation to estimate the travel time: time_{mode}.
+        If False, it will use the average travel time: time_average.
+        Default is False.
+
+    Returns
+    -------
+    str
+        The zone that has the estimated time closest to the given time. The zone also has an activity that matches the activity_col value.
+
+    """
+    activity_purpose = activity[activity_col]
+    from_zone = activity["OA21CD"]
+    to_zones = activities_per_zone[activities_per_zone["activity"] == activity_purpose][
+        "OA21CD"
+    ].tolist()
+
+    logger.debug(
+        f"Activity {activity.TripID} | person: {activity.id}: Number of possible destination zones: {len(to_zones)}"
+    )
+
+    time = activity["TripTotalTime"]
+    if use_mode:
+        mode = activity["mode"]
+    else:
+        mode = None
+
+    zone = _get_zones_using_time_estimate(
+        estimated_times=travel_times_est,
+        from_zone=from_zone,
+        to_zones=to_zones,
+        time=time,
+        mode=mode,
+    )
+
+    return zone
+
+
+def _get_zones_using_time_estimate(
+    estimated_times: dict, from_zone: str, to_zones: list, time: int, mode: str = None
+) -> str:
+    """
+    This function returns the zone that has the estimated time closest to the given time. It is meant to be used inside fill_missing_zones()
+
+    Parameters:
+    ----------
+    estimated_times: dict
+        A dictionary with keys as tuples ({id_col}_from, {id_col}_to) and values as dictionaries containing time estimates. It is the output of zones_to_time_matrix()
+    id_col: str
+        The column name for the zone id.
+    from_zone: str
+        The zone of the previous activity
+    to_zones (list): A list of destination zones.
+    time:
+        The target time to compare the estimated times with.
+    mode: str, optional
+        The mode of transportation. It should be one of ['car', 'pt', 'walk', 'cycle']. If not provided, the function uses 'time_average'.
+
+    Returns
+    -------
+    str
+        The zone that has the estimated time closest to the given time.
+    """
+
+    acceptable_modes = ["car", "pt", "walk", "cycle"]
+
+    if mode is not None and mode not in acceptable_modes:
+        raise ValueError(
+            f"Invalid mode '{mode}'. Mode must be one of {acceptable_modes}."
+        )
+
+    # Convert to_zones to a set for faster lookup
+    to_zones_set = set(to_zones)
+
+    # Filter the entries where {id_col}_from matches the specific zone and {id_col}_to is in the specific list of zones
+    filtered_dict = {
+        k: v
+        for k, v in estimated_times.items()
+        if k[0] == from_zone and k[1] in to_zones_set
+    }
+    # get to_zone where time_average is closest to "time"
+    if mode is not None:
+        closest_to_zone = min(
+            filtered_dict.items(), key=lambda item: abs(item[1][f"time_{mode}"] - time)
+        )
+    else:
+        closest_to_zone = min(
+            filtered_dict.items(), key=lambda item: abs(item[1]["time_average"] - time)
+        )
+
+    return closest_to_zone[0][1]
