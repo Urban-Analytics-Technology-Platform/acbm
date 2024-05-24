@@ -946,3 +946,60 @@ def _get_zones_using_time_estimate(
         )
 
     return closest_to_zone[0][1]
+
+
+def filter_matrix_to_boundary(
+    boundary,
+    matrix,
+    boundary_id_col,
+    matrix_id_col,
+    matrix_id_col_sfx=["_home", "_work"],
+    type="both",
+) -> pd.DataFrame:
+    """
+    Filter the matrix to only include rows and columns that are in the boundary. We can filter
+    based on matching origin, destination, or both.
+
+    Parameters
+    ----------
+    boundary : GeoDataFrame
+        The boundary GeoDataFrame.
+    matrix : DataFrame
+        The matrix DataFrame.
+    boundary_id_col : str
+        The column name in the boundary GeoDataFrame that contains the unique identifier.
+    matrix_id_col : str
+        The column name in the matrix DataFrame that contains the unique identifier.
+    matrix_id_cols_sfx : list, optional
+        The suffixes to add to the matrix_id_col to get the origin and destination columns.
+        The default is ["_home", "_work"].
+    type : str, optional
+        The type of filtering to apply. Options are 'origin', 'destination', 'columns'. The default is 'both'
+
+    Returns
+    -------
+
+    filtered_matrix : DataFrame
+        The filtered matrix DataFrame.
+    """
+
+    matrix_id_col_from = matrix_id_col + matrix_id_col_sfx[0]
+    matrix_id_col_to = matrix_id_col + matrix_id_col_sfx[1]
+
+    if type == "origin":
+        filtered_matrix = matrix[
+            matrix[matrix_id_col_from].isin(boundary[boundary_id_col])
+        ]
+
+    elif type == "destination":
+        filtered_matrix = matrix[
+            matrix[matrix_id_col_to].isin(boundary[boundary_id_col])
+        ]
+
+    elif type == "both":
+        filtered_matrix = matrix[
+            matrix[matrix_id_col_from].isin(boundary[boundary_id_col])
+            & matrix[matrix_id_col_to].isin(boundary[boundary_id_col])
+        ]
+
+    return filtered_matrix
