@@ -1003,3 +1003,99 @@ def filter_matrix_to_boundary(
         ]
 
     return filtered_matrix
+
+
+def intrazone_time(zones: gpd.GeoDataFrame) -> dict:
+    """
+    Estimate the time taken to travel within each zone.
+
+    The function calculates the area of each zone, and assumes that they are regular polygons. We then
+    assume that the average travel distance within the zone is equal to the 'radius' of the zone.
+    Travel time is based on estimated speed by mode
+
+    Parameters
+    ----------
+    zones : gpd.GeoDataFrame
+        The GeoDataFrame containing the zones.
+
+    Returns
+    -------
+    dict
+        A dictionary containing the intrazone travel time estimates.
+        Example row:
+        {53506: {'car': 0.3, 'pt': 0.5, 'cycle': 0.5, 'walk': 1.4, 'average': 0.5},
+    """
+
+    # convert zones to metric crs
+    zones = zones.to_crs(epsg=27700)
+    # get the sqrt of the area of each zone
+    zones["area"] = zones["geometry"].area
+    zones["average_dist"] = np.sqrt(zones["area"]) / 2
+
+    # mode speeds in m/s
+    mode_speeds_mps = {
+        "car": 20 * 1000 / 3600,
+        "pt": 15 * 1000 / 3600,
+        "cycle": 15 * 1000 / 3600,
+        "walk": 5 * 1000 / 3600,
+        "average": 15 * 1000 / 3600,
+    }
+
+    # Create a dictionary where key = zone and values = travel time in minutes
+    travel_time_dict = {
+        zone: {
+            mode: round((dist / speed) / 60, 1)
+            for mode, speed in mode_speeds_mps.items()
+        }
+        for zone, dist in zones["average_dist"].items()
+    }
+
+    return travel_time_dict
+
+
+def replace_intrazonal_travel_time(
+    travel_times: pd.DataFrame, intrazonal_estimates: dict, column_to_replace: str
+) -> pd.DataFrame:
+    """
+    Replace the intrazonal travel times in a travel time matrix.
+
+    Intrazonal travel times from routing engines (e.g. r5) are normally 0. We replace these with estimates
+    based on the area of the zone ( values calculated using intrazone_time() function).
+
+    Parameters
+    ----------
+    travel_times : pd.DataFrame
+        The DataFrame containing the travel time estimates. It will be modified
+    intrazonal_estimates : dict
+        The dictionary containing the intrazonal travel time estimates. From intrazone_time() function.
+    column_to_replace : str
+        The name of the column wth the travel time estimates to replace.
+
+    Returns
+    -------
+
+    pd.DataFrame
+        A DataFrame with the intrazonal travel time estimates replaced.
+    """
+
+    # Copy the DataFrame to avoid modifying the original one
+    travel_times_copy = travel_times.copy()
+
+    # Create a new column 'mode' by splitting the 'combination' column
+    travel_times_copy["mode"] = travel_times_copy["combination"].str.split("_").str[0]
+
+    # Iterate over the keys in the travel_times22 dictionary
+    for key in intrazonal_estimates:
+        # Create a mask for the rows where 'from_id' and 'to_id' are equal to the current key
+        mask = (travel_times_copy["from_id"] == key) & (
+            travel_times_copy["to_id"] == key
+        )
+        # Iterate over the rows that match the mask
+        for idx, row in travel_times_copy[mask].iterrows():
+            # Replace the 'travel_time_p50' value with the corresponding value from travel_times22
+            travel_times_copy.loc[idx, column_to_replace] = intrazonal_estimates[key][
+                row["mode"]
+            ]
+
+    # Return the modified DataFrame
+    return travel_times_copy
