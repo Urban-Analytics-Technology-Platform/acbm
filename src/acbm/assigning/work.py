@@ -308,7 +308,7 @@ class WorkZoneAssignment:
                     prob += pulp.lpSum(person_vars) == 1
         # Calculate assigned percentages and deviation for each origin-destination pair
         for (from_zone, to_zone), percentage in self.percentages.items():
-            # Create a variable for the absolute deviation
+            # Create a variable for the absolute deviation (with lower bound of 0)
             abs_dev = pulp.LpVariable(
                 f"abs_dev_{from_zone}_{to_zone}", 0, None, pulp.LpContinuous
             )
@@ -329,6 +329,7 @@ class WorkZoneAssignment:
                 logger.warning(f"Warning: Origin {from_zone} not found in total_flows.")
 
             if use_percentages:
+                # to satisfy both constraints, abs_dev will be a positive number (it is the larger of the two)
                 prob += assigned_percentage - percentage <= abs_dev
                 prob += percentage - assigned_percentage <= abs_dev
             else:
