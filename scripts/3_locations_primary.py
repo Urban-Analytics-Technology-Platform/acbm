@@ -136,11 +136,17 @@ boundaries.head(10)
 
 # Convert location column in activity_chains to spatial column
 
+
 # turn column to shapely point
 def add_location(df):
-    location = pd.read_csv("../data/external/centroids/Output_Areas_Dec_2011_PWC_2022.csv")
-    location["location"] = location.apply(lambda loc: Point(loc['x'], loc['y']), axis=1)
-    return df.merge(location[["OA11CD", "location"]], left_on="OA11CD", right_on="OA11CD")
+    location = pd.read_csv(
+        "../data/external/centroids/Output_Areas_Dec_2011_PWC_2022.csv"
+    )
+    location["location"] = location.apply(lambda loc: Point(loc["x"], loc["y"]), axis=1)
+    return df.merge(
+        location[["OA11CD", "location"]], left_on="OA11CD", right_on="OA11CD"
+    )
+
 
 activity_chains = add_location(activity_chains)
 
