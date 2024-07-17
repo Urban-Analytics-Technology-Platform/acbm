@@ -84,9 +84,9 @@ def _map_day_to_wkday_binary(day: int) -> int:
         return 1
     if day in [6, 7]:
         return 0
-    else:
-        # if day is not in the range 1: 7, raise an error
-        raise ValueError("Day should be numeric and in the range 1-7")
+    # if day is not in the range 1: 7, raise an error
+    msg = "Day should be numeric and in the range 1-7"
+    raise ValueError(msg)
 
 
 # function to filter travel_times df specifically for pt mode
@@ -410,13 +410,11 @@ def _get_possible_zones(
         ]
 
     # create dictionary with key = origin_zone and values = list of travel_times_filtered.OA21CD_to
-    possible_zones = (
+    return (
         travel_times_filtered_time.groupby("OA21CD_from")["OA21CD_to"]
         .apply(list)
         .to_dict()
     )
-
-    return possible_zones
 
 
 def get_activities_per_zone(
