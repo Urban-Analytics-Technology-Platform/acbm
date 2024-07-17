@@ -493,8 +493,8 @@ def get_activities_per_zone(
 
     if return_df:
         return _get_activities_per_zone_df(grouped_data)
-    else:
-        return grouped_data
+
+    return grouped_data
 
 
 def _get_activities_per_zone_df(activities_per_zone: dict) -> pd.DataFrame:
@@ -532,10 +532,8 @@ def _get_activities_per_zone_df(activities_per_zone: dict) -> pd.DataFrame:
         # add a column for the activity type
         df["activity"] = activity
 
-    # concatenate all the dataframes in activities_per_zone
-    activities_per_zone_df = pd.concat(activities_per_zone.values())
-
-    return activities_per_zone_df
+    # concatenate all the dataframes and return
+    return pd.concat(activities_per_zone.values())
 
 
 def select_zone(
@@ -586,9 +584,8 @@ def select_zone(
     # Check if the input is in the list of allowed values
     allowed_weightings = ["floor_area", "counts", "none"]
     if weighting not in allowed_weightings:
-        raise ValueError(
-            f"Invalid value for weighting: {weighting}. Allowed values are {allowed_weightings}."
-        )
+        msg = f"Invalid value for weighting: {weighting}. Allowed values are {allowed_weightings}."
+        raise ValueError(msg)
 
     # get the values from possible_zones_school that match the index of the row
     # use try/except as some activities might have no possible zones
@@ -761,7 +758,7 @@ def select_activity(
 
 def zones_to_time_matrix(
     zones: gpd.GeoDataFrame,
-    id_col: str = None,
+    id_col: str | None = None,
     to_dict: bool = False,
 ) -> dict:
     """
@@ -882,12 +879,9 @@ def fill_missing_zones(
     )
 
     time = activity["TripTotalTime"]
-    if use_mode:
-        mode = activity["mode"]
-    else:
-        mode = None
+    mode = activity["mode"] if use_mode else None
 
-    zone = _get_zones_using_time_estimate(
+    return _get_zones_using_time_estimate(
         estimated_times=travel_times_est,
         from_zone=from_zone,
         to_zones=to_zones,
@@ -895,11 +889,13 @@ def fill_missing_zones(
         mode=mode,
     )
 
-    return zone
-
 
 def _get_zones_using_time_estimate(
-    estimated_times: dict, from_zone: str, to_zones: list, time: int, mode: str = None
+    estimated_times: dict,
+    from_zone: str,
+    to_zones: list,
+    time: int,
+    mode: str | None = None,
 ) -> str:
     """
     This function returns the zone that has the estimated time closest to the given time. It is meant to be used inside fill_missing_zones()
@@ -927,9 +923,8 @@ def _get_zones_using_time_estimate(
     acceptable_modes = ["car", "pt", "walk", "cycle"]
 
     if mode is not None and mode not in acceptable_modes:
-        raise ValueError(
-            f"Invalid mode '{mode}'. Mode must be one of {acceptable_modes}."
-        )
+        msg = f"Invalid mode '{mode}'. Mode must be one of {acceptable_modes}."
+        raise ValueError(msg)
 
     # Convert to_zones to a set for faster lookup
     to_zones_set = set(to_zones)
