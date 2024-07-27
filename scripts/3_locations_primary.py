@@ -105,12 +105,10 @@ purp_mapping = {
     -8: "NA",
 }
 
-
-activity_chains["mode"] = activity_chains["mode"].map(mode_mapping)
-
-activity_chains["oact"] = activity_chains["oact"].map(purp_mapping)
-
-activity_chains["dact"] = activity_chains["dact"].map(purp_mapping)
+# TODO: Original recoding, no longer required to be applied, consider removing from here
+# activity_chains["mode"] = activity_chains["mode"].map(mode_mapping)
+# activity_chains["oact"] = activity_chains["oact"].map(purp_mapping)
+# activity_chains["dact"] = activity_chains["dact"].map(purp_mapping)
 
 
 # ### Study area boundaries
@@ -139,16 +137,30 @@ boundaries.head(10)
 
 # turn column to shapely point
 def add_location(df):
+    from pyproj import Transformer
+
+    # source and target CRS
+    source, target = "EPSG:27700", "EPSG:4326"
+    # read centroids in source CRS
     location = pd.read_csv(
         "../data/external/centroids/Output_Areas_Dec_2011_PWC_2022.csv"
     )
-    location["location"] = location.apply(lambda loc: Point(loc["x"], loc["y"]), axis=1)
+    # make transformer
+    transformer = Transformer.from_crs(source, target, always_xy=True)
+
+    # convert loc from source to target CRS returning as Point type
+    def get_new_coords(loc):
+        x, y = transformer.transform(loc["x"], loc["y"])
+        return Point(x, y)
+
+    location["location"] = location.apply(lambda loc: get_new_coords(loc), axis=1)
     return df.merge(
         location[["OA11CD", "location"]], left_on="OA11CD", right_on="OA11CD"
     )
 
 
 activity_chains = add_location(activity_chains)
+
 
 # Convert the DataFrame into a GeoDataFrame, and assign a coordinate reference system (CRS)
 activity_chains = gpd.GeoDataFrame(activity_chains, geometry="location")
@@ -366,6 +378,9 @@ activities_per_zone.to_parquet("../data/interim/assigning/activities_per_zone.pa
 # We start with `education` trips as we need to know the trip origin. The vast majority of `education` trips start at home, as shown in `3.1_sandbox-locations_primary.ipynb`. Given that we know the home location of each individual, we can use this information to determine the feasible zones for each education trip.
 
 # ### Getting feasible zones for each activity
+
+print(activity_chains["dact"].value_counts())
+
 
 activity_chains_edu = activity_chains[activity_chains["dact"] == "education"]
 
