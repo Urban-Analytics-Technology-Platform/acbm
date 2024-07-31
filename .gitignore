@@ -160,3 +160,6 @@ Thumbs.db
 
 # Misc
 .copier-answers.yml
+
+# Ignore data path
+data/
