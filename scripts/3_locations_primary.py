@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # # Adding Primary Location to individuals
 #
 # After assigning an activity chain to each individual, we then need to map these activities to geographic locations. We start with primary locations (work, school) and fill in the gaps later with discretionary locations. This notebook will focus on the primary locations.
@@ -14,6 +12,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+from pyproj import Transformer
 from shapely.geometry import Point
 
 from acbm.assigning import (
@@ -137,8 +136,6 @@ boundaries.head(10)
 
 # turn column to shapely point
 def add_location(df):
-    from pyproj import Transformer
-
     # source and target CRS
     source, target = "EPSG:27700", "EPSG:4326"
     # read centroids in source CRS
@@ -240,7 +237,7 @@ travel_time_estimates = zones_to_time_matrix(
 # Get an iterator over the dictionary items and then print the first n items
 items = iter(travel_time_estimates.items())
 
-for i in range(5):
+for _ in range(5):
     print(next(items))
 
 
@@ -318,9 +315,9 @@ df_list = []
 
 # For each activity type, filter the rows where activities includes the activity type, and append to df_list
 for activity in activity_types:
-    temp_df = osm_data_gdf[osm_data_gdf["activities"].apply(lambda x: activity in x)][
-        ["floor_area"]
-    ].copy()
+    temp_df = osm_data_gdf[
+        osm_data_gdf["activities"].apply(lambda x, activity=activity: activity in x)
+    ][["floor_area"]].copy()
     temp_df["activity"] = activity
     df_list.append(temp_df)
 
@@ -349,16 +346,13 @@ activities_per_zone_dict = get_activities_per_zone(
 items = iter(activities_per_zone_dict.items())
 
 # Print the first 5 items
-for i in range(5):
+for _ in range(5):
     print(next(items))
 
 
 activities_per_zone = get_activities_per_zone(
     zones=boundaries, zone_id_col="OA21CD", activity_pts=osm_data, return_df=True
 )
-
-activities_per_zone
-
 
 with open("../data/interim/assigning/activities_per_zone.pkl", "wb") as f:
     pkl.dump(activities_per_zone_dict, f)
