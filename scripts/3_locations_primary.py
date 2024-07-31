@@ -4,7 +4,7 @@
 #
 # We follow the steps outlined in this [github issue](https://github.com/Urban-Analytics-Technology-Platform/acbm/issues/12)
 
-import logging
+import math
 import pickle as pkl
 
 import geopandas as gpd
@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from pyproj import Transformer
-from shapely.geometry import Point
+from shapely.geometry import LineString, Point
 
 from acbm.assigning import (
     fill_missing_zones,
@@ -538,7 +538,6 @@ activity_chains_ex.head(10)
 # #### Plot the results
 
 # For each row in activity_chains_ex, turn the geometry into a linestring: Origin = location and destination = activity_geom
-from shapely.geometry import LineString
 
 activity_chains_plot = activity_chains_ex.copy()
 # filter to only include rows where activity_geom is not NA
@@ -566,8 +565,6 @@ activity_chains_plot = activity_chains_plot.to_crs(epsg=4326)
 
 
 # ##### Maps
-
-import math
 
 
 def plot_activity_chains(
@@ -723,5 +720,5 @@ plt.show()
 # - I could assign to zones and then use pam to assign to a random facility
 #
 #
-# "All education-related trips from the household travel survey were first split into several groups depending first on the residence area type (see subsubsection 5.1.2) the agent lives in, secondly, on the agent’s gender, and, thirdly, on the age of the individual sample who made the trip (and thus on the category of education facility the individual visited: pre-school or elementary school for children aged 14 or less, high school or technical school for teenagers aged 14 to 18, university for people aged 18 to 30 and various places for agents aged 30 or more. For each of these groups, it was then possible to construct the histogram of the distances separating the education place to the home of the individual samples. Finally, a probability density function corresponding to each histogram was obtained." - A synthetic population for the greater São Paulo metropolitan region (Sallard et al 2020)
+# "All education-related trips from the household travel survey were first split into several groups depending first on the residence area type (see subsubsection 5.1.2) the agent lives in, secondly, on the agent's gender, and, thirdly, on the age of the individual sample who made the trip (and thus on the category of education facility the individual visited: pre-school or elementary school for children aged 14 or less, high school or technical school for teenagers aged 14 to 18, university for people aged 18 to 30 and various places for agents aged 30 or more. For each of these groups, it was then possible to construct the histogram of the distances separating the education place to the home of the individual samples. Finally, a probability density function corresponding to each histogram was obtained." - A synthetic population for the greater São Paulo metropolitan region (Sallard et al 2020)
 #
