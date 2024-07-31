@@ -10,7 +10,7 @@ def main():
 
     # Pick a region with SPC output saved
     path = "../data/external/spc_output/raw/"
-    region = "west-yorkshire"
+    region = "leeds"
 
     # Add people and households
     spc_people_hh = (

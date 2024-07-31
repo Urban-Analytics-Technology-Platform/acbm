@@ -28,10 +28,13 @@ python = "^3.10"
 pytest = { version = ">=6", optional = true }
 pytest-cov = { version = ">=3", optional = true }
 pandas = "^2.2.0"
-uatk-spc = {git = "https://github.com/alan-turing-institute/uatk-spc.git", rev = "55-output-formats-python", subdirectory = "python"}
+uatk-spc = {git = "https://github.com/alan-turing-institute/uatk-spc.git", subdirectory = "python"}
 geopandas = "^0.14.3"
 matplotlib = "^3.8.3"
 scikit-learn = "^1.4.1.post1"
+seaborn = "^0.13.2"
+pandarallel = "^1.6.5"
+ipywidgets = "^8.1.2"
 tqdm = "^4.66.2"
 
 [tool.poetry.dev-dependencies]
@@ -101,7 +104,8 @@ select = [
 ignore = [
   "PLR",    # Design related pylint codes
   "ISC001", # Conflicts with formatter
-  "E501"    # Line too long
+  "E501",   # Line too long
+  "G004",   # Logging statement uses f-string, not necessary here
 ]
 unfixable = [
   "F401",   # Would remove unused imports

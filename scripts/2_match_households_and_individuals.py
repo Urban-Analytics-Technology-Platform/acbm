@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from IPython.display import display
+from joblib import Parallel, delayed
 from tqdm import trange
 
 from acbm.matching import match_categorical, match_individuals
@@ -35,7 +36,7 @@ def get_interim_path(file_name: str, path: str = "../data/interim/matching/") ->
 # ### SPC
 
 # useful variables
-region = "west-yorkshire"
+region = "leeds"
 
 # Read in the spc data (parquet format)
 spc = pd.read_parquet("../data/external/spc_output/" + region + "_people_hh.parquet")
@@ -70,9 +71,7 @@ spc = spc[
 
 
 # temporary reduction of the dataset for quick analysis
-# TODO: check if this should be present?
-spc = spc.head(15000)
-# spc = spc.head(500000)
+spc = spc.sample(n=15000, random_state=SEED)
 
 
 # ### NTS
@@ -1166,22 +1165,21 @@ display(
 # Here, we iterate over the list and do individual matching for each item. The output is a list of n dictionaries, each of which could be used as a synthetic population matched to the NTS
 
 # iterate over all items in the matches_hh_level_sample_list and apply the match_individuals function to each
-
-matches_list_of_dict = []
-for i in trange(len(matches_hh_level_sample_list)):
-    # apply match_individuals function to each item in the list
-    matches_ind = match_individuals(
-        df1=spc_edited,
-        df2=nts_individuals,
-        matching_columns=["age_group", "sex"],
-        df1_id="hid",
-        df2_id="HouseholdID",
-        matches_hh=matches_hh_level_sample_list[i],
-        show_progress=False,
+parallel = Parallel(n_jobs=-1, return_as="generator")
+matches_list_of_dict = list(
+    parallel(
+        delayed(match_individuals)(
+            df1=spc_edited,
+            df2=nts_individuals,
+            matching_columns=["age_group", "sex"],
+            df1_id="hid",
+            df2_id="HouseholdID",
+            matches_hh=matches_hh_level_sample_list[i],
+            show_progress=False,
+        )
+        for i in trange(len(matches_hh_level_sample_list))
     )
-
-    matches_list_of_dict.append(matches_ind)
-
+)
 
 # Save the results of individual matching
 
