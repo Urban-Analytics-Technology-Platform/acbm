@@ -85,7 +85,8 @@ def _map_day_to_wkday_binary(day: int) -> int:
     if day in [6, 7]:
         return 0
     # if day is not in the range 1: 7, raise an error
-    raise ValueError("Day should be numeric and in the range 1-7")
+    error_message = f"Day should be numeric and in the range 1-7. {day} is not valid"
+    raise ValueError(error_message)
 
 
 # function to filter travel_times df specifically for pt mode
