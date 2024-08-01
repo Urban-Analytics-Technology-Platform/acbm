@@ -1,5 +1,5 @@
 import logging
-from typing import Optional
+from typing import Optional, List
 
 import geopandas as gpd
 import numpy as np
@@ -954,7 +954,7 @@ def filter_matrix_to_boundary(
     matrix,
     boundary_id_col,
     matrix_id_col,
-    matrix_id_col_sfx=["_home", "_work"],
+    matrix_id_col_sfx= Optional[List[str]] = None,
     type="both",
 ) -> pd.DataFrame:
     """
@@ -983,6 +983,9 @@ def filter_matrix_to_boundary(
     filtered_matrix : DataFrame
         The filtered matrix DataFrame.
     """
+
+    if matrix_id_col_sfx is None:
+        matrix_id_col_sfx = ["_home", "_work"]
 
     matrix_id_col_from = matrix_id_col + matrix_id_col_sfx[0]
     matrix_id_col_to = matrix_id_col + matrix_id_col_sfx[1]
