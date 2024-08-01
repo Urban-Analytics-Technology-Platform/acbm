@@ -409,13 +409,11 @@ def _get_possible_zones(
         ]
 
     # create dictionary with key = origin_zone and values = list of travel_times_filtered.OA21CD_to
-    possible_zones = (
+    return (
         travel_times_filtered_time.groupby("OA21CD_from")["OA21CD_to"]
         .apply(list)
         .to_dict()
     )
-
-    return possible_zones
 
 
 def get_activities_per_zone(
@@ -534,9 +532,7 @@ def _get_activities_per_zone_df(activities_per_zone: dict) -> pd.DataFrame:
         df["activity"] = activity
 
     # concatenate all the dataframes in activities_per_zone
-    activities_per_zone_df = pd.concat(activities_per_zone.values())
-
-    return activities_per_zone_df
+    return pd.concat(activities_per_zone.values())
 
 
 def select_zone(
@@ -888,7 +884,7 @@ def fill_missing_zones(
     else:
         mode = None
 
-    zone = _get_zones_using_time_estimate(
+    return _get_zones_using_time_estimate(
         estimated_times=travel_times_est,
         from_zone=from_zone,
         to_zones=to_zones,
@@ -896,7 +892,6 @@ def fill_missing_zones(
         mode=mode,
     )
 
-    return zone
 
 
 def _get_zones_using_time_estimate(
@@ -1047,16 +1042,14 @@ def intrazone_time(zones: gpd.GeoDataFrame) -> dict:
         "average": 15 * 1000 / 3600,
     }
 
-    # Create a dictionary where key = zone and values = travel time in minutes
-    travel_time_dict = {
+    # Create (and return) a dictionary where key = zone and values = travel time in minutes
+    return {
         zone: {
             mode: round((dist / speed) / 60, 1)
             for mode, speed in mode_speeds_mps.items()
         }
         for zone, dist in zones["average_dist"].items()
     }
-
-    return travel_time_dict
 
 
 def replace_intrazonal_travel_time(
