@@ -84,9 +84,8 @@ def _map_day_to_wkday_binary(day: int) -> int:
         return 1
     if day in [6, 7]:
         return 0
-    else:
-        # if day is not in the range 1: 7, raise an error
-        raise ValueError("Day should be numeric and in the range 1-7")
+    # if day is not in the range 1: 7, raise an error
+    raise ValueError("Day should be numeric and in the range 1-7")
 
 
 # function to filter travel_times df specifically for pt mode
@@ -495,8 +494,8 @@ def get_activities_per_zone(
 
     if return_df:
         return _get_activities_per_zone_df(grouped_data)
-    else:
-        return grouped_data
+    # if return_df is False, return the dictionary
+    return grouped_data
 
 
 def _get_activities_per_zone_df(activities_per_zone: dict) -> pd.DataFrame:
