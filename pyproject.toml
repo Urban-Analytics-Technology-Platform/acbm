@@ -36,6 +36,8 @@ seaborn = "^0.13.2"
 pandarallel = "^1.6.5"
 ipywidgets = "^8.1.2"
 tqdm = "^4.66.2"
+pulp = "^2.8.0"
+libpysal = "^4.11.0"
 
 [tool.poetry.dev-dependencies]
 pytest = ">= 6"
