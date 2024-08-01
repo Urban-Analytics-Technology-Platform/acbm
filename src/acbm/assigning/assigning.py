@@ -879,10 +879,8 @@ def fill_missing_zones(
     )
 
     time = activity["TripTotalTime"]
-    if use_mode:
-        mode = activity["mode"]
-    else:
-        mode = None
+
+    mode = activity["mode"] if use_mode else None
 
     return _get_zones_using_time_estimate(
         estimated_times=travel_times_est,
