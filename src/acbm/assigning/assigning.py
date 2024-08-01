@@ -758,8 +758,8 @@ def select_activity(
 
 def zones_to_time_matrix(
     zones: gpd.GeoDataFrame,
-    id_col: str = None,
-    to_dict: bool = False,
+    id_col: Optional[str] = None,
+    to_dict: Optional[bool] = False,
 ) -> dict:
     """
     Calculates the distance matrix between the centroids of the given zones and returns it as a DataFrame. The matrix also adds
@@ -893,9 +893,12 @@ def fill_missing_zones(
     )
 
 
-
 def _get_zones_using_time_estimate(
-    estimated_times: dict, from_zone: str, to_zones: list, time: int, mode: str = None
+    estimated_times: dict,
+    from_zone: str,
+    to_zones: list,
+    time: int,
+    mode: Optional[str] = None,
 ) -> str:
     """
     This function returns the zone that has the estimated time closest to the given time. It is meant to be used inside fill_missing_zones()
