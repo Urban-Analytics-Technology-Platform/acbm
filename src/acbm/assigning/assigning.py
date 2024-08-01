@@ -583,9 +583,8 @@ def select_zone(
     # Check if the input is in the list of allowed values
     allowed_weightings = ["floor_area", "counts", "none"]
     if weighting not in allowed_weightings:
-        raise ValueError(
-            f"Invalid value for weighting: {weighting}. Allowed values are {allowed_weightings}."
-        )
+        error_message = f"Invalid value for weighting: {weighting}. Allowed values are {allowed_weightings}."
+        raise ValueError(error_message)
 
     # get the values from possible_zones_school that match the index of the row
     # use try/except as some activities might have no possible zones
@@ -926,9 +925,8 @@ def _get_zones_using_time_estimate(
     acceptable_modes = ["car", "pt", "walk", "cycle"]
 
     if mode is not None and mode not in acceptable_modes:
-        raise ValueError(
-            f"Invalid mode '{mode}'. Mode must be one of {acceptable_modes}."
-        )
+        error_message = f"Invalid mode: {mode}. Mode must be one of {acceptable_modes}."
+        raise ValueError(error_message)
 
     # Convert to_zones to a set for faster lookup
     to_zones_set = set(to_zones)
