@@ -90,7 +90,7 @@ class WorkZoneAssignment:
             A dictionary with origin zones as keys and total flows as values.
         """
         total_flows = {}
-        for (from_zone, to_zone), flow in self.actual_flows.items():
+        for (from_zone, _), flow in self.actual_flows.items():
             if from_zone in total_flows:
                 total_flows[from_zone] += flow
             else:
