@@ -12,8 +12,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from pyproj import Transformer
-from shapely.geometry import LineString, Point
+from shapely.geometry import LineString
 
 from acbm.assigning import (
     fill_missing_zones,
@@ -23,6 +22,7 @@ from acbm.assigning import (
     select_zone,
     zones_to_time_matrix,
 )
+from acbm.preprocessing import add_location
 
 # ## Load in the data
 #
@@ -132,31 +132,13 @@ boundaries.head(10)
 # #### Assign activity home locations to boundaries zoning system
 
 # Convert location column in activity_chains to spatial column
-
-
-# turn column to shapely point
-def add_location(df):
-    # source and target CRS
-    source, target = "EPSG:27700", "EPSG:4326"
-    # read centroids in source CRS
-    location = pd.read_csv(
-        "../data/external/centroids/Output_Areas_Dec_2011_PWC_2022.csv"
-    )
-    # make transformer
-    transformer = Transformer.from_crs(source, target, always_xy=True)
-
-    # convert loc from source to target CRS returning as Point type
-    def get_new_coords(loc):
-        x, y = transformer.transform(loc["x"], loc["y"])
-        return Point(x, y)
-
-    location["location"] = location.apply(lambda loc: get_new_coords(loc), axis=1)
-    return df.merge(
-        location[["OA11CD", "location"]], left_on="OA11CD", right_on="OA11CD"
-    )
-
-
-activity_chains = add_location(activity_chains)
+# read centroids in source CRS
+centroid_layer = pd.read_csv(
+    "../data/external/centroids/Output_Areas_Dec_2011_PWC_2022.csv"
+)
+activity_chains = add_location(
+    activity_chains, "EPSG:27700", "EPSG:4326", centroid_layer, "OA11CD", "OA11CD"
+)
 
 
 # Convert the DataFrame into a GeoDataFrame, and assign a coordinate reference system (CRS)

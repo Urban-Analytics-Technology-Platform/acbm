@@ -31,6 +31,7 @@ from acbm.assigning.assigning import (
     zones_to_time_matrix,
 )
 from acbm.assigning.work import WorkZoneAssignment
+from acbm.preprocessing import add_location
 
 # ## Load in the data
 #
@@ -137,10 +138,11 @@ boundaries.plot()
 # #### Assign activity home locations to boundaries zoning system
 
 # Convert location column in activity_chains to spatial column
-
-# turn column to shapely point
-activity_chains["location"] = activity_chains["location"].apply(
-    lambda loc: Point(loc["x"], loc["y"])
+centroid_layer = pd.read_csv(
+    "../data/external/centroids/Output_Areas_Dec_2011_PWC_2022.csv"
+)
+activity_chains = add_location(
+    activity_chains, "EPSG:27700", "EPSG:4326", centroid_layer, "OA11CD", "OA11CD"
 )
 
 # Convert the DataFrame into a GeoDataFrame, and assign a coordinate reference system (CRS)

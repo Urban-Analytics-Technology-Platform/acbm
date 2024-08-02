@@ -2,6 +2,8 @@ from typing import Optional
 
 import numpy as np
 import pandas as pd
+from pyproj import Transformer
+from shapely import Point
 
 
 def nts_filter_by_year(
@@ -294,4 +296,31 @@ def match_coverage_col(
         [total, matched, percentage_matched],
         axis=1,
         keys=["Total", "Matched", "Percentage Matched"],
+    )
+
+
+def add_location(
+    df: pd.DataFrame,
+    source_crs: str,
+    target_crs: str,
+    centroid_layer: pd.DataFrame,
+    df_geo_id: str,
+    centroid_layer_geo_id: str,
+) -> pd.DataFrame:
+    # TODO: add doc comment
+    # make transformer
+    transformer = Transformer.from_crs(source_crs, target_crs, always_xy=True)
+
+    # convert loc from source to target CRS returning as Point type
+    def get_new_coords(loc):
+        x, y = transformer.transform(loc["x"], loc["y"])
+        return Point(x, y)
+
+    centroid_layer["location"] = centroid_layer.apply(
+        lambda loc: get_new_coords(loc), axis=1
+    )
+    return df.merge(
+        centroid_layer[[centroid_layer_geo_id, "location"]],
+        left_on=df_geo_id,
+        right_on=centroid_layer_geo_id,
     )
