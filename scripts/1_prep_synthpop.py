@@ -1,6 +1,8 @@
 import numpy as np
 from uatk_spc.builder import Builder
 
+import acbm
+
 SEED = 0
 
 
@@ -9,7 +11,7 @@ def main():
     np.random.seed(SEED)
 
     # Pick a region with SPC output saved
-    path = "../data/external/spc_output/raw/"
+    path = acbm.root_path / "data/external/spc_output/raw/"
     region = "leeds"
 
     # Add people and households
@@ -22,7 +24,7 @@ def main():
         .build()
     )
     spc_people_hh.to_parquet(
-        "../data/external/spc_output/" + region + "_people_hh.parquet"
+        acbm.root_path / "data/external/spc_output/" + region + "_people_hh.parquet"
     )
 
     # People and time-use data
@@ -51,7 +53,7 @@ def main():
 
     # save the output
     spc_people_tu.write_parquet(
-        "../data/external/spc_output/" + region + "_people_tu.parquet"
+        acbm.root_path / "data/external/spc_output/" + region + "_people_tu.parquet"
     )
 
 

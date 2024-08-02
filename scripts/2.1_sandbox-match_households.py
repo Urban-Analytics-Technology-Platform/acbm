@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+import acbm
 from acbm.preprocessing import (
     count_per_group,
     match_coverage_col,
@@ -28,7 +29,9 @@ region = "west-yorkshire"
 
 
 # Read in the spc data (parquet format)
-spc = pd.read_parquet("../data/external/spc_output/" + region + "_people_hh.parquet")
+spc = pd.read_parquet(
+    acbm.root_path / "data/external/spc_output/" + region + "_people_hh.parquet"
+)
 spc.head()
 
 
@@ -72,13 +75,15 @@ spc = spc.head(50000)
 # - households
 # - trips
 
-path_psu = "../data/external/nts/UKDA-5340-tab/tab/psu_eul_2002-2022.tab"
+path_psu = acbm.root_path / "data/external/nts/UKDA-5340-tab/tab/psu_eul_2002-2022.tab"
 psu = pd.read_csv(path_psu, sep="\t")
 
 
 # #### Individuals
 
-path_individuals = "../data/external/nts/UKDA-5340-tab/tab/individual_eul_2002-2022.tab"
+path_individuals = (
+    acbm.root_path / "data/external/nts/UKDA-5340-tab/tab/individual_eul_2002-2022.tab"
+)
 nts_individuals = pd.read_csv(
     path_individuals,
     sep="\t",
@@ -119,7 +124,9 @@ nts_individuals = pd.read_csv(
 
 # #### Households
 
-path_households = "../data/external/nts/UKDA-5340-tab/tab/household_eul_2002-2022.tab"
+path_households = (
+    acbm.root_path / "data/external/nts/UKDA-5340-tab/tab/household_eul_2002-2022.tab"
+)
 nts_households = pd.read_csv(
     path_households,
     sep="\t",
@@ -158,7 +165,9 @@ nts_households = pd.read_csv(
 
 # #### Trips
 
-path_trips = "../data/external/nts/UKDA-5340-tab/tab/trip_eul_2002-2022.tab"
+path_trips = (
+    acbm.root_path / "data/external/nts/UKDA-5340-tab/tab/trip_eul_2002-2022.tab"
+)
 nts_trips = pd.read_csv(
     path_trips,
     sep="\t",
@@ -601,7 +610,9 @@ ax[1].set_xlabel("Employment status - Household level")
 # We use the 2011 rural urban classification to match the SPC to the NTS. The NTS has 2 columns that we can use to match to the SPC: `Settlement2011EW_B03ID` and `Settlement2011EW_B04ID`. The `Settlement2011EW_B03ID` column is more general (urban / rural only), while the `Settlement2011EW_B04ID` column is more specific. We stick to the more general column for now.
 
 # read the rural urban classification data
-rural_urban = pd.read_csv("../data/external/census_2011_rural_urban.csv", sep=",")
+rural_urban = pd.read_csv(
+    acbm.root_path / "data/external/census_2011_rural_urban.csv", sep=","
+)
 
 # merge the rural_urban data with the spc
 spc_edited = spc_edited.merge(
@@ -1144,7 +1155,7 @@ print(
 # This will show us, for each matching key, the % of spc households from each unique category that were matched to the NTS
 
 # Make plots path
-os.makedirs("../data/interim/matching/plots/", exist_ok=True)
+os.makedirs(acbm.root_path / "data/interim/matching/plots/", exist_ok=True)
 
 # loop over all variables in matching_dfs_dict and save a plot for each
 for key in list(matching_dfs_dict.keys())[1:]:  # skip 1st key (hid)
@@ -1169,7 +1180,9 @@ for key in list(matching_dfs_dict.keys())[1:]:  # skip 1st key (hid)
     plt.title("Matching coverage for " + key)
 
     # save the plot
-    fig.savefig(f"../data/interim/matching/plots/matching_coverage_hh_{key}.png")
+    fig.savefig(
+        acbm.root_path / f"data/interim/matching/plots/matching_coverage_hh_{key}.png"
+    )
 
 
 # Plot matching coverage for each attempt + variable (key) combination
@@ -1199,7 +1212,9 @@ for key in list(matching_dfs_dict.keys())[1:]:  # skip 1st key (hid)
     plt.title("Matching coverage for " + key)
 
     # save the plot
-    fig.savefig(f"../data/interim/matching/plots/matching_coverage_hh_{key}.png")
+    fig.savefig(
+        acbm.root_path / f"data/interim/matching/plots/matching_coverage_hh_{key}.png"
+    )
 
 
 # #### Treat different households differently

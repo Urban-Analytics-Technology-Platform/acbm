@@ -14,6 +14,7 @@ import pandas as pd
 import seaborn as sns
 from shapely.geometry import LineString
 
+import acbm
 from acbm.assigning import (
     fill_missing_zones,
     get_activities_per_zone,
@@ -30,7 +31,9 @@ from acbm.preprocessing import add_location
 # ### Activity chains
 
 # read parquet file
-activity_chains = pd.read_parquet("../data/interim/matching/spc_with_nts_trips.parquet")
+activity_chains = pd.read_parquet(
+    acbm.root_path / "data/interim/matching/spc_with_nts_trips.parquet"
+)
 activity_chains.head(10)
 
 
@@ -112,7 +115,9 @@ purp_mapping = {
 
 # ### Study area boundaries
 
-boundaries = gpd.read_file("../data/external/boundaries/oa_england.geojson")
+boundaries = gpd.read_file(
+    acbm.root_path / "data/external/boundaries/oa_england.geojson"
+)
 boundaries.head(10)
 
 
@@ -134,7 +139,7 @@ boundaries.head(10)
 # Convert location column in activity_chains to spatial column
 # read centroids in source CRS
 centroid_layer = pd.read_csv(
-    "../data/external/centroids/Output_Areas_Dec_2011_PWC_2022.csv"
+    acbm.root_path / "data/external/centroids/Output_Areas_Dec_2011_PWC_2022.csv"
 )
 activity_chains = add_location(
     activity_chains, "EPSG:27700", "EPSG:4326", centroid_layer, "OA11CD", "OA11CD"
@@ -171,7 +176,7 @@ activity_chains = activity_chains.drop("index_right", axis=1)
 # Travel time data between geographical areas (LSOA, OA, custom hexagons etc) is used to determine feasible work / school locations for each individual. The travel times are compared to the travel times of the individual's actual trips from the nts (`tst`/`TripStart` and `tet`/`TripEnd`)
 
 travel_times = pd.read_parquet(
-    "../data/external/travel_times/oa/travel_time_matrix_acbm.parquet"
+    acbm.root_path / "data/external/travel_times/oa/travel_time_matrix_acbm.parquet"
 )
 travel_times.head(10)
 
@@ -223,7 +228,9 @@ for _ in range(5):
     print(next(items))
 
 
-with open("../data/interim/assigning/travel_time_estimates.pkl", "wb") as f:
+with open(
+    acbm.root_path / "data/interim/assigning/travel_time_estimates.pkl", "wb"
+) as f:
     pkl.dump(travel_time_estimates, f)
 
 
@@ -233,7 +240,7 @@ with open("../data/interim/assigning/travel_time_estimates.pkl", "wb") as f:
 
 # osm data
 osm_data = gpd.read_parquet(
-    "../data/external/boundaries/west-yorkshire_epsg_4326.parquet"
+    acbm.root_path / "data/external/boundaries/west-yorkshire_epsg_4326.parquet"
 )
 
 
@@ -336,11 +343,13 @@ activities_per_zone = get_activities_per_zone(
     zones=boundaries, zone_id_col="OA21CD", activity_pts=osm_data, return_df=True
 )
 
-with open("../data/interim/assigning/activities_per_zone.pkl", "wb") as f:
+with open(acbm.root_path / "data/interim/assigning/activities_per_zone.pkl", "wb") as f:
     pkl.dump(activities_per_zone_dict, f)
 
 # save activities_per_zone as a parquet file
-activities_per_zone.to_parquet("../data/interim/assigning/activities_per_zone.parquet")
+activities_per_zone.to_parquet(
+    acbm.root_path / "data/interim/assigning/activities_per_zone.parquet"
+)
 
 
 # ## Education
@@ -405,7 +414,9 @@ for key in list(possible_zones_school.keys())[:10]:
 
 
 # save possible_zones_school to dictionary
-with open("../data/interim/assigning/possible_zones_education.pkl", "wb") as f:
+with open(
+    acbm.root_path / "data/interim/assigning/possible_zones_education.pkl", "wb"
+) as f:
     pkl.dump(possible_zones_school, f)
 
 
@@ -414,7 +425,7 @@ with open("../data/interim/assigning/possible_zones_education.pkl", "wb") as f:
 
 # read in possible_zones_school
 possible_zones_school = pd.read_pickle(
-    "../data/interim/assigning/possible_zones_education.pkl"
+    acbm.root_path / "data/interim/assigning/possible_zones_education.pkl"
 )
 
 

@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # # Adding Work Location to individuals
 #
 # Assigning individuals to work locations
@@ -19,9 +17,10 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from libpysal.weights import Queen
-from shapely.geometry import LineString, Point
+from shapely.geometry import LineString
 from sklearn.metrics import mean_squared_error
 
+import acbm
 from acbm.assigning.assigning import (
     filter_matrix_to_boundary,
     get_activities_per_zone,
@@ -39,7 +38,10 @@ from acbm.preprocessing import add_location
 # ### Activity chains
 
 # read parquet file
-activity_chains = pd.read_parquet("../data/interim/matching/spc_with_nts_trips.parquet")
+activity_chains = pd.read_parquet(
+    acbm.root_path / "data/interim/matching/spc_with_nts_trips.parquet"
+)
+activity_chains = activity_chains.sample(n=100)
 
 
 # ### Study area boundaries
@@ -50,7 +52,7 @@ activity_chains = pd.read_parquet("../data/interim/matching/spc_with_nts_trips.p
 where_clause = "MSOA21NM LIKE '%Leeds%'"
 
 boundaries = gpd.read_file(
-    "../data/external/boundaries/oa_england.geojson", where=where_clause
+    acbm.root_path / "data/external/boundaries/oa_england.geojson", where=where_clause
 )
 
 
@@ -65,7 +67,7 @@ boundaries.plot()
 
 # Convert location column in activity_chains to spatial column
 centroid_layer = pd.read_csv(
-    "../data/external/centroids/Output_Areas_Dec_2011_PWC_2022.csv"
+    acbm.root_path / "data/external/centroids/Output_Areas_Dec_2011_PWC_2022.csv"
 )
 activity_chains = add_location(
     activity_chains, "EPSG:27700", "EPSG:4326", centroid_layer, "OA11CD", "OA11CD"
@@ -101,7 +103,7 @@ activity_chains = activity_chains.drop("index_right", axis=1)
 # Travel time data between geographical areas (LSOA, OA, custom hexagons etc) is used to determine feasible work / school locations for each individual. The travel times are compared to the travel times of the individual's actual trips from the nts (`tst`/`TripStart` and `tet`/`TripEnd`)
 
 travel_times = pd.read_parquet(
-    "../data/external/travel_times/oa/travel_time_matrix_acbm.parquet"
+    acbm.root_path / "data/external/travel_times/oa/travel_time_matrix_acbm.parquet"
 )
 
 travel_times["combination"].unique()
@@ -146,7 +148,9 @@ travel_time_estimates = zones_to_time_matrix(
 items = iter(travel_time_estimates.items())
 
 
-with open("../data/interim/assigning/travel_time_estimates.pkl", "wb") as f:
+with open(
+    acbm.root_path / "data/interim/assigning/travel_time_estimates.pkl", "wb"
+) as f:
     pkl.dump(travel_time_estimates, f)
 
 
@@ -178,7 +182,7 @@ travel_times = replace_intrazonal_travel_time(
 
 # osm data
 osm_data = gpd.read_parquet(
-    "../data/external/boundaries/west-yorkshire_epsg_4326.parquet"
+    acbm.root_path / "data/external/boundaries/west-yorkshire_epsg_4326.parquet"
 )
 
 
@@ -232,7 +236,7 @@ commute_level = "OA"  # "OA" or "MSOA" data
 
 if commute_level == "MSOA":
     print("Step 1: Reading in the zipped csv file")
-    travel_demand = pd.read_csv("../data/external/ODWP15EW_MSOA_v1.zip")
+    travel_demand = pd.read_csv(acbm.root_path / "data/external/ODWP15EW_MSOA_v1.zip")
 
     print("Step 2: Creating commute_mode_dict")
     commute_mode_dict = {
@@ -293,7 +297,7 @@ if commute_level == "MSOA":
 
 elif commute_level == "OA":
     print("Step 1: Reading in the zipped csv file")
-    travel_demand = pd.read_csv("../data/external/ODWP01EW_OA.zip")
+    travel_demand = pd.read_csv(acbm.root_path / "data/external/ODWP01EW_OA.zip")
 
     print("Step 2: Filtering rows and dropping unnecessary columns")
     travel_demand_clipped = travel_demand[
@@ -379,7 +383,7 @@ possible_zones_work = get_possible_zones(
 
 
 # save possible_zones_school to dictionary
-with open("../data/interim/assigning/possible_zones_work.pkl", "wb") as f:
+with open(acbm.root_path / "data/interim/assigning/possible_zones_work.pkl", "wb") as f:
     pkl.dump(possible_zones_work, f)
 
 
@@ -388,7 +392,7 @@ with open("../data/interim/assigning/possible_zones_work.pkl", "wb") as f:
 
 # # read in possible_zones_school
 # possible_zones_work = pd.read_pickle(
-#     "../data/interim/assigning/possible_zones_work.pkl"
+#     acbm.root_path / "data/interim/assigning/possible_zones_work.pkl"
 # )
 
 
@@ -413,13 +417,11 @@ assignments_df = zone_assignment.select_work_zone_iterative(random_assignment=Tr
 # count number of None values in Assigned_Zone column
 assignments_df["assigned_zone"].isnull().sum()
 
-
 # #### Option 2: Optimization Problem
 
 assignments_df = zone_assignment.select_work_zone_optimization(
     use_percentages=True, weight_max_dev=0.2, weight_total_dev=0.8, max_zones=8
 )
-
 
 # #### Evaluating assignment quality
 
@@ -541,12 +543,7 @@ def plot_workzone_assignment_line(
     """
     nrows = np.ceil(n / 2).astype(int)
     fig, axes = plt.subplots(nrows, 2, figsize=(20, 6 * nrows))
-
-    if n > 2:
-        axes = axes.flatten()
-    else:
-        axes = np.array([axes]).flatten()
-
+    axes = axes.flatten() if n > 2 else np.array([axes]).flatten()
     selected_zones = []
     if selection_type == "random":
         selected_zones = assignment_results["origin_zone"].sample(n).values
