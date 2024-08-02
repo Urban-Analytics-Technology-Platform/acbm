@@ -7,14 +7,20 @@ import numpy as np
 import pandas as pd
 import pulp
 
+import acbm
+from acbm.utils import prepend_datetime
+
 # Define logger at the module level
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 # Create a handler that outputs to the console
 console_handler = logging.StreamHandler()
+
 # Create a handler that outputs to a file
-file_handler = logging.FileHandler("log_assigning_work.log")
+file_handler = logging.FileHandler(
+    acbm.logs_path / prepend_datetime("log_assigning_work.log")
+)
 
 
 # Create a formatter and add it to the handler

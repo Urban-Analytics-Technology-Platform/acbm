@@ -6,6 +6,9 @@ import numpy as np
 import pandas as pd
 from pandarallel import pandarallel
 
+import acbm
+from acbm.utils import prepend_datetime
+
 # Define logger at the module level
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -13,8 +16,9 @@ logger.setLevel(logging.DEBUG)
 # Create a handler that outputs to the console
 console_handler = logging.StreamHandler()
 # Create a handler that outputs to a file
-file_handler = logging.FileHandler("log_assigning.log")
-
+file_handler = logging.FileHandler(
+    acbm.logs_path / prepend_datetime("log_assigning.log")
+)
 
 # Create a formatter and add it to the handler
 formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")

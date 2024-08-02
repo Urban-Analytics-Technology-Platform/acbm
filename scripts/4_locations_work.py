@@ -62,7 +62,6 @@ boundaries = boundaries.to_crs(epsg=4326)
 # plot the geometry
 boundaries.plot()
 
-
 # #### Assign activity home locations to boundaries zoning system
 
 # Convert location column in activity_chains to spatial column
