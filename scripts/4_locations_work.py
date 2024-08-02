@@ -41,7 +41,6 @@ from acbm.preprocessing import add_location
 activity_chains = pd.read_parquet(
     acbm.root_path / "data/interim/matching/spc_with_nts_trips.parquet"
 )
-activity_chains = activity_chains.sample(n=100)
 
 
 # ### Study area boundaries
