@@ -181,7 +181,7 @@ class WorkZoneAssignment:
                     )
                     if weighted_zones:
                         zones, weights = zip(*weighted_zones)
-                        assigned_zone = random.choices(zones, weights=weights, k=1)[0]
+                        assigned_zone = np.random.choice(zones, p=weights)
                         assignment_type = "Weighted"
                         self.remaining_flows[(origin_id, assigned_zone)] -= 1
                         logger.info(
@@ -189,7 +189,7 @@ class WorkZoneAssignment:
                         )
 
                     elif random_assignment:
-                        assigned_zone = random.choice(feasible_zones)
+                        assigned_zone = np.random.choice(feasible_zones)
                         assignment_type = "Random"
                         logger.info(
                             f"Assigned zone {assigned_zone} to person {activity_id} using random selection."
