@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# coding: utf-8
 
 # # Adding Work Location to individuals
 #
@@ -8,33 +7,30 @@
 # We follow the steps outlined in this [github issue](https://github.com/Urban-Analytics-Technology-Platform/acbm/issues/12)
 
 import logging
+import math
 import pickle as pkl
-import random
+from math import sqrt
+from typing import Optional
 
 import geopandas as gpd
+import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
 from libpysal.weights import Queen
-from shapely.geometry import Point
+from shapely.geometry import LineString, Point
+from sklearn.metrics import mean_squared_error
 
 from acbm.assigning.assigning import (
-    fill_missing_zones,
     filter_matrix_to_boundary,
     get_activities_per_zone,
     get_possible_zones,
     intrazone_time,
     replace_intrazonal_travel_time,
-    select_activity,
-    select_zone,
     zones_to_time_matrix,
 )
 from acbm.assigning.work import WorkZoneAssignment
-
-# to display aall columns
-pd.set_option("display.max_columns", None)
-
 
 # ## Load in the data
 #
@@ -43,8 +39,6 @@ pd.set_option("display.max_columns", None)
 
 # read parquet file
 activity_chains = pd.read_parquet("../data/interim/matching/spc_with_nts_trips.parquet")
-activity_chains.head(10)
-
 
 # #### Data preparation: Mapping trip purposes
 #
@@ -116,11 +110,8 @@ purp_mapping = {
     -8: "NA",
 }
 
-
 activity_chains["mode"] = activity_chains["mode"].map(mode_mapping)
-
 activity_chains["oact"] = activity_chains["oact"].map(purp_mapping)
-
 activity_chains["dact"] = activity_chains["dact"].map(purp_mapping)
 
 
@@ -135,11 +126,10 @@ boundaries = gpd.read_file(
     "../data/external/boundaries/oa_england.geojson", where=where_clause
 )
 
-boundaries.head(10)
-
 
 # convert boundaries to 4326
 boundaries = boundaries.to_crs(epsg=4326)
+# TODO: remove plotting from combined script
 # plot the geometry
 boundaries.plot()
 
@@ -185,8 +175,6 @@ activity_chains = activity_chains.drop("index_right", axis=1)
 travel_times = pd.read_parquet(
     "../data/external/travel_times/oa/travel_time_matrix_acbm.parquet"
 )
-travel_times.head(10)
-
 
 travel_times["combination"].unique()
 
@@ -214,8 +202,6 @@ travel_times = travel_times.merge(
 )
 travel_times = travel_times.drop(columns="OBJECTID")
 
-travel_times.head(10)
-
 
 # #### Travel distance matrix
 #
@@ -230,9 +216,6 @@ travel_time_estimates = zones_to_time_matrix(
 
 # Get an iterator over the dictionary items and then print the first n items
 items = iter(travel_time_estimates.items())
-
-for i in range(5):
-    print(next(items))
 
 
 with open("../data/interim/assigning/travel_time_estimates.pkl", "wb") as f:
@@ -251,10 +234,6 @@ intrazone_times = intrazone_time(boundaries)
 
 # print first 10 items in the dictionary
 items = iter(intrazone_times.items())
-
-for i in range(10):
-    print(next(items))
-
 
 # replace intrazonal travel times with estimates from intrazone_times
 
@@ -275,9 +254,6 @@ osm_data = gpd.read_parquet(
 )
 
 
-osm_data.head(10)
-
-
 # get unique values for activties column
 osm_data["activities"].unique()
 
@@ -286,8 +262,6 @@ osm_data["activities"].unique()
 
 osm_data = osm_data[~osm_data["activities"].isin(["home", "transit"])]
 # osm_data = osm_data[osm_data['activities'] != 'home']
-osm_data.head(10)
-
 
 osm_data.activities.unique()
 
@@ -307,10 +281,6 @@ osm_data.activities.unique()
 osm_data_gdf = gpd.sjoin(
     osm_data, boundaries[["OA21CD", "geometry"]], how="inner", predicate="within"
 )
-osm_data_gdf.head(5)
-
-
-boundaries.OA21CD.nunique(), osm_data_gdf.OA21CD.nunique()
 
 
 # plot the points and then plot the zones on a map
@@ -324,9 +294,6 @@ plt.show()
 activities_per_zone = get_activities_per_zone(
     zones=boundaries, zone_id_col="OA21CD", activity_pts=osm_data, return_df=True
 )
-
-activities_per_zone
-
 
 # ### Commuting matrices (from 2021 census)
 
@@ -434,9 +401,6 @@ elif commute_level == "OA":
     )
 
 
-travel_demand_clipped.head(10)
-
-
 # Get dictionary of commuting matrices
 
 if commute_level == "MSOA":
@@ -459,18 +423,6 @@ elif commute_level == "OA":
     )
 
 
-# Get an iterator over the dictionary items
-items = iter(travel_demand_dict_nomode.items())
-
-# Print the first 5 items
-for i in range(5):
-    print(next(items))
-
-
-# ### Business Registry
-#
-# Removed for now ...
-
 # ## Workplace Assignment
 #
 # The NTS gives us the trip duration, mode, and trip purpose of each activity. We have also calculated a zone to zone travel time matrix by mode. We know the locaiton of people's homes so, for home-based activities, we can use this information to determine the feasible zones for each activity.
@@ -488,9 +440,6 @@ activity_chains_work = activity_chains_work[
 ]  # Wednesday
 
 
-activity_chains_work.head(10)
-
-
 possible_zones_work = get_possible_zones(
     activity_chains=activity_chains_work,
     travel_times=travel_times,
@@ -501,11 +450,6 @@ possible_zones_work = get_possible_zones(
 )
 
 
-# Output is a nested dictionary
-for key in list(possible_zones_work.keys())[:5]:
-    print(key, " : ", possible_zones_work[key])
-
-
 # save possible_zones_school to dictionary
 with open("../data/interim/assigning/possible_zones_work.pkl", "wb") as f:
     pkl.dump(possible_zones_work, f)
@@ -514,10 +458,10 @@ with open("../data/interim/assigning/possible_zones_work.pkl", "wb") as f:
 # remove possible_zones_work from environment
 # del possible_zones_work
 
-# read in possible_zones_school
-possible_zones_work = pd.read_pickle(
-    "../data/interim/assigning/possible_zones_work.pkl"
-)
+# # read in possible_zones_school
+# possible_zones_work = pd.read_pickle(
+#     "../data/interim/assigning/possible_zones_work.pkl"
+# )
 
 
 # ### Choose a zone for each activity
@@ -538,16 +482,6 @@ zone_assignment = WorkZoneAssignment(
 # Step 8: Perform the assignment
 assignments_df = zone_assignment.select_work_zone_iterative(random_assignment=True)
 
-
-assignments_df
-
-# count number of weighted and random
-# assignments_df['Assignment_Type'].value_counts()
-
-
-assignments_df.shape[0], activity_chains_work.shape[0]
-
-
 # count number of None values in Assigned_Zone column
 assignments_df["assigned_zone"].isnull().sum()
 
@@ -557,14 +491,6 @@ assignments_df["assigned_zone"].isnull().sum()
 assignments_df = zone_assignment.select_work_zone_optimization(
     use_percentages=True, weight_max_dev=0.2, weight_total_dev=0.8, max_zones=8
 )
-
-print(assignments_df)
-
-
-assignments_df.shape[0], activity_chains_work.shape[0]
-
-
-assignments_df
 
 
 # #### Evaluating assignment quality
@@ -595,8 +521,6 @@ demand_df.drop(columns=["zone_pair"], inplace=True)
 workzone_assignment_opt = pd.merge(
     assignment_agg, demand_df, on=["origin_zone", "assigned_zone"], how="outer"
 ).fillna(0)
-workzone_assignment_opt
-
 
 # (1) % of Total Demand
 workzone_assignment_opt["pct_of_total_demand_actual"] = (
@@ -626,10 +550,6 @@ workzone_assignment_opt["pct_of_d_total_assigned"] = workzone_assignment_opt.gro
 
 workzone_assignment_opt.head(20)
 
-
-from math import sqrt
-
-from sklearn.metrics import mean_squared_error
 
 # (1) RMSE for % of Total Demand
 rmse_pct_of_total_demand = sqrt(
@@ -911,12 +831,6 @@ workzone_assignment_opt_agg["qj"] = (
     - workzone_assignment_opt_agg["dj_assigned_dk"]
 ) * 100
 
-# workzone_assignment_opt_agg['qj'] = (workzone_assignment_opt_agg['total_demand_actual'] / total_actual) - (workzone_assignment_opt_agg['total_demand_assigned'] / total_assigned)
-workzone_assignment_opt_agg
-
-
-total_actual, total_assigned
-
 
 # Add boundary layer to plot
 
@@ -927,16 +841,6 @@ workzone_assignment_opt_agg_gdf = boundaries[["OA21CD", "geometry"]].merge(
 
 # Ensure the result is a GeoDataFrame
 workzone_assignment_opt_agg_gdf = gpd.GeoDataFrame(workzone_assignment_opt_agg_gdf)
-workzone_assignment_opt_agg_gdf
-
-
-# Plot the map
-fig, ax = plt.subplots(figsize=(10, 8))
-boundaries.plot(ax=ax, color="lightgrey")
-workzone_assignment_opt_agg_gdf.plot(column="qj", legend=True, cmap="coolwarm_r", ax=ax)
-
-plt.title("Qj values for Work Zone Assignment")
-plt.show()
 
 
 # #### Add zones to the activity chains
@@ -955,11 +859,6 @@ activity_chains_work = activity_chains_work.drop(columns="dzone")
 # rename assigned_zone to dzone
 activity_chains_work = activity_chains_work.rename(columns={"assigned_zone": "dzone"})
 
-activity_chains_work
-
-
-activity_chains_work.head(5)
-
 
 #  ### Assign activity to point locations
 #
@@ -972,13 +871,9 @@ activity_chains_work.head(5)
 # Assuming zones_gdf is your GeoDataFrame containing the zones
 zone_neighbors = Queen.from_dataframe(boundaries, idVariable="OA21CD").neighbors
 
-zone_neighbors
-
 
 # #### 2. Select a facility
 #
-
-from typing import Optional
 
 
 def select_facility(
@@ -1115,11 +1010,8 @@ activity_chains_ex[["activity_id", "activity_geom"]] = activity_chains_ex.apply(
     axis=1,
 )
 
-activity_chains_ex.tail(5)
-
 
 # For each row in activity_chains_ex, turn the geometry into a linestring: Origin = location and destination = activity_geom
-from shapely.geometry import LineString
 
 activity_chains_plot = activity_chains_ex.copy()
 # filter to only include rows where activity_geom is not NA
@@ -1140,20 +1032,11 @@ activity_chains_plot = activity_chains_plot.to_crs(epsg=3857)
 # calculate the length of the line_geometry in meters
 activity_chains_plot["length"] = activity_chains_plot["line_geometry"].length
 
-activity_chains_plot.head(10)
-
 # convert crs back to 4326
 activity_chains_plot = activity_chains_plot.to_crs(epsg=4326)
 
 
-activity_chains_plot
-
-
 # ##### Maps
-
-import math
-
-import matplotlib.patches as mpatches
 
 
 def plot_activity_chains(
@@ -1283,8 +1166,6 @@ plot_activity_chains(
 
 # ##### Bar Plots
 
-import matplotlib.pyplot as plt
-
 # Calculate the number of rows and columns for the subplots. It is a function of the number of modes
 nrows = math.ceil(len(activity_chains_plot["mode"].unique()) / 2)
 ncols = 2
@@ -1315,8 +1196,6 @@ for i, mode in enumerate(activity_chains_plot["mode"].unique()):
     ax.set_xlabel("Reported Travel Time (min)")  # Adjusted to km for clarity
     ax.set_ylabel("Actual Distance - Euclidian (km)")
 
-
-import matplotlib.pyplot as plt
 
 # Calculate the number of rows and columns for the subplots. It is a function of the number of modes
 nrows = math.ceil(len(activity_chains_plot["mode"].unique()) / 2)
