@@ -7,7 +7,6 @@
 import logging
 import math
 import pickle as pkl
-from math import sqrt
 from typing import Optional
 
 import geopandas as gpd
@@ -18,7 +17,6 @@ import pandas as pd
 import seaborn as sns
 from libpysal.weights import Queen
 from shapely.geometry import LineString
-from sklearn.metrics import mean_squared_error
 
 import acbm
 from acbm.assigning.assigning import (
@@ -31,6 +29,7 @@ from acbm.assigning.assigning import (
 )
 from acbm.assigning.work import WorkZoneAssignment
 from acbm.preprocessing import add_location
+from acbm.utils import calculate_rmse
 
 # ## Load in the data
 #
@@ -41,6 +40,7 @@ from acbm.preprocessing import add_location
 activity_chains = pd.read_parquet(
     acbm.root_path / "data/interim/matching/spc_with_nts_trips.parquet"
 )
+# activity_chains = activity_chains.sample(n=100)
 
 
 # ### Study area boundaries
@@ -380,9 +380,9 @@ possible_zones_work = get_possible_zones(
 )
 
 
-# save possible_zones_school to dictionary
-with open(acbm.root_path / "data/interim/assigning/possible_zones_work.pkl", "wb") as f:
-    pkl.dump(possible_zones_work, f)
+# # save possible_zones_school to dictionary
+# with open(acbm.root_path / "data/interim/assigning/possible_zones_work.pkl", "wb") as f:
+#     pkl.dump(possible_zones_work, f)
 
 
 # remove possible_zones_work from environment
@@ -480,31 +480,24 @@ workzone_assignment_opt.head(20)
 
 
 # (1) RMSE for % of Total Demand
-rmse_pct_of_total_demand = sqrt(
-    mean_squared_error(
-        workzone_assignment_opt["pct_of_total_demand_actual"],
-        workzone_assignment_opt["pct_of_total_demand_assigned"],
-    )
-)
+predictions = workzone_assignment_opt["pct_of_total_demand_assigned"]
+targets = workzone_assignment_opt["pct_of_total_demand_actual"]
+
+rmse_pct_of_total_demand = calculate_rmse(predictions, targets)
+print(f"RMSE for % of Total Demand: {rmse_pct_of_total_demand}")
 
 # (2) RMSE for demand as % of total demand from the same origin
-rmse_pct_of_o_total = sqrt(
-    mean_squared_error(
-        workzone_assignment_opt["pct_of_o_total_actual"],
-        workzone_assignment_opt["pct_of_o_total_assigned"],
-    )
-)
+predictions = workzone_assignment_opt["pct_of_o_total_assigned"]
+targets = workzone_assignment_opt["pct_of_o_total_actual"]
+
+rmse_pct_of_o_total = calculate_rmse(predictions, targets)
+print(f"RMSE for % of Total Demand from the Same Origin: {rmse_pct_of_o_total}")
 
 # (3) RMSE for demand as % of total demand to each destination
-rmse_pct_of_d_total = sqrt(
-    mean_squared_error(
-        workzone_assignment_opt["pct_of_d_total_actual"],
-        workzone_assignment_opt["pct_of_d_total_assigned"],
-    )
-)
+predictions = workzone_assignment_opt["pct_of_d_total_assigned"]
+targets = workzone_assignment_opt["pct_of_d_total_actual"]
 
-print(f"RMSE for % of Total Demand: {rmse_pct_of_total_demand}")
-print(f"RMSE for % of Total Demand from the Same Origin: {rmse_pct_of_o_total}")
+rmse_pct_of_d_total = calculate_rmse(predictions, targets)
 print(f"RMSE for % of Total Demand to Each Destination: {rmse_pct_of_d_total}")
 
 
