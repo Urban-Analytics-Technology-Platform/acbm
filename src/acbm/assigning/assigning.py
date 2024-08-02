@@ -85,7 +85,7 @@ def _map_day_to_wkday_binary(day: int) -> int:
     if day in [6, 7]:
         return 0
     # if day is not in the range 1: 7, raise an error
-    error_message = f"Day should be numeric and in the range 1-7. {day} is not valid"
+    error_message = "Day should be numeric and in the range 1-7"
     raise ValueError(error_message)
 
 
