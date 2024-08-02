@@ -181,7 +181,9 @@ class WorkZoneAssignment:
                     )
                     if weighted_zones:
                         zones, weights = zip(*weighted_zones)
-                        assigned_zone = np.random.choice(zones, p=weights)
+                        assigned_zone = np.random.choice(
+                            zones, p=weights / weights.sum()
+                        )
                         assignment_type = "Weighted"
                         self.remaining_flows[(origin_id, assigned_zone)] -= 1
                         logger.info(
