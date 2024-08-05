@@ -1289,7 +1289,30 @@ nts_trips["oact"] = nts_trips["oact"].map(purp_mapping)
 nts_trips["dact"] = nts_trips["dact"].map(purp_mapping)
 
 
-nts_trips.head(10)
+# # For education trips, we use age as an indicator for the type of education facility the individual is most likely to go to. The `age_group_mapping` dictionary maps age groups to education facility types. For each person activity, we use the age_group to determine which education facilities to look at.
+
+# map the age_group to an education type (age group is from NTS::Age_B04ID)
+# TODO edit osmox config to replace education_college with education_university.
+# We should have mutually exclusive groups only and these two options serve the
+# same age group
+age_group_mapping = {
+    1: "education_kg",  # "0-4"
+    2: "education_school",  # "5-10"
+    3: "education_school",  # "11-16"
+    4: "education_university",  # "17-20"
+    5: "education_university",  # "21-29"
+    6: "education_university",  # "30-39"
+    7: "education_university",  # "40-49"
+    8: "education_university",  # "50-59"
+    9: "education_university",  # "60+"
+}
+
+
+# map the age_group_mapping dict to an education type
+# (age group is from NTS::Age_B04ID)
+# TODO: move this further upstream in a preprocessing step so that I don't need
+# to save the df again
+spc_edited["education_type"] = spc_edited["age_group"].map(age_group_mapping)
 
 
 # create an independant copy of spc_edited
