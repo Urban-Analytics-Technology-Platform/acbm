@@ -1,4 +1,3 @@
-import logging
 import random
 from dataclasses import dataclass, field
 from typing import Dict, List, Tuple
@@ -7,30 +6,7 @@ import numpy as np
 import pandas as pd
 import pulp
 
-import acbm
-from acbm.utils import prepend_datetime
-
-# Define logger at the module level
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-
-# Create a handler that outputs to the console
-console_handler = logging.StreamHandler()
-
-# Create a handler that outputs to a file
-file_handler = logging.FileHandler(
-    acbm.logs_path / prepend_datetime("log_assigning_work.log")
-)
-
-
-# Create a formatter and add it to the handler
-formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-console_handler.setFormatter(formatter)
-file_handler.setFormatter(formatter)
-
-# Add the handler to the logger
-logger.addHandler(console_handler)
-logger.addHandler(file_handler)
+from acbm.logger_config import assigning_primary_logger as logger
 
 
 @dataclass

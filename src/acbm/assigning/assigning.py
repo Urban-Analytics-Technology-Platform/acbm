@@ -1,4 +1,3 @@
-import logging
 from typing import List, Optional
 
 import geopandas as gpd
@@ -6,28 +5,7 @@ import numpy as np
 import pandas as pd
 from pandarallel import pandarallel
 
-import acbm
-from acbm.utils import prepend_datetime
-
-# Define logger at the module level
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-
-# Create a handler that outputs to the console
-console_handler = logging.StreamHandler()
-# Create a handler that outputs to a file
-file_handler = logging.FileHandler(
-    acbm.logs_path / prepend_datetime("log_assigning.log")
-)
-
-# Create a formatter and add it to the handler
-formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-console_handler.setFormatter(formatter)
-file_handler.setFormatter(formatter)
-
-# Add the handler to the logger
-logger.addHandler(console_handler)
-logger.addHandler(file_handler)
+from acbm.logger_config import assigning_primary_logger as logger
 
 pandarallel.initialize(progress_bar=True)
 
@@ -731,7 +709,7 @@ def select_facility(
     # Extract the destination zone from the input row
     destination_zone = row[row_destination_zone_col]
     if pd.isna(destination_zone):
-        logging.info(f"Destination zone is NA for row {row.name}")
+        logger.info(f"Destination zone is NA for row {row.name}")
         return pd.Series([np.nan, np.nan])
 
     # Filter facilities within the specified destination zone
@@ -747,7 +725,7 @@ def select_facility(
 
     # If no specific facilities found in the initial zone, and neighboring zones are provided, search in neighboring zones
     if facilities_valid.empty and neighboring_zones:
-        logging.info(
+        logger.info(
             f"No {row[row_activity_type_col]} facilities in {destination_zone}. Expanding search to neighboring zones"
         )
         neighbors = neighboring_zones.get(destination_zone, [])
@@ -759,13 +737,13 @@ def select_facility(
                 lambda x: row[row_activity_type_col] in x
             )
         ]
-        logging.info(
+        logger.info(
             f"Found {len(facilities_valid)} matching facilities in neighboring zones"
         )
 
     # If no specific facilities found and a fallback type is provided, attempt to find facilities matching the fallback type
     if facilities_valid.empty and fallback_type:
-        logging.info(
+        logger.info(
             f"No {row[row_activity_type_col]} facilities in zone {destination_zone} or neighboring zones, trying with {fallback_type}"
         )
         # This should consider both the initial zone and neighboring zones if the previous step expanded the search
@@ -774,13 +752,13 @@ def select_facility(
                 lambda x: fallback_type in x
             )
         ]
-        logging.info(
+        logger.info(
             f"Found {len(facilities_valid)} matching facilities with type: {fallback_type}"
         )
 
     # If no facilities found after all attempts, log the failure and return NaN
     if facilities_valid.empty:
-        logging.info(
+        logger.info(
             f"No facilities in zone {destination_zone} with {gdf_facility_type_col} '{fallback_type or row[row_activity_type_col]}'"
         )
         return pd.Series([np.nan, np.nan])
