@@ -682,82 +682,122 @@ def select_zone(
         return "NA"
 
 
-def select_activity(
+def select_facility(
     row: pd.Series,
-    activities_pts: gpd.GeoDataFrame,
-    sample_col: str = "none",
+    facilities_gdf: gpd.GeoDataFrame,
+    row_destination_zone_col: str,
+    gdf_facility_zone_col: str,
+    row_activity_type_col: str,
+    gdf_facility_type_col: str,
+    fallback_type: Optional[str] = None,
+    neighboring_zones: Optional[dict] = None,
+    gdf_sample_col: Optional[str] = None,
 ) -> pd.Series:
     """
-    Select a suitable location for an activity based on the activity purpose and a specific zone
-    TODO: this function is specific to education locations. We can either
-        - Generalize it to other trip purposes
-        - Keep it specific to education and change it''s name
-        - Replace it with PAM
+    Select a suitable facility based on the activity type and a specific zone from a GeoDataFrame.
+    Optionally:
+     - looks in neighboring zones when there is no suitable facility in the initial zone
+     - add a fallback type to search for a more general type of facility when no specific facilities are found
+       (e.g. 'education' instead of 'education_university')
+     - sample based on a specific column in the GeoDataFrame (e..g. floor_area)
 
     Parameters
     ----------
-    row : pandas.Series
-        A row from the activity_chains DataFrame
-    activities_pts : geopandas.GeoDataFrame
-        A GeoDataFrame containing the activities to sample from
-    sample_col : str, optional
-        The column to sample from, by default 'none'.Options are: "floor_area", "none"
-
+    selection_row : pandas.Series
+        A row from the DataFrame indicating the selection criteria, including the destination zone and activity type.
+    facilities_gdf : geopandas.GeoDataFrame
+        GeoDataFrame containing facilities to sample from.
+    row_destination_zone_col : str
+        The column name in `selection_row` that indicates the destination zone.
+    gdf_facility_zone_col : str
+        The column name in `facilities_gdf` that indicates the facility zone.
+    row_activity_type_col : str
+        The column in `selection_row` indicating the type of activity (e.g., 'education', 'work').
+    gdf_facility_type_col : str
+        The column in `facilities_gdf` to filter facilities by type based on the activity type.
+    fallback_type : Optional[str]
+        A more general type of facility to fallback to if no specific facilities are found. By default None.
+    neighboring_zones : Optional[dict]
+        A dictionary mapping zones to their neighboring zones for fallback searches, by default None.
+    gdf_sample_col : Optional[str]
+        The column to sample from, by default None. The only feasible input is "floor_area". If "floor_area" is specified,
+        uses this column's values as weights for sampling.
 
     Returns
     -------
-    activity_id : int
-        The id of the chosen activity
-    activity_geom : shapely.geometry
-        The geometry of the chosen activity
-
+    pd.Series
+        Series containing the id and geometry of the chosen facility. Returns NaN if no suitable facility is found.
     """
-    destination_zone = row["dzone"]
-
-    if destination_zone == "NA":
-        # log the error
-        logger.info(f"Destination zone is NA for row {row}")
+    # Extract the destination zone from the input row
+    destination_zone = row[row_destination_zone_col]
+    if pd.isna(destination_zone):
+        logging.info(f"Destination zone is NA for row {row.name}")
         return pd.Series([np.nan, np.nan])
 
-    # filter to activities in the dsired zone
-    activities_in_zone = activities_pts[activities_pts["OA21CD"] == destination_zone]
-
-    if activities_in_zone.empty:
-        logger.info(f"No activities in zone {destination_zone}")
-        return pd.Series([np.nan, np.nan])
-
-    # filter all rows in activities_in_zone where  activities includes the specific activity type
-    activities_valid = activities_in_zone[
-        activities_in_zone["activities"].apply(lambda x: row["education_type"] in x)
+    # Filter facilities within the specified destination zone
+    facilities_in_zone = facilities_gdf[
+        facilities_gdf[gdf_facility_zone_col] == destination_zone
     ]
-    # if no activities match the exact education type, relax the constraint to just "education"
-    if activities_valid.empty:
-        logger.info(
-            f"No activities in zone {destination_zone} with education type {row['education_type']},\
-                      Returning activities with education type 'education'"
+    # Attempt to find facilities matching the specific facility type
+    facilities_valid = facilities_in_zone[
+        facilities_in_zone[gdf_facility_type_col].apply(
+            lambda x: row[row_activity_type_col] in x
         )
-        activities_valid = activities_in_zone[
-            activities_in_zone["activities"].apply(lambda x: "education" in x)
+    ]
+
+    # If no specific facilities found in the initial zone, and neighboring zones are provided, search in neighboring zones
+    if facilities_valid.empty and neighboring_zones:
+        logging.info(
+            f"No {row[row_activity_type_col]} facilities in {destination_zone}. Expanding search to neighboring zones"
+        )
+        neighbors = neighboring_zones.get(destination_zone, [])
+        facilities_in_neighboring_zones = facilities_gdf[
+            facilities_gdf[gdf_facility_zone_col].isin(neighbors)
         ]
-        # if still no activities match the education type, return NA
-        if activities_valid.empty:
-            logger.info(
-                f"No activities in zone {destination_zone} with education type 'education'"
+        facilities_valid = facilities_in_neighboring_zones[
+            facilities_in_neighboring_zones[gdf_facility_type_col].apply(
+                lambda x: row[row_activity_type_col] in x
             )
-            return pd.Series([np.nan, np.nan])
+        ]
+        logging.info(
+            f"Found {len(facilities_valid)} matching facilities in neighboring zones"
+        )
 
-    if sample_col == "floor_area":
-        # sample an activity from activities_valid based on the floor_area column
-        if activities_valid["floor_area"].sum() != 0:
-            activity = activities_valid.sample(
-                1, weights=activities_valid["floor_area"]
+    # If no specific facilities found and a fallback type is provided, attempt to find facilities matching the fallback type
+    if facilities_valid.empty and fallback_type:
+        logging.info(
+            f"No {row[row_activity_type_col]} facilities in zone {destination_zone} or neighboring zones, trying with {fallback_type}"
+        )
+        # This should consider both the initial zone and neighboring zones if the previous step expanded the search
+        facilities_valid = facilities_in_zone[
+            facilities_in_zone[gdf_facility_type_col].apply(
+                lambda x: fallback_type in x
             )
-        else:
-            activity = activities_valid.sample(1)
+        ]
+        logging.info(
+            f"Found {len(facilities_valid)} matching facilities with type: {fallback_type}"
+        )
+
+    # If no facilities found after all attempts, log the failure and return NaN
+    if facilities_valid.empty:
+        logging.info(
+            f"No facilities in zone {destination_zone} with {gdf_facility_type_col} '{fallback_type or row[row_activity_type_col]}'"
+        )
+        return pd.Series([np.nan, np.nan])
+
+    # If "floor_area" is specified for sampling
+    if (
+        gdf_sample_col == "floor_area"
+        and "floor_area" in facilities_valid.columns
+        and facilities_valid["floor_area"].sum() != 0
+    ):
+        facility = facilities_valid.sample(1, weights=facilities_valid["floor_area"])
     else:
-        activity = activities_valid.sample(1)
+        # Otherwise, randomly sample one facility from the valid facilities
+        facility = facilities_valid.sample(1)
 
-    return pd.Series([activity["id"].values[0], activity["geometry"].values[0]])
+    # Return the id and geometry of the selected facility
+    return pd.Series([facility["id"].values[0], facility["geometry"].values[0]])
 
 
 def zones_to_time_matrix(
