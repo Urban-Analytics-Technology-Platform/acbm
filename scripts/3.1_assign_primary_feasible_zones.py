@@ -5,7 +5,6 @@ import pandas as pd
 
 import acbm
 from acbm.assigning.assigning import (
-    filter_matrix_to_boundary,
     get_activities_per_zone,
     get_possible_zones,
     intrazone_time,
@@ -183,144 +182,12 @@ logger.info("Getting the number of activities in each zone")
 osm_data_gdf = gpd.sjoin(
     osm_data, boundaries[["OA21CD", "geometry"]], how="inner", predicate="within"
 )
+# save as pickle
+osm_data_gdf.to_pickle(acbm.root_path / "data/interim/assigning/osm_poi_with_zones.pkl")
 
 activities_per_zone = get_activities_per_zone(
     zones=boundaries, zone_id_col="OA21CD", activity_pts=osm_data, return_df=True
 )
-
-
-# --- Commuting matrices (from 2021 census)
-
-commute_level = "OA"  # "OA" or "MSOA" data
-
-logger.info(f"Loading commuting matrices at {commute_level} level")
-
-# Clean the data
-
-if commute_level == "MSOA":
-    print("Step 1: Reading in the zipped csv file")
-    travel_demand = pd.read_csv(acbm.root_path / "data/external/ODWP15EW_MSOA_v1.zip")
-
-    print("Step 2: Creating commute_mode_dict")
-    commute_mode_dict = {
-        "Bus, minibus or coach": "pt",
-        "Driving a car or van": "car",
-        "Train": "pt",
-        "Underground, metro, light rail, tram": "pt",
-        "On foot": "walk",
-        "Taxi": "car",
-        "Other method of travel to work": "other",
-        "Bicycle": "cycle",
-        "Passenger in a car or van": "car",
-        "Motorcycle, scooter or moped": "car",
-        "Work mainly at or from home": "home",
-    }
-
-    print("Step 3: Mapping commute mode to model mode")
-    travel_demand["mode"] = travel_demand[
-        "Method used to travel to workplace (12 categories) label"
-    ].map(commute_mode_dict)
-
-    print("Step 4: Filtering rows and dropping unnecessary columns")
-    travel_demand_clipped = travel_demand[
-        travel_demand["Place of work indicator (4 categories) code"].isin([1, 3])
-    ]
-    travel_demand_clipped = travel_demand_clipped.drop(
-        columns=[
-            "Middle layer Super Output Areas label",
-            "MSOA of workplace label",
-            "Method used to travel to workplace (12 categories) label",
-            "Method used to travel to workplace (12 categories) code",
-            "Place of work indicator (4 categories) code",
-            "Place of work indicator (4 categories) label",
-        ]
-    )
-
-    print("Step 5: Renaming columns and grouping")
-    travel_demand_clipped = travel_demand_clipped.rename(
-        columns={
-            "Middle layer Super Output Areas code": "MSOA21CD_home",
-            "MSOA of workplace code": "MSOA21CD_work",
-        }
-    )
-    travel_demand_clipped = (
-        travel_demand_clipped.groupby(["MSOA21CD_home", "MSOA21CD_work", "mode"])
-        .agg({"Count": "sum"})
-        .reset_index()
-    )
-
-    print("Step 6: Filtering matrix to boundary")
-    travel_demand_clipped = filter_matrix_to_boundary(
-        boundary=boundaries,
-        matrix=travel_demand_clipped,
-        boundary_id_col="MSOA21CD",
-        matrix_id_col="MSOA21CD",
-        type="both",
-    )
-
-elif commute_level == "OA":
-    print("Step 1: Reading in the zipped csv file")
-    travel_demand = pd.read_csv(acbm.root_path / "data/external/ODWP01EW_OA.zip")
-
-    print("Step 2: Filtering rows and dropping unnecessary columns")
-    travel_demand_clipped = travel_demand[
-        travel_demand["Place of work indicator (4 categories) code"].isin([1, 3])
-    ]
-    travel_demand_clipped = travel_demand_clipped.drop(
-        columns=[
-            "Place of work indicator (4 categories) code",
-            "Place of work indicator (4 categories) label",
-        ]
-    )
-
-    print("Step 3: Renaming columns and grouping")
-    travel_demand_clipped = travel_demand_clipped.rename(
-        columns={
-            "Output Areas code": "OA21CD_home",
-            "OA of workplace code": "OA21CD_work",
-        }
-    )
-    travel_demand_clipped = (
-        travel_demand_clipped.groupby(["OA21CD_home", "OA21CD_work"])
-        .agg({"Count": "sum"})
-        .reset_index()
-    )
-
-    print("Step 4: Filtering matrix to boundary")
-    travel_demand_clipped = filter_matrix_to_boundary(
-        boundary=boundaries,
-        matrix=travel_demand_clipped,
-        boundary_id_col="OA21CD",
-        matrix_id_col="OA21CD",
-        type="both",
-    )
-
-logger.info(f"Commuting matrices at {commute_level} level loaded")
-
-# Get dictionary of commuting matrices
-logger.info("Converting commuting matrices to dictionaries")
-
-if commute_level == "MSOA":
-    travel_demand_dict_mode = (
-        travel_demand_clipped.groupby(["MSOA21CD_home", "MSOA21CD_work"])
-        .apply(lambda x: dict(zip(x["mode"], x["Count"])))
-        .to_dict()
-    )
-    travel_demand_dict_nomode = (
-        travel_demand_clipped.groupby(["MSOA21CD_home", "MSOA21CD_work"])["Count"]
-        .sum()
-        .to_dict()
-    )
-
-elif commute_level == "OA":
-    travel_demand_dict_nomode = (
-        travel_demand_clipped.groupby(["OA21CD_home", "OA21CD_work"])["Count"]
-        .sum()
-        .to_dict()
-    )
-
-logger.info("Commuting matrices converted to dictionaries")
-
 
 #### Get possible zones for each primary activity
 
