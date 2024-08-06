@@ -75,8 +75,14 @@ spc = spc[
 ]
 
 
-# temporary reduction of the dataset for quick analysis
-spc = spc.sample(n=15000, random_state=SEED)
+# --- temporary reduction of the dataset for quick analysis
+
+# Identify unique households
+unique_households = spc["household"].unique()
+# Sample a subset of households
+sampled_households = pd.Series(unique_households).sample(n=5000, random_state=SEED)
+# Filter the original DataFrame based on the sampled households
+spc = spc[spc["household"].isin(sampled_households)]
 
 
 # ### NTS
