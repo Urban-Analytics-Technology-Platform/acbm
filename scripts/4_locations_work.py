@@ -19,14 +19,15 @@ from libpysal.weights import Queen
 from shapely.geometry import LineString
 
 import acbm
-from acbm.assigning.assigning import (
+from acbm.assigning.utils import (
     filter_matrix_to_boundary,
     get_activities_per_zone,
-    get_possible_zones,
     intrazone_time,
     replace_intrazonal_travel_time,
     zones_to_time_matrix,
 )
+
+
 from acbm.assigning.work import WorkZoneAssignment
 from acbm.preprocessing import add_location
 from acbm.utils import calculate_rmse

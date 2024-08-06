@@ -27,17 +27,29 @@ matching_file_handler.setFormatter(
 matching_logger.addHandler(matching_file_handler)
 matching_logger.addHandler(console_handler)
 
-# Create a logger for the primary assignment
-assigning_primary_logger = logging.getLogger("assigning_primary")
-assigning_primary_handler = logging.FileHandler(
-    acbm.logs_path / prepend_datetime("assigning_primary.log")
+# Create a logger for the primary assignment (feasible)
+assigning_primary_feasible_logger = logging.getLogger("assigning_primary_feasible")
+assigning_primary_feasible_handler = logging.FileHandler(
+    acbm.logs_path / prepend_datetime("assigning_primary_feasible.log")
 )
-assigning_primary_handler.setLevel(logging.DEBUG)
-assigning_primary_handler.setFormatter(
+assigning_primary_feasible_handler.setLevel(logging.DEBUG)
+assigning_primary_feasible_handler.setFormatter(
     logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 )
-assigning_primary_logger.addHandler(assigning_primary_handler)
-assigning_primary_logger.addHandler(console_handler)
+assigning_primary_feasible_logger.addHandler(assigning_primary_feasible_handler)
+assigning_primary_feasible_logger.addHandler(console_handler)
+
+# Create a logger for the primary assignment (locations)
+assigning_primary_locations_logger = logging.getLogger("assigning_primary_locations")
+assigning_primary_locations_handler = logging.FileHandler(
+    acbm.logs_path / prepend_datetime("assigning_primary_locations.log")
+)
+assigning_primary_locations_handler.setLevel(logging.DEBUG)
+assigning_primary_locations_handler.setFormatter(
+    logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+)
+assigning_primary_locations_logger.addHandler(assigning_primary_locations_handler)
+assigning_primary_locations_logger.addHandler(console_handler)
 
 
 # Create a logger for the secondary assignment

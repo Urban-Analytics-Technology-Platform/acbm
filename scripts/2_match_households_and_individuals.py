@@ -1,15 +1,13 @@
-import itertools
 import os
 import pickle as pkl
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from IPython.display import display
-from joblib import Parallel, delayed
-from tqdm import trange
+# from joblib import Parallel, delayed
+# from tqdm import trange
 
 import acbm
+from acbm.logger_config import matching_logger as logger
 from acbm.matching import match_categorical, match_individuals
 from acbm.preprocessing import (
     count_per_group,
@@ -41,11 +39,14 @@ def get_interim_path(
 # useful variables
 region = "leeds"
 
+logger.info("Loading SPC data")
+
 # Read in the spc data (parquet format)
 spc = pd.read_parquet(
-    acbm.root_path / "data/external/spc_output/" + region + "_people_hh.parquet"
+    acbm.root_path / "data/external/spc_output/" f"{region}_people_hh.parquet"
 )
 
+logger.info("Filtering SPC data to specific columns")
 # select columns
 spc = spc[
     [
@@ -75,6 +76,7 @@ spc = spc[
 ]
 
 
+logger.info("Sampling SPC data")
 # --- temporary reduction of the dataset for quick analysis
 
 # Identify unique households
@@ -84,6 +86,7 @@ sampled_households = pd.Series(unique_households).sample(n=5000, random_state=SE
 # Filter the original DataFrame based on the sampled households
 spc = spc[spc["household"].isin(sampled_households)]
 
+logger.info(f"Sampled {spc.shape[0]} individuals from SPC data")
 
 # ### NTS
 #
@@ -92,11 +95,17 @@ spc = spc[spc["household"].isin(sampled_households)]
 # - households
 # - trips
 
+logger.info("Loading NTS data")
+
+# #### PSU
+
+logger.info("Loading NTS data: PSU table")
 path_psu = acbm.root_path / "data/external/nts/UKDA-5340-tab/tab/psu_eul_2002-2022.tab"
 psu = pd.read_csv(path_psu, sep="\t")
 
 
 # #### Individuals
+logger.info("Loading NTS data: individuals table")
 
 path_individuals = (
     acbm.root_path / "data/external/nts/UKDA-5340-tab/tab/individual_eul_2002-2022.tab"
@@ -140,6 +149,7 @@ nts_individuals = pd.read_csv(
 
 
 # #### Households
+logger.info("Loading NTS data: household table")
 
 path_households = (
     acbm.root_path / "data/external/nts/UKDA-5340-tab/tab/household_eul_2002-2022.tab"
@@ -181,6 +191,7 @@ nts_households = pd.read_csv(
 
 
 # #### Trips
+logger.info("Loading NTS data: trips table")
 
 path_trips = (
     acbm.root_path / "data/external/nts/UKDA-5340-tab/tab/trip_eul_2002-2022.tab"
@@ -224,6 +235,8 @@ nts_trips = pd.read_csv(
 # only 1 year, or multiple years to increase our sample size and the likelihood of a
 # match with the spc.
 
+logger.info("Filtering NTS data by specified year(s)")
+
 years = [2019, 2021, 2022]
 
 nts_individuals = nts_filter_by_year(nts_individuals, psu, years)
@@ -253,7 +266,9 @@ _nts_ind: from NTS individuals table
 _spc: from SPC
 
 """
+logger.info("Categorical matching: Data preparation")
 
+logger.info("Categorical matching: Creating dictionaries")
 
 # ---------- NTS
 
@@ -371,6 +386,7 @@ dict_spc = {"pwkstat": employment_dict_spc, "tenure": tenure_dict_spc}
 # ### 2.1 Edit SPC columns
 
 # #### Household Income
+logger.info("Categorical matching: Editing SPC columns (HH income)")
 #
 # Edit the spc so that we have household income as well as individual income.
 
@@ -381,61 +397,6 @@ spc_edited = transform_by_group(
     transform_col="salary_yearly",
     new_col="salary_yearly_hh",
     transformation_type="sum",
-)
-
-
-# Check number of individuals and households with reported salaries
-
-# histogram for individuals and households (include NAs as 0)
-fig, ax = plt.subplots(1, 2, figsize=(12, 6), sharey=True)
-ax[0].hist(spc_edited["salary_yearly"].fillna(0), bins=30)
-ax[0].set_title("Salary yearly (Individuals)")
-ax[0].set_xlabel("Salary yearly")
-ax[0].set_ylabel("Frequency")
-ax[1].hist(spc_edited["salary_yearly_hh"].fillna(0), bins=30)
-ax[1].set_title("Salary yearly (Households)")
-ax[1].set_xlabel("Salary yearly")
-
-
-# statistics
-
-# print the total number of rows in the spc. Add a message "Values ="
-print("Individuals in SPC =", spc_edited.shape[0])
-# number of individuals without reported income
-print("Individuals without reported income =", spc_edited["salary_yearly"].isna().sum())
-# % of individuals with reported income (salary_yearly not equal NA)
-print(
-    "% of individuals with reported income =",
-    round((spc_edited["salary_yearly"].count() / spc_edited.shape[0]) * 100, 1),
-)
-print(
-    "Individuals with reported income: 0 =",
-    spc_edited[spc_edited["salary_yearly"] == 0].shape[0],
-)
-
-
-# print the total number of households
-print("Households in SPC =", spc_edited["household"].nunique())
-# number of households without reported income (salary yearly_hh = 0)
-print(
-    "Households without reported income =",
-    spc_edited[spc_edited["salary_yearly_hh"] == 0].shape[0],
-)
-# # % of households with reported income (salary_yearly not equal NA)
-print(
-    "% of households with reported income =",
-    round(
-        (
-            spc_edited[spc_edited["salary_yearly_hh"] == 0].shape[0]
-            / spc_edited["household"].nunique()
-        )
-        * 100,
-        1,
-    ),
-)
-print(
-    "Households with reported income: 0 =",
-    spc_edited[spc_edited["salary_yearly_hh"] == 0].shape[0],
 )
 
 
@@ -465,49 +426,8 @@ spc_edited["salary_yearly_hh_cat"] = spc_edited["salary_yearly_hh_cat"].fillna(-
 spc_edited["salary_yearly_hh_cat"] = spc_edited["salary_yearly_hh_cat"].astype("int")
 
 
-# If we compare household income from the SPC and the NTS, we find that the SPC has many
-# more households with no reported income (-8). This will create an issue when matching
-# using household income
-
-# bar plot showing spc_edited.salary_yearly_hh_cat and nts_households.HHIncome2002_B02ID side by side
-fig, ax = plt.subplots(1, 2, figsize=(12, 6), sharey=True)
-ax[0].bar(
-    spc_edited["salary_yearly_hh_cat"].value_counts().index,
-    spc_edited["salary_yearly_hh_cat"].value_counts().values,
-)
-ax[0].set_title("SPC")
-ax[0].set_xlabel("Income Bracket - Household level")
-ax[0].set_ylabel("No of Households")
-ax[1].bar(
-    nts_households["HHIncome2002_B02ID"].value_counts().index,
-    nts_households["HHIncome2002_B02ID"].value_counts().values,
-)
-ax[1].set_title("NTS")
-ax[1].set_xlabel("Income Bracket - Household level")
-
-
-# same as above but (%)
-fig, ax = plt.subplots(1, 2, figsize=(12, 6), sharey=True)
-ax[0].bar(
-    spc_edited["salary_yearly_hh_cat"].value_counts(normalize=True).index,
-    spc_edited["salary_yearly_hh_cat"].value_counts(normalize=True).values,
-)
-ax[0].set_title("SPC")
-ax[0].set_xlabel("Income Bracket - Household level")
-ax[0].set_ylabel("Fraction of Households")
-ax[1].bar(
-    nts_households["HHIncome2002_B02ID"].value_counts(normalize=True).index,
-    nts_households["HHIncome2002_B02ID"].value_counts(normalize=True).values,
-)
-ax[1].set_title("NTS")
-ax[1].set_xlabel("Income Bracket - Household level")
-
-
-# get the % of households in each income bracket for the nts
-nts_households["HHIncome2002_B02ID"].value_counts(normalize=True) * 100
-
-
 # #### Household Composition (No. of Adults / Children)
+logger.info("Categorical matching: Editing SPC columns (number of adults / children)")
 
 # Number of adults and children in the household
 
@@ -517,6 +437,7 @@ spc_edited = num_adult_child_hh(
 
 
 # #### Employment Status
+logger.info("Categorical matching: Editing SPC columns (employment status)")
 
 # Employment status
 
@@ -598,42 +519,9 @@ spc_edited[
 ].head(10)
 
 
-# bar plot of counts_df['pwkstat_NTS_match'] and nts_households['HHoldEmploy_B01ID']
-fig, ax = plt.subplots(1, 2, figsize=(12, 6))
-ax[0].bar(
-    counts_df["pwkstat_NTS_match"].value_counts().index,
-    counts_df["pwkstat_NTS_match"].value_counts().values,
-)
-ax[0].set_title("SPC")
-ax[0].set_xlabel("Employment status - Household level")
-ax[0].set_ylabel("Frequency")
-ax[1].bar(
-    nts_households["HHoldEmploy_B01ID"].value_counts().index,
-    nts_households["HHoldEmploy_B01ID"].value_counts().values,
-)
-ax[1].set_title("NTS")
-ax[1].set_xlabel("Employment status - Household level")
-
-
-# same as above but percentages
-fig, ax = plt.subplots(1, 2, figsize=(12, 6))
-ax[0].bar(
-    counts_df["pwkstat_NTS_match"].value_counts().index,
-    counts_df["pwkstat_NTS_match"].value_counts(normalize=True).values,
-)
-ax[0].set_title("SPC")
-ax[0].set_xlabel("Employment status - Household level")
-ax[0].set_ylabel("Frequency (normalized)")
-ax[1].bar(
-    nts_households["HHoldEmploy_B01ID"].value_counts().index,
-    nts_households["HHoldEmploy_B01ID"].value_counts(normalize=True).values,
-)
-ax[1].set_title("NTS")
-ax[1].set_xlabel("Employment status - Household level")
-
-
 # #### Urban Rural Classification
-#
+logger.info("Categorical matching: Editing SPC columns (urban / rural classification)")
+
 # We use the 2011 rural urban classification to match the SPC to the NTS. The NTS has 2 columns that we can use to match to the SPC: `Settlement2011EW_B03ID` and `Settlement2011EW_B04ID`. The `Settlement2011EW_B03ID` column is more general (urban / rural only), while the `Settlement2011EW_B04ID` column is more specific. We stick to the more general column for now.
 
 # read the rural urban classification data
@@ -645,7 +533,6 @@ rural_urban = pd.read_csv(
 spc_edited = spc_edited.merge(
     rural_urban[["OA11CD", "RUC11", "RUC11CD"]], left_on="oa11cd", right_on="OA11CD"
 )
-spc_edited.head(5)
 
 
 # create dictionary from the NTS `Settlement2011EW_B03ID` column
@@ -729,6 +616,7 @@ spc_edited.head()
 
 
 # ### 2.2 Edit NTS columns
+logger.info("Categorical matching: Editing NTS columns (number of pensioners")
 
 # #### Number of people of pension age
 
@@ -749,7 +637,8 @@ nts_households = nts_households.merge(
 
 
 # #### Number of cars
-#
+logger.info("Categorical matching: Editing NTS columns (number of cars")
+
 # - `SPC.num_cars` only has values [0, 1, 2]. 2 is for all households with 2 or more cars
 # - `NTS.NumCar` is more detailed. It has the actual value of the number of cars. We will cap this at 2.
 
@@ -758,16 +647,8 @@ nts_households.loc[:, "NumCar_SPC_match"] = nts_households["NumCar"].apply(
     truncate_values, upper=2
 )
 
-nts_households[["NumCar", "NumCar_SPC_match"]].head(20)
-
-
 # #### Type of tenancy
-#
-# Breakdown between NTS and SPC is different.
-
-dict_nts["Ten1_B02ID"], dict_spc["tenure"]
-
-
+logger.info("Categorical matching: Editing NTS columns (tenure status)")
 # Create dictionaries to map tenure onto the spc and nts dfs
 
 # Dictionary showing how we want the final columns to look like
@@ -811,6 +692,9 @@ spc_edited["tenure_spc_for_matching"] = (
 
 
 # ## Step 3: Matching at Household Level
+
+logger.info("Categorical matching: MATCHING HOUSEHOLDS")
+
 #
 # Now that we've prepared all the columns, we can start matching.
 
@@ -869,8 +753,6 @@ nts_matching = nts_households[
     ]
 ]
 
-nts_matching.head(10)
-
 
 # Dictionary of matching columns. We extract column names from this dictioary when matching on a subset of the columns
 
@@ -928,43 +810,23 @@ matches_hh_level = match_categorical(
 )
 
 
-# Plot number of matches for each SPC household
-
-# Get the counts of each key
-counts = [len(v) for v in matches_hh_level.values()]
-
-# Create the histogram
-plt.hist(counts, bins="auto")  # 'auto' automatically determines the number of bins
-
-plt.title("Categorical (Exact) Matching - Household Level")
-plt.xlabel("No. of Households in SPC")
-plt.ylabel("No. of matching households in NTS")
-
-
 # Number of unmatched households
 
 # no. of keys where value is na
 na_count = sum([1 for v in matches_hh_level.values() if pd.isna(v).all()])
 
-
-print(na_count, "households in the SPC had no match")
-print(
-    round((na_count / len(matches_hh_level)) * 100, 1),
-    "% of households in the SPC had no match",
+logger.info(f"Categorical matching: {na_count} households in the SPC had no match")
+logger.info(
+    f"{round((na_count / len(matches_hh_level)) * 100, 1)}% of households in the SPC had no match"
 )
-
-
-# print the 6th key, value in the matches_hh_level dictionary
-print(list(matches_hh_level.items())[90])
-
 
 ## add matches_hh_level as a column in spc_edited
 spc_edited["nts_hh_id"] = spc_edited["hid"].map(matches_hh_level)
 
-spc_edited.head(5)
-
 
 # ### Random Sampling from matched households
+
+logger.info("Categorical matching: Randomly choosing one match per household")
 #
 # In categorical matching, many households in the SPC are matched to more than 1 household in the NTS. Which household to choose? We do random sampling
 
@@ -989,9 +851,6 @@ matches_hh_level_sample = {
 }
 
 
-print(list(matches_hh_level_sample.items())[568])
-
-
 # Multiple matches in case we want to try stochastic runs
 
 # same logic as cell above, but repeat it multiple times and store each result as a separate dictionary in a list
@@ -1000,11 +859,11 @@ matches_hh_level_sample_list = [
     for i in range(100)
 ]
 
-# matches_hh_level_sample_list
+logger.info("Categorical matching: Random sampling complete")
 
 
 # Save results
-
+logger.info("Categorical matching: Saving results")
 # random sample
 with open(
     get_interim_path("matches_hh_level_categorical_random_sample.pkl"), "wb"
@@ -1037,8 +896,7 @@ with open(
 #
 #
 
-nts_individuals.head()
-
+logger.info("Statistical matching: MATCHING INDIVIDUALS")
 
 # Create an 'age' column in the SPC that matches the NTS categories
 
@@ -1087,12 +945,6 @@ matches_ind = match_individuals(
     show_progress=False,
 )
 
-# matches_ind
-
-
-# Output the first n items of the dictionary
-dict(itertools.islice(matches_ind.items(), 10))
-
 
 # Add matches_ind values to spc_edited using map
 spc_edited["nts_ind_id"] = spc_edited.index.map(matches_ind)
@@ -1101,125 +953,53 @@ spc_edited["nts_ind_id"] = spc_edited.index.map(matches_ind)
 spc_edited["nts_ind_id"] = spc_edited["nts_ind_id"].map(nts_individuals["IndividualID"])
 
 
-spc_edited.head(5)
+logger.info("Statistical matching: Matching complete")
 
-
-# ### Check that matching is working as intended
-
-# ids = [99, 100, 101, 102]
-ids = [109, 110, 111, 112, 113, 114]
-
-
-spc_rows = []
-nts_rows = []
-
-for id in ids:
-    # get spc and nts values for position id
-    spc_ind = list(matches_ind.keys())[id]
-    nts_ind = matches_ind[list(matches_ind.keys())[id]]
-
-    # get rows from spc and nts dfs that match spc_ind and nts_ind
-    spc_row = spc_edited.loc[spc_ind]
-    nts_row = nts_individuals.loc[nts_ind]
-
-    # convert to df and append
-    spc_rows.append(spc_row.to_frame().transpose())
-    nts_rows.append(nts_row.to_frame().transpose())
-# convert individual dfs to one df
-spc_rows_df = pd.concat(spc_rows)
-nts_rows_df = pd.concat(nts_rows)
-
-display(
-    spc_rows_df[
-        [
-            "id",
-            "household",
-            "pwkstat",
-            "salary_yearly",
-            "salary_hourly",
-            "hid",
-            "tenure",
-            "num_cars",
-            "sex",
-            "age_years",
-            "age_group",
-            "nssec8",
-            "salary_yearly_hh",
-            "salary_yearly_hh_cat",
-            "is_adult",
-            "is_child",
-            "is_pension_age",
-            "pwkstat_FT_hh",
-            "pwkstat_PT_hh",
-            "pwkstat_NTS_match",
-            "Settlement2011EW_B03ID_spc",
-            "Settlement2011EW_B04ID_spc",
-            "Settlement2011EW_B03ID_spc_CD",
-            "Settlement2011EW_B04ID_spc_CD",
-        ]
-    ]
-)
-
-display(
-    nts_rows_df[
-        [
-            "IndividualID",
-            "HouseholdID",
-            "Age_B01ID",
-            "age_group",
-            "sex",
-            "OfPenAge_B01ID",
-            "IndIncome2002_B02ID",
-        ]
-    ]
-)
-
-
-# ### Match on multiple samples
-
-# In household level matching, some households in the SPC are matched to multiple households in the NTS. To have 1:1 match between the SPC and NTS, we randomly sample from the list of matches
-#
-# The random sample produces different results each time. In `matches_hh_level_sample_list` we did many iterations of random sampling to produce multiple results of household matching, and saved the output in a list of dictionaries.
-#
-# Here, we iterate over the list and do individual matching for each item. The output is a list of n dictionaries, each of which could be used as a synthetic population matched to the NTS
-
-# iterate over all items in the matches_hh_level_sample_list and apply the match_individuals function to each
-parallel = Parallel(n_jobs=-1, return_as="generator")
-matches_list_of_dict = list(
-    parallel(
-        delayed(match_individuals)(
-            df1=spc_edited,
-            df2=nts_individuals,
-            matching_columns=["age_group", "sex"],
-            df1_id="hid",
-            df2_id="HouseholdID",
-            matches_hh=matches_hh_level_sample_list[i],
-            show_progress=False,
-        )
-        for i in trange(len(matches_hh_level_sample_list))
-    )
-)
-
-# Save the results of individual matching
-
-# random sample
+# save random sample
 with open(
     get_interim_path("matches_ind_level_categorical_random_sample.pkl"), "wb"
 ) as f:
     pkl.dump(matches_ind, f)
 
-# multiple random samples
-with open(
-    get_interim_path("matches_ind_level_categorical_random_sample_multiple.pkl"), "wb"
-) as f:
-    pkl.dump(matches_list_of_dict, f)
+# ### Match on multiple samples
+
+# logger.info("Statistical matching: Matching on multiple samples")
+
+# # In household level matching, some households in the SPC are matched to multiple households in the NTS. To have 1:1 match between the SPC and NTS, we randomly sample from the list of matches
+# #
+# # The random sample produces different results each time. In `matches_hh_level_sample_list` we did many iterations of random sampling to produce multiple results of household matching, and saved the output in a list of dictionaries.
+# #
+# # Here, we iterate over the list and do individual matching for each item. The output is a list of n dictionaries, each of which could be used as a synthetic population matched to the NTS
+
+# # iterate over all items in the matches_hh_level_sample_list and apply the match_individuals function to each
+# parallel = Parallel(n_jobs=-1, return_as="generator")
+# matches_list_of_dict = list(
+#     parallel(
+#         delayed(match_individuals)(
+#             df1=spc_edited,
+#             df2=nts_individuals,
+#             matching_columns=["age_group", "sex"],
+#             df1_id="hid",
+#             df2_id="HouseholdID",
+#             matches_hh=matches_hh_level_sample_list[i],
+#             show_progress=False,
+#         )
+#         for i in trange(len(matches_hh_level_sample_list))
+#     )
+# )
+
+# # Save the results of individual matching
+# logger.info("Statistical matching: Saving results")
+
+# # save multiple random samples
+# with open(
+#     get_interim_path("matches_ind_level_categorical_random_sample_multiple.pkl"), "wb"
+# ) as f:
+#     pkl.dump(matches_list_of_dict, f)
 
 
 # ### Add trip data
-#
-
-nts_trips.head(10)
-
+logger.info("Post-processing: Editing column names")
 
 # Rename columns and map actual modes and trip purposes to the trip table.
 #
@@ -1238,8 +1018,7 @@ nts_trips = nts_trips.rename(
     }
 )
 
-nts_trips.head(10)
-
+logger.info("Post-processing: Mapping modes and trip purposes")
 
 mode_mapping = {
     1: "walk",
@@ -1296,6 +1075,7 @@ nts_trips["dact"] = nts_trips["dact"].map(purp_mapping)
 
 
 # # For education trips, we use age as an indicator for the type of education facility the individual is most likely to go to. The `age_group_mapping` dictionary maps age groups to education facility types. For each person activity, we use the age_group to determine which education facilities to look at.
+logger.info("Post-processing: Assigning education activities to education types")
 
 # map the age_group to an education type (age group is from NTS::Age_B04ID)
 # TODO edit osmox config to replace education_college with education_university.
@@ -1325,7 +1105,7 @@ spc_edited["education_type"] = spc_edited["age_group"].map(age_group_mapping)
 spc_edited_copy = spc_edited.copy()
 
 # replace non-finite values with a default value
-spc_edited_copy["nts_ind_id"].fillna(-1, inplace=True)
+spc_edited_copy["nts_ind_id"] = spc_edited_copy["nts_ind_id"].fillna(-1)
 # convert the nts_ind_id column to int for merging
 spc_edited_copy["nts_ind_id"] = spc_edited_copy["nts_ind_id"].astype(int)
 
@@ -1333,10 +1113,6 @@ spc_edited_copy["nts_ind_id"] = spc_edited_copy["nts_ind_id"].astype(int)
 spc_edited_copy = spc_edited_copy.merge(
     nts_trips, left_on="nts_ind_id", right_on="IndividualID", how="left"
 )
-
-
-spc_edited_copy.head(10)
-
 
 # save the file as a parquet file
 spc_edited_copy.to_parquet(get_interim_path("spc_with_nts_trips.parquet"))

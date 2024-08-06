@@ -4,14 +4,14 @@ import geopandas as gpd
 import pandas as pd
 
 import acbm
-from acbm.assigning.assigning import (
+from acbm.assigning.primary_feasible import get_possible_zones
+from acbm.assigning.utils import (
     get_activities_per_zone,
-    get_possible_zones,
     intrazone_time,
     replace_intrazonal_travel_time,
     zones_to_time_matrix,
 )
-from acbm.logger_config import assigning_primary_logger as logger
+from acbm.logger_config import assigning_primary_feasible_logger as logger
 from acbm.preprocessing import add_location
 
 #### LOAD DATA ####
@@ -108,7 +108,7 @@ travel_times = travel_times.drop(columns="OBJECTID")
 # #### Travel distance matrix
 #
 # Some areas aren't reachable by specific modes. We create a travel distance matrix
-# to fall back on when there are no travel time calculations
+# to fall back on when the, inplace=Truere are no travel time calculations
 
 logger.info("Creating travel time estimates")
 
