@@ -452,18 +452,13 @@ def replace_intrazonal_travel_time(
     # Create a new column 'mode' by splitting the 'combination' column
     travel_times_copy["mode"] = travel_times_copy["combination"].str.split("_").str[0]
 
-    # Iterate over the keys in the travel_times22 dictionary
-    for key in intrazonal_estimates:
-        # Create a mask for the rows where 'from_id' and 'to_id' are equal to the current key
-        mask = (travel_times_copy["from_id"] == key) & (
-            travel_times_copy["to_id"] == key
-        )
-        # Iterate over the rows that match the mask
-        for idx, row in travel_times_copy[mask].iterrows():
-            # Replace the 'travel_time_p50' value with the corresponding value from travel_times22
-            travel_times_copy.loc[idx, column_to_replace] = intrazonal_estimates[key][
-                row["mode"]
-            ]
+    # Create a mask for intrazonal trips
+    intrazonal_mask = travel_times_copy["from_id"] == travel_times_copy["to_id"]
+
+    # Apply the intrazonal estimates using a vectorized operation
+    travel_times_copy.loc[intrazonal_mask, column_to_replace] = travel_times_copy[
+        intrazonal_mask
+    ].apply(lambda row: intrazonal_estimates[row["from_id"]][row["mode"]], axis=1)
 
     # Return the modified DataFrame
     return travel_times_copy
