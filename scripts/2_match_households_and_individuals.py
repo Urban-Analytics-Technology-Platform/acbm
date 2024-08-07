@@ -3,9 +3,9 @@ import pickle as pkl
 
 import numpy as np
 import pandas as pd
+
 # from joblib import Parallel, delayed
 # from tqdm import trange
-
 import acbm
 from acbm.logger_config import matching_logger as logger
 from acbm.matching import match_categorical, match_individuals
@@ -856,7 +856,7 @@ matches_hh_level_sample = {
 # same logic as cell above, but repeat it multiple times and store each result as a separate dictionary in a list
 matches_hh_level_sample_list = [
     {key: np.random.choice(value) for key, value in matches_hh_level.items()}
-    for i in range(100)
+    for i in range(25)
 ]
 
 logger.info("Categorical matching: Random sampling complete")

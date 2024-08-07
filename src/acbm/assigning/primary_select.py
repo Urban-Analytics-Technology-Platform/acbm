@@ -198,7 +198,7 @@ def select_facility(
     # Extract the destination zone from the input row
     destination_zone = row[row_destination_zone_col]
     if pd.isna(destination_zone):
-        logger.info(f"Destination zone is NA for row {row.name}")
+        logger.info(f"Activity {row.name}: Destination zone is NA")
         return pd.Series([np.nan, np.nan])
 
     # Filter facilities within the specified destination zone
@@ -215,7 +215,7 @@ def select_facility(
     # If no specific facilities found in the initial zone, and neighboring zones are provided, search in neighboring zones
     if facilities_valid.empty and neighboring_zones:
         logger.info(
-            f"No {row[row_activity_type_col]} facilities in {destination_zone}. Expanding search to neighboring zones"
+            f"Activity {row.name}: No {row[row_activity_type_col]} facilities in {destination_zone}. Expanding search to neighboring zones"
         )
         neighbors = neighboring_zones.get(destination_zone, [])
         facilities_in_neighboring_zones = facilities_gdf[
@@ -227,13 +227,13 @@ def select_facility(
             )
         ]
         logger.info(
-            f"Found {len(facilities_valid)} matching facilities in neighboring zones"
+            f"Activity {row.name}: Found {len(facilities_valid)} matching facilities in neighboring zones"
         )
 
     # If no specific facilities found and a fallback type is provided, attempt to find facilities matching the fallback type
     if facilities_valid.empty and fallback_type:
         logger.info(
-            f"No {row[row_activity_type_col]} facilities in zone {destination_zone} or neighboring zones, trying with {fallback_type}"
+            f"Activity {row.name}: No {row[row_activity_type_col]} facilities in zone {destination_zone} or neighboring zones, trying with {fallback_type}"
         )
         # This should consider both the initial zone and neighboring zones if the previous step expanded the search
         facilities_valid = facilities_in_zone[
@@ -242,13 +242,13 @@ def select_facility(
             )
         ]
         logger.info(
-            f"Found {len(facilities_valid)} matching facilities with type: {fallback_type}"
+            f"Activity {row.name}: Found {len(facilities_valid)} matching facilities with type: {fallback_type}"
         )
 
     # If no facilities found after all attempts, log the failure and return NaN
     if facilities_valid.empty:
         logger.info(
-            f"No facilities in zone {destination_zone} with {gdf_facility_type_col} '{fallback_type or row[row_activity_type_col]}'"
+            f"Activity {row.name}: No facilities in zone {destination_zone} with {gdf_facility_type_col} '{fallback_type or row[row_activity_type_col]}'"
         )
         return pd.Series([np.nan, np.nan])
 
@@ -258,6 +258,11 @@ def select_facility(
         and "floor_area" in facilities_valid.columns
         and facilities_valid["floor_area"].sum() != 0
     ):
+        # Ensure floor_area is numeric
+        facilities_valid["floor_area"] = pd.to_numeric(
+            facilities_valid["floor_area"], errors="coerce"
+        )
+        facilities_valid = facilities_valid.dropna(subset=["floor_area"])
         facility = facilities_valid.sample(1, weights=facilities_valid["floor_area"])
     else:
         # Otherwise, randomly sample one facility from the valid facilities
@@ -265,3 +270,118 @@ def select_facility(
 
     # Return the id and geometry of the selected facility
     return pd.Series([facility["id"].values[0], facility["geometry"].values[0]])
+
+
+def fill_missing_zones(
+    activity: pd.Series,
+    travel_times_est: dict,
+    activities_per_zone: pd.DataFrame,
+    activity_col: str,
+    use_mode: bool = False,
+):
+    """
+    This function fills in missing zones in the activity chains. It uses a travel time matrix based on euclidian distance instead of
+    the computed travel time matrix which is a sparse matrix.
+
+    Parameters
+    ----------
+    activity: pd.Series
+        A row from the activity chains dataframe
+    travel_times_est: dict
+        A dictionary with keys as tuples ({id_col}_from, {id_col}_to) and values as dictionaries containing time estimates.
+        It is the output of zones_to_time_matrix()
+    activities_per_zone: pd.DataFrame
+        A dataframe with the number of activities and floorspace for each zone. The columns are 'OA21CD', 'counts', 'floor_area', 'activity'
+        where 'activity' is the activity type as defined in the osmox config file
+    activity_col: str
+        The column name for the activity type
+    use_mode: bool
+        If True, the function will use the mode of transportation to estimate the travel time: time_{mode}.
+        If False, it will use the average travel time: time_average.
+        Default is False.
+
+    Returns
+    -------
+    str
+        The zone that has the estimated time closest to the given time. The zone also has an activity that matches the activity_col value.
+
+    """
+    activity_purpose = activity[activity_col]
+    from_zone = activity["OA21CD"]
+    to_zones = activities_per_zone[activities_per_zone["activity"] == activity_purpose][
+        "OA21CD"
+    ].tolist()
+
+    logger.debug(
+        f"Activity {activity.TripID} | person: {activity.id}: Number of possible destination zones: {len(to_zones)}"
+    )
+
+    time = activity["TripTotalTime"]
+
+    mode = activity["mode"] if use_mode else None
+
+    return _get_zones_using_time_estimate(
+        estimated_times=travel_times_est,
+        from_zone=from_zone,
+        to_zones=to_zones,
+        time=time,
+        mode=mode,
+    )
+
+
+def _get_zones_using_time_estimate(
+    estimated_times: dict,
+    from_zone: str,
+    to_zones: list,
+    time: int,
+    mode: Optional[str] = None,
+) -> str:
+    """
+    This function returns the zone that has the estimated time closest to the given time. It is meant to be used inside fill_missing_zones()
+
+    Parameters:
+    ----------
+    estimated_times: dict
+        A dictionary with keys as tuples ({id_col}_from, {id_col}_to) and values as dictionaries containing time estimates. It is the output of zones_to_time_matrix()
+    id_col: str
+        The column name for the zone id.
+    from_zone: str
+        The zone of the previous activity
+    to_zones (list): A list of destination zones.
+    time:
+        The target time to compare the estimated times with.
+    mode: str, optional
+        The mode of transportation. It should be one of ['car', 'pt', 'walk', 'cycle']. If not provided, the function uses 'time_average'.
+
+    Returns
+    -------
+    str
+        The zone that has the estimated time closest to the given time.
+    """
+
+    acceptable_modes = ["car", "pt", "walk", "cycle"]
+
+    if mode is not None and mode not in acceptable_modes:
+        error_message = f"Invalid mode: {mode}. Mode must be one of {acceptable_modes}."
+        raise ValueError(error_message)
+
+    # Convert to_zones to a set for faster lookup
+    to_zones_set = set(to_zones)
+
+    # Filter the entries where {id_col}_from matches the specific zone and {id_col}_to is in the specific list of zones
+    filtered_dict = {
+        k: v
+        for k, v in estimated_times.items()
+        if k[0] == from_zone and k[1] in to_zones_set
+    }
+    # get to_zone where time_average is closest to "time"
+    if mode is not None:
+        closest_to_zone = min(
+            filtered_dict.items(), key=lambda item: abs(item[1][f"time_{mode}"] - time)
+        )
+    else:
+        closest_to_zone = min(
+            filtered_dict.items(), key=lambda item: abs(item[1]["time_average"] - time)
+        )
+
+    return closest_to_zone[0][1]

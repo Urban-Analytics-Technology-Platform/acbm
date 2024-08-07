@@ -18,7 +18,9 @@ from acbm.preprocessing import add_location
 
 # --- Activity chains
 logger.info("Loading activity chains")
-activity_chains = pd.read_parquet("../data/interim/matching/spc_with_nts_trips.parquet")
+activity_chains = pd.read_parquet(
+    acbm.root_path / "data/interim/matching/spc_with_nts_trips.parquet"
+)
 logger.info("Activity chains loaded")
 
 # Filter to a specific day of the week
@@ -189,6 +191,10 @@ activities_per_zone = get_activities_per_zone(
     zones=boundaries, zone_id_col="OA21CD", activity_pts=osm_data, return_df=True
 )
 
+activities_per_zone.to_parquet(
+    acbm.root_path / "data/interim/assigning/activities_per_zone.parquet"
+)
+
 #### Get possible zones for each primary activity
 
 # # For education trips, we use age as an indicator for the type of education facility the individual is most likely to go to. The `age_group_mapping` dictionary maps age groups to education facility types. For each person activity, we use the age_group to determine which education facilities to look at.
@@ -211,8 +217,8 @@ possible_zones_school = get_possible_zones(
     travel_times=travel_times,
     activities_per_zone=activities_per_zone,
     filter_by_activity=True,
-    activity_col="education_type",
-    time_tolerance=0.2,
+    activity_col="dact",
+    time_tolerance=0.3,
 )
 
 logger.info("Saving feasible zones for education activities")

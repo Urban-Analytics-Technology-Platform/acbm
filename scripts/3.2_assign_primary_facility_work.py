@@ -44,6 +44,8 @@ osm_data_gdf = gpd.GeoDataFrame(osm_data_gdf, geometry="geometry", crs="EPSG:432
 activity_chains = pd.read_parquet(
     acbm.root_path / "data/interim/matching/spc_with_nts_trips.parquet"
 )
+activity_chains = activity_chains[activity_chains["TravDay"] == 3]  # Wednesday
+
 
 activity_chains_work = activity_chains[activity_chains["dact"] == "work"]
 
@@ -310,6 +312,8 @@ plot_workzone_assignment_heatmap(
 
 zone_neighbors = Queen.from_dataframe(boundaries, idVariable="OA21CD").neighbors
 
+# 2. select a facility
+
 # apply the function to a row in activity_chains_ex
 activity_chains_work[["activity_id", "activity_geom"]] = activity_chains_work.apply(
     lambda row: select_facility(
@@ -347,7 +351,7 @@ plot_desire_lines(
 
 # plot the scatter plot of actual and reported activities
 plot_scatter_actual_reported(
-    activities=pd.DataFrame,
+    activities=activity_chains_work,
     x_col="TripTotalTime",
     y_col="length",
     x_label="Reported Travel Time (min)",
@@ -357,7 +361,7 @@ plot_scatter_actual_reported(
 )
 
 plot_scatter_actual_reported(
-    activities=pd.DataFrame,
+    activities=activity_chains_work,
     x_col="TripDisIncSW",
     y_col="length",
     x_label="Reported Travel Distance (km)",

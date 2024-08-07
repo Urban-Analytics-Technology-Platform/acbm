@@ -1,5 +1,6 @@
 from typing import Optional
 
+import geopandas as gpd
 import numpy as np
 import pandas as pd
 from pyproj import Transformer
@@ -319,8 +320,11 @@ def add_location(
     centroid_layer["location"] = centroid_layer.apply(
         lambda loc: get_new_coords(loc), axis=1
     )
-    return df.merge(
+    merged_df = df.merge(
         centroid_layer[[centroid_layer_geo_id, "location"]],
         left_on=df_geo_id,
         right_on=centroid_layer_geo_id,
     )
+
+    # Convert to GeoDataFrame
+    return gpd.GeoDataFrame(merged_df, geometry="location", crs=target_crs)
