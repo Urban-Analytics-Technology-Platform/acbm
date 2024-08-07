@@ -14,9 +14,11 @@ def main(config):
     # Read config
     with open(acbm.root_path / config, "rb") as f:
         config_dict = tomlkit.load(f)
+    seed = config_dict["parameters"]["seed"]
+    region = config_dict["parameters"]["region"]
 
     # Seed RNG
-    np.random.seed(config_dict["parameters"]["seed"])
+    np.random.seed(seed)
 
     # Pick a region with SPC output saved
     path = acbm.root_path / "data/external/spc_output/raw/"
@@ -32,7 +34,7 @@ def main(config):
         .build()
     )
     spc_people_hh.to_parquet(
-        acbm.root_path / "data/external/spc_output/" + region + "_people_hh.parquet"
+        acbm.root_path / f"data/external/spc_output/{region}_people_hh.parquet"
     )
 
     # People and time-use data
@@ -61,7 +63,7 @@ def main(config):
 
     # save the output
     spc_people_tu.write_parquet(
-        acbm.root_path / "data/external/spc_output/" + region + "_people_tu.parquet"
+        acbm.root_path / f"data/external/spc_output/{region}_people_tu.parquet"
     )
 
 
