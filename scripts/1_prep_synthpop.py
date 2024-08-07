@@ -1,14 +1,22 @@
+import click
 import numpy as np
+import tomlkit
 from uatk_spc.builder import Builder
 
 import acbm
 
-SEED = 0
 
+@click.command()
+# TODO: add override for case when seed provided from CLI
+# @click.option("--seed", default=1, help="Seed for random state", type=int)
+@click.option("--config", prompt="Filepath relative to repo root of config", type=str)
+def main(config):
+    # Read config
+    with open(acbm.root_path / config, "rb") as f:
+        config_dict = tomlkit.load(f)
 
-def main():
     # Seed RNG
-    np.random.seed(SEED)
+    np.random.seed(config_dict["parameters"]["seed"])
 
     # Pick a region with SPC output saved
     path = acbm.root_path / "data/external/spc_output/raw/"
