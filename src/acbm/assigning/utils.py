@@ -386,7 +386,7 @@ def intrazone_time(zones: gpd.GeoDataFrame) -> dict:
     Parameters
     ----------
     zones : gpd.GeoDataFrame
-        The GeoDataFrame containing the zones.
+        The GeoDataFrame containing the zones with zone IDs as the GeoDataFrame index.
 
     Returns
     -------

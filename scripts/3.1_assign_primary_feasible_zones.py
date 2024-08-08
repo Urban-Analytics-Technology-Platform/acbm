@@ -138,7 +138,7 @@ logger.info("Travel time estimates created")
 
 logger.info("Creating intrazonal travel time estimates")
 
-intrazone_times = intrazone_time(boundaries)
+intrazone_times = intrazone_time(boundaries.set_index("OBJECTID"))
 
 logger.info("Intrazonal travel time estimates created")
 
