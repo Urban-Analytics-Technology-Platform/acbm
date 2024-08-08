@@ -195,6 +195,8 @@ def select_facility(
     pd.Series
         Series containing the id and geometry of the chosen facility. Returns NaN if no suitable facility is found.
     """
+    # ----- Step 1. Find valid facilities in the destination zone
+
     # Extract the destination zone from the input row
     destination_zone = row[row_destination_zone_col]
     if pd.isna(destination_zone):
@@ -211,6 +213,9 @@ def select_facility(
             lambda x: row[row_activity_type_col] in x
         )
     ]
+    logger.info(
+        f"Activity {row.name}: Found {len(facilities_valid)} matching facilities in zone {destination_zone}"
+    )
 
     # If no specific facilities found in the initial zone, and neighboring zones are provided, search in neighboring zones
     if facilities_valid.empty and neighboring_zones:
@@ -252,6 +257,8 @@ def select_facility(
         )
         return pd.Series([np.nan, np.nan])
 
+    # ----- Step 2. Sample a facility from the valid facilities
+
     # If "floor_area" is specified for sampling
     if (
         gdf_sample_col == "floor_area"
@@ -264,9 +271,11 @@ def select_facility(
         )
         facilities_valid = facilities_valid.dropna(subset=["floor_area"])
         facility = facilities_valid.sample(1, weights=facilities_valid["floor_area"])
+        logger.info(f"Activity {row.name}: Sampled facility based on floor area)")
     else:
         # Otherwise, randomly sample one facility from the valid facilities
         facility = facilities_valid.sample(1)
+        logger.info(f"Activity {row.name}: Sampled facility randomly")
 
     # Return the id and geometry of the selected facility
     return pd.Series([facility["id"].values[0], facility["geometry"].values[0]])

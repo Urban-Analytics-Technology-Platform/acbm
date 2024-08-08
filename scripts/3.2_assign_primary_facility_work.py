@@ -197,6 +197,12 @@ assignments_df = zone_assignment.select_work_zone_optimization(
     use_percentages=True, weight_max_dev=0.2, weight_total_dev=0.8, max_zones=8
 )
 
+
+# Add assigned zones to activity_chains_work. Replace dzone with assigned_zone
+activity_chains_work["dzone"] = activity_chains_work["id"].map(
+    assignments_df.set_index("person_id")["assigned_zone"]
+)
+
 # --- Evaluating assignment quality
 
 # - RMSE
