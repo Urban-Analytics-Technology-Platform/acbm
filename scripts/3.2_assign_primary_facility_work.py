@@ -368,6 +368,7 @@ plot_scatter_actual_reported(
     x_label="Reported Travel Time (min)",
     y_label="Actual Distance - Euclidian (km)",
     title_prefix="Scatter plot of TripTotalTime vs. Length",
+    activity_type="work",
     save_dir=acbm.root_path / "data/processed/plots/assigning/",
 )
 
@@ -378,5 +379,6 @@ plot_scatter_actual_reported(
     x_label="Reported Travel Distance (km)",
     y_label="Actual Distance - Euclidian (km)",
     title_prefix="Scatter plot of TripDisIncSW vs. Length",
+    activity_type="work",
     save_dir=acbm.root_path / "data/processed/plots/assigning/",
 )
