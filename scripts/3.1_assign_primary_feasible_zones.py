@@ -12,7 +12,7 @@ from acbm.assigning.utils import (
     zones_to_time_matrix,
 )
 from acbm.logger_config import assigning_primary_feasible_logger as logger
-from acbm.preprocessing import add_location
+from acbm.preprocessing import add_locations_to_activity_chains
 
 #### LOAD DATA ####
 
@@ -44,13 +44,7 @@ logger.info("Study area boundaries loaded")
 # --- Assign activity home locations to boundaries zoning system
 
 logger.info("Assigning activity home locations to boundaries zoning system")
-# Convert location column in activity_chains to spatial column
-centroid_layer = pd.read_csv(
-    acbm.root_path / "data/external/centroids/Output_Areas_Dec_2011_PWC_2022.csv"
-)
-activity_chains = add_location(
-    activity_chains, "EPSG:27700", "EPSG:4326", centroid_layer, "OA11CD", "OA11CD"
-)
+activity_chains = add_locations_to_activity_chains(activity_chains)
 
 # Convert the DataFrame into a GeoDataFrame, and assign a coordinate reference system (CRS)
 activity_chains = gpd.GeoDataFrame(activity_chains, geometry="location")

@@ -15,6 +15,7 @@ from acbm.assigning.primary_select import select_facility
 from acbm.assigning.utils import filter_matrix_to_boundary
 from acbm.assigning.work import WorkZoneAssignment
 from acbm.logger_config import assigning_primary_locations_logger as logger
+from acbm.preprocessing import add_locations_to_activity_chains
 from acbm.utils import calculate_rmse
 
 #### LOAD DATA ####
@@ -46,6 +47,7 @@ osm_data_gdf = gpd.GeoDataFrame(osm_data_gdf, geometry="geometry", crs="EPSG:432
 activity_chains = pd.read_parquet(
     acbm.root_path / "data/interim/matching/spc_with_nts_trips.parquet"
 )
+activity_chains = add_locations_to_activity_chains(activity_chains)
 activity_chains = activity_chains[activity_chains["TravDay"] == 3]  # Wednesday
 
 
