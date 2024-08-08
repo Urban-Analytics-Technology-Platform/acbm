@@ -218,7 +218,7 @@ possible_zones_school = get_possible_zones(
     activities_per_zone=activities_per_zone,
     key_col="id",
     filter_by_activity=True,
-    activity_col="dact",
+    activity_col="education_type",
     time_tolerance=0.3,
 )
 
@@ -244,7 +244,7 @@ possible_zones_work = get_possible_zones(
     key_col="id",
     filter_by_activity=True,
     activity_col="dact",
-    time_tolerance=0.2,
+    time_tolerance=0.3,
 )
 
 logger.info("Saving feasible zones for work activities")
