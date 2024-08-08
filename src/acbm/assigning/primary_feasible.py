@@ -12,6 +12,7 @@ def get_possible_zones(
     travel_times: pd.DataFrame,
     activities_per_zone: pd.DataFrame,
     activity_col: str,
+    key_col: str,
     filter_by_activity: bool = False,
     time_tolerance: int = 0.2,
 ) -> dict:
@@ -30,6 +31,8 @@ def get_possible_zones(
     activities_per_zone: pd.DataFrame
         A dataframe with the number of activities and floorspace for each zone. The columns are 'OA21CD', 'counts', 'floor_area', 'activity'
         where 'activity' is the activity type as defined in the osmox config file
+    key_col: str
+        The column that will be used as a key in the dictionary
     filter_by_activity: bool
         If True, we will return a results that only includes destination zones that have an activity that matches the activity purpose
     time_tolerance: int
@@ -42,7 +45,11 @@ def get_possible_zones(
     -------
     dict
         A dictionary of dictionaries. Each dictionary is for one of the rows in activity chains
-        with the origin zone as the key and a list of possible destination zones as the value
+        with the origin zone as the key and a list of possible destination zones as the value. Eg:
+        {
+        164: {'E00059011': ['E00056917','E00056922', 'E00056923']},
+        165: {'E00059012': ['E00056918','E00056952', 'E00056923']}
+        }
     """
     list_of_modes = activity_chains["mode"].unique()
     print(f"Unique modes found in the dataset are: {list_of_modes}")
@@ -58,8 +65,8 @@ def get_possible_zones(
     # get unique time_of_day values
     list_of_times_of_day = activity_chains["time_of_day"].unique()
 
-    # create an empty dictionary to store the results
-    results = {}
+    # Initialize a list to collect results
+    results_list = []
 
     # loop over the list of modes
     for mode in list_of_modes:
@@ -134,19 +141,20 @@ def get_possible_zones(
                         # apply get_possible_zones to each row in activity_chains_filtered
                         # pandarallel.initialize(progress_bar=True)
                         possible_zones = activity_chains_filtered.parallel_apply(
-                            lambda row,
-                            tt=travel_times_filtered_mode_time_day: _get_possible_zones(
-                                activity=row,
-                                travel_times=tt,
-                                activities_per_zone=activities_per_zone,
-                                filter_by_activity=filter_by_activity,
-                                activity_col=activity_col,
-                                time_tolerance=time_tolerance,
-                            ),
+                            lambda row, tt=travel_times_filtered_mode_time_day: {
+                                row[key_col]: _get_possible_zones(
+                                    activity=row,
+                                    travel_times=tt,
+                                    activities_per_zone=activities_per_zone,
+                                    filter_by_activity=filter_by_activity,
+                                    activity_col=activity_col,
+                                    time_tolerance=time_tolerance,
+                                )
+                            },
                             axis=1,
                         )
 
-                        results.update(possible_zones)
+                        results_list.extend(possible_zones)
 
         # for all other modes, we don't care about time of day and weekday/weekend
         else:
@@ -162,19 +170,26 @@ def get_possible_zones(
                 # apply _get_possible_zones to each row in activity_chains_filtered
                 # pandarallel.initialize(progress_bar=True)
                 possible_zones = activity_chains_filtered.parallel_apply(
-                    lambda row,
-                    tt=travel_times_filtered_mode_time_day: _get_possible_zones(
-                        activity=row,
-                        travel_times=tt,
-                        activities_per_zone=activities_per_zone,
-                        filter_by_activity=filter_by_activity,
-                        activity_col=activity_col,
-                        time_tolerance=time_tolerance,
-                    ),
+                    lambda row, tt=travel_times_filtered_mode_time_day: {
+                        row[key_col]: _get_possible_zones(
+                            activity=row,
+                            travel_times=tt,
+                            activities_per_zone=activities_per_zone,
+                            filter_by_activity=filter_by_activity,
+                            activity_col=activity_col,
+                            time_tolerance=time_tolerance,
+                        )
+                    },
                     axis=1,
                 )
 
-                results.update(possible_zones)
+                results_list.extend(possible_zones)
+
+    # Combine all dictionaries in the list into a single dictionary
+    results = {}
+    for result in results_list:
+        for key, value in result.items():
+            results[key] = value
 
     return results
 
