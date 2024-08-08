@@ -1,3 +1,5 @@
+import os
+
 import geopandas as gpd
 import pandas as pd
 from libpysal.weights import Queen
@@ -252,6 +254,7 @@ workzone_assignment_opt["pct_of_d_total_assigned"] = workzone_assignment_opt.gro
 
 
 # Define the output file path
+os.makedirs(acbm.root_path / "data/processed/", exist_ok=True)
 output_file_path = acbm.root_path / "data/processed/workzone_rmse_results.txt"
 
 # Open the file in write mode
