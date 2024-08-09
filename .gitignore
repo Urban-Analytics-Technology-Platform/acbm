@@ -161,5 +161,9 @@ Thumbs.db
 # Misc
 .copier-answers.yml
 
-# Ignore data path
+# Ignore data and logs path
 data/
+logs/
+
+# pyright config
+pyrightconfig.json
