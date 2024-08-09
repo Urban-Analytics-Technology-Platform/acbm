@@ -164,3 +164,6 @@ Thumbs.db
 # Ignore data and logs path
 data/
 logs/
+
+# pyright config
+pyrightconfig.json

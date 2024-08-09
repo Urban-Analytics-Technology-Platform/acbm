@@ -1,9 +1,12 @@
 from typing import Optional
 
+import geopandas as gpd
 import numpy as np
 import pandas as pd
 from pyproj import Transformer
 from shapely import Point
+
+import acbm
 
 
 def nts_filter_by_year(
@@ -319,8 +322,21 @@ def add_location(
     centroid_layer["location"] = centroid_layer.apply(
         lambda loc: get_new_coords(loc), axis=1
     )
-    return df.merge(
+    merged_df = df.merge(
         centroid_layer[[centroid_layer_geo_id, "location"]],
         left_on=df_geo_id,
         right_on=centroid_layer_geo_id,
+    )
+
+    # Convert to GeoDataFrame
+    return gpd.GeoDataFrame(merged_df, geometry="location", crs=target_crs)
+
+
+def add_locations_to_activity_chains(activity_chains: pd.DataFrame) -> pd.DataFrame:
+    # Add location column as spatial column from OA centroids
+    centroid_layer = pd.read_csv(
+        acbm.root_path / "data/external/centroids/Output_Areas_Dec_2011_PWC_2022.csv"
+    )
+    return add_location(
+        activity_chains, "EPSG:27700", "EPSG:4326", centroid_layer, "OA11CD", "OA11CD"
     )
