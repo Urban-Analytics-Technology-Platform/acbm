@@ -265,8 +265,11 @@ def plot_desire_lines(
     activity_chains_plot["line_geometry"] = activity_chains_plot.apply(
         lambda row: LineString([row["location"], row["activity_geom"]]), axis=1
     )
-    # Set the geometry column to 'line_geometry'
-    activity_chains_plot = activity_chains_plot.set_geometry("line_geometry")
+
+    # Convert to GeoDataFrame and set the geometry column to 'line_geometry'
+    activity_chains_plot = gpd.GeoDataFrame(
+        activity_chains_plot, geometry="line_geometry"
+    )
 
     # add the original crs
     activity_chains_plot.crs = "EPSG:4326"

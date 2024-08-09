@@ -349,12 +349,13 @@ activity_chains_work.to_pickle(
 
 # --- Plots
 
+
 # plot the activity chains
 plot_desire_lines(
     activities=activity_chains_work,
     activity_type_col="dact",
     activity_type="work",
-    bin_size=3000,
+    bin_size=5000,
     boundaries=boundaries,
     sample_size=1000,
     save_dir=acbm.root_path / "data/processed/plots/assigning/",
@@ -363,22 +364,22 @@ plot_desire_lines(
 # plot the scatter plot of actual and reported activities
 plot_scatter_actual_reported(
     activities=activity_chains_work,
+    activity_type="work",
     x_col="TripTotalTime",
     y_col="length",
     x_label="Reported Travel Time (min)",
     y_label="Actual Distance - Euclidian (km)",
     title_prefix="Scatter plot of TripTotalTime vs. Length",
-    activity_type="work",
     save_dir=acbm.root_path / "data/processed/plots/assigning/",
 )
 
 plot_scatter_actual_reported(
     activities=activity_chains_work,
+    activity_type="work",
     x_col="TripDisIncSW",
     y_col="length",
     x_label="Reported Travel Distance (km)",
     y_label="Actual Distance - Euclidian (km)",
     title_prefix="Scatter plot of TripDisIncSW vs. Length",
-    activity_type="work",
     save_dir=acbm.root_path / "data/processed/plots/assigning/",
 )
