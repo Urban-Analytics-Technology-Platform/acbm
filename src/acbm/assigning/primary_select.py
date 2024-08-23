@@ -157,6 +157,7 @@ def select_facility(
     row_activity_type_col: str,
     gdf_facility_type_col: str,
     fallback_type: Optional[str] = None,
+    fallback_to_random: bool = False,
     neighboring_zones: Optional[dict] = None,
     gdf_sample_col: Optional[str] = None,
 ) -> pd.Series:
@@ -184,6 +185,8 @@ def select_facility(
         The column in `facilities_gdf` to filter facilities by type based on the activity type.
     fallback_type : Optional[str]
         A more general type of facility to fallback to if no specific facilities are found. By default None.
+    fallback_to_random : bool
+        If True, sample from all facilities in the zone if no specific facilities are found. By default False.
     neighboring_zones : Optional[dict]
         A dictionary mapping zones to their neighboring zones for fallback searches, by default None.
     gdf_sample_col : Optional[str]
@@ -249,6 +252,13 @@ def select_facility(
         logger.info(
             f"Activity {row.name}: Found {len(facilities_valid)} matching facilities with type: {fallback_type}"
         )
+
+    # if no specific facilities found and fallback_to_random is True, take all facilities in the zone
+    if facilities_valid.empty and fallback_to_random:
+        logger.info(
+            f"Activity {row.name}: No facilities in zone {destination_zone} with {gdf_facility_type_col} '{fallback_type or row[row_activity_type_col]}'. Sampling from all facilities in the zone"
+        )
+        facilities_valid = facilities_in_zone
 
     # If no facilities found after all attempts, log the failure and return NaN
     if facilities_valid.empty:
