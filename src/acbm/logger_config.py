@@ -53,13 +53,15 @@ assigning_primary_locations_logger.addHandler(console_handler)
 
 
 # Create a logger for the secondary assignment
-assigning_secondary_logger = logging.getLogger("assigning_secondary")
-assigning_secondary_handler = logging.FileHandler(
-    acbm.logs_path / prepend_datetime("assigning_secondary.log")
+assigning_secondary_locations_logger = logging.getLogger(
+    "assigning_secondary_locations"
 )
-assigning_secondary_handler.setLevel(logging.DEBUG)
-assigning_secondary_handler.setFormatter(
+assigning_secondary_locations_handler = logging.FileHandler(
+    acbm.logs_path / prepend_datetime("assigning_secondary_locations.log")
+)
+assigning_secondary_locations_handler.setLevel(logging.DEBUG)
+assigning_secondary_locations_handler.setFormatter(
     logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 )
-assigning_secondary_logger.addHandler(assigning_secondary_handler)
-assigning_secondary_logger.addHandler(console_handler)
+assigning_secondary_locations_logger.addHandler(assigning_secondary_locations_handler)
+assigning_secondary_locations_logger.addHandler(console_handler)
