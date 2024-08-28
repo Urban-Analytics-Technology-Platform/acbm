@@ -1,15 +1,9 @@
 import geopandas as gpd
 import pandas as pd
-from libpysal.weights import Queen
 
 import acbm
-from acbm.assigning.plots import (
-    plot_desire_lines,
-    plot_scatter_actual_reported,
-)
 from acbm.assigning.primary_select import (
     fill_missing_zones,
-    select_facility,
     select_zone,
 )
 from acbm.logger_config import assigning_primary_locations_logger as logger
@@ -157,96 +151,8 @@ logger.info(
     f"Mode counts for activities with missing zones after filling: {mode_counts_after}"
 )
 
-
-#### ASSING ACTIVITIES TO POINT LOCATIONS ####
-
-logger.info("Assigning activities to point locations")
-# 1. Get neighboring zones
-
-# Sometimes, an activity can be assigned to a zone, but there are no facilities
-# in the zone that match the activity type. In this case, we can search for matching
-# facilities in neighboring zones.
-
-logger.info("Step 1: Getting neighboring zones")
-
-zone_neighbors = Queen.from_dataframe(boundaries, idVariable="OA21CD").neighbors
-
-# 2. select a facility
-
-logger.info("Step 2: Selecting a facility")
-
-# apply the function to a row in activity_chains_ex
-activity_chains_edu[["activity_id", "activity_geom"]] = activity_chains_edu.apply(
-    lambda row: select_facility(
-        row=row,
-        facilities_gdf=osm_data_gdf,
-        row_destination_zone_col="dzone",
-        row_activity_type_col="education_type",
-        gdf_facility_zone_col="OA21CD",
-        gdf_facility_type_col="activities",
-        gdf_sample_col="floor_area",
-        neighboring_zones=zone_neighbors,
-        fallback_type="education",
-    ),
-    axis=1,
-)
-
-# Compute summary statistics
-assignments_successful = activity_chains_edu[
-    activity_chains_edu["activity_id"].notnull()
-].shape[0]
-assignments_failed = activity_chains_edu[
-    activity_chains_edu["activity_id"].isnull()
-].shape[0]
-percentage_failed = (assignments_failed / assignments_successful) * 100
-
-logger.info("Summary statistics for assigning education activities to locations")
-logger.info(f"Number of successful assignments: {assignments_successful}")
-logger.info(f"Number of failed assignments: {assignments_failed}")
-logger.info(f"Percentage of failed assignments: {percentage_failed}")
-
-
-# save the activity chains as a pickle
-logger.info("Saving activity chains with assigned locations")
+logger.info("Saving activity chains with assigned zones")
 
 activity_chains_edu.to_pickle(
     acbm.root_path / "data/interim/assigning/activity_chains_education.pkl"
-)
-
-
-#### PLOTS ####
-logger.info("Plotting")
-
-# plot the activity chains
-plot_desire_lines(
-    activities=activity_chains_edu,
-    activity_type_col="dact",
-    activity_type="education",
-    bin_size=3000,
-    boundaries=boundaries,
-    sample_size=1000,
-    save_dir=acbm.root_path / "data/processed/plots/assigning/",
-)
-
-# plot the scatter plot of actual and reported activities
-plot_scatter_actual_reported(
-    activities=activity_chains_edu,
-    x_col="TripTotalTime",
-    y_col="length",
-    x_label="Reported Travel Time (min)",
-    y_label="Actual Distance - Euclidian (km)",
-    title_prefix="Scatter plot of TripTotalTime vs. Length",
-    activity_type="education",
-    save_dir=acbm.root_path / "data/processed/plots/assigning/",
-)
-
-plot_scatter_actual_reported(
-    activities=activity_chains_edu,
-    x_col="TripDisIncSW",
-    y_col="length",
-    x_label="Reported Travel Distance (km)",
-    y_label="Actual Distance - Euclidian (km)",
-    title_prefix="Scatter plot of TripDisIncSW vs. Length",
-    activity_type="education",
-    save_dir=acbm.root_path / "data/processed/plots/assigning/",
 )
