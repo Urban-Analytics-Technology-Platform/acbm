@@ -1,10 +1,12 @@
-import pandas as pd
-import geopandas as gpd
-import numpy as np
 import logging
 from typing import Optional
 
+import geopandas as gpd
+import numpy as np
+import pandas as pd
+
 from acbm.logger_config import assigning_facility_locations_logger as logger
+
 
 def _select_facility(
     row: pd.Series,
@@ -64,7 +66,7 @@ def _select_facility(
     destination_zone = row[row_destination_zone_col]
     if pd.isna(destination_zone):
         logger.info(f"Activity {row.name}: Destination zone is NA")
-        return {'id': np.nan, 'geometry': np.nan}
+        return {"id": np.nan, "geometry": np.nan}
 
     # Filter facilities within the specified destination zone
     facilities_in_zone = facilities_gdf[
@@ -126,7 +128,7 @@ def _select_facility(
             f"Activity {row.name}: No facilities in zone {destination_zone} with {gdf_facility_type_col} '{fallback_type or row[row_activity_type_col]}'"
         )
         return {row[unique_id_col]: (np.nan, np.nan)}
-    
+
     # ----- Step 2. Sample a facility from the valid facilities
 
     # If "floor_area" is specified for sampling
@@ -148,7 +150,9 @@ def _select_facility(
         logger.info(f"Activity {row.name}: Sampled facility randomly")
 
     # Return the id and geometry of the selected facility
-    return {row[unique_id_col]: (facility["id"].values[0], facility["geometry"].values[0])}
+    return {
+        row[unique_id_col]: (facility["id"].values[0], facility["geometry"].values[0])
+    }
 
 
 def select_facility(
@@ -217,9 +221,8 @@ def select_facility(
 
 
 def map_activity_locations(
-        activity_chains_df: pd.DataFrame, 
-        activity_locations_dict: dict, 
-        id_col: str='pid'):
+    activity_chains_df: pd.DataFrame, activity_locations_dict: dict, id_col: str = "pid"
+):
     """
     Map activity locations to the activity chains DataFrame.
 
@@ -237,12 +240,14 @@ def map_activity_locations(
     pd.DataFrame
         DataFrame with mapped activity locations.
     """
-    activity_chains_df['end_location_id'] = activity_chains_df[id_col].map(
-        lambda pid: activity_locations_dict[pid][0] if pid in activity_locations_dict else None
+    activity_chains_df["end_location_id"] = activity_chains_df[id_col].map(
+        lambda pid: activity_locations_dict[pid][0]
+        if pid in activity_locations_dict
+        else None
     )
-    activity_chains_df['end_location_geometry'] = activity_chains_df[id_col].map(
-        lambda pid: activity_locations_dict[pid][1] if pid in activity_locations_dict else None
+    activity_chains_df["end_location_geometry"] = activity_chains_df[id_col].map(
+        lambda pid: activity_locations_dict[pid][1]
+        if pid in activity_locations_dict
+        else None
     )
     return activity_chains_df
-
-

@@ -138,7 +138,9 @@ def select_zone(
                     0
                 ]
             else:
-                logger.debug(f"Activity {activity_id}: No count data. sampling randomly")
+                logger.debug(
+                    f"Activity {activity_id}: No count data. sampling randomly"
+                )
                 selected_zone = options.sample(1)[zone_id_col].values[0]
         else:
             logger.debug(f"Activity {activity_id}: sampling randomly")
