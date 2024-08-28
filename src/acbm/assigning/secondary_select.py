@@ -3,7 +3,7 @@ from copy import deepcopy
 import numpy as np
 import pam
 import pandas as pd
-from pam.activity import DiscretionaryTrips
+from pam.planner.choice_location import DiscretionaryTrips
 from pam.core import Population
 from pam.planner.od import ODFactory
 
