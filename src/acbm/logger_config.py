@@ -3,65 +3,53 @@ import logging
 import acbm
 from acbm.utils import prepend_datetime
 
-# Configure the root logger
-logging.basicConfig(
-    level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+# # Configure the root logger
+# logging.basicConfig(
+#     level=logging.WARNING,  # Set to DEBUG to capture all logs
+#     format="%(asctime)s - %(filename)s - %(levelname)s - %(message)s"
+# )
 
 # Shared console handler
 console_handler = logging.StreamHandler()
-console_handler.setLevel(logging.DEBUG)
+console_handler.setLevel(logging.INFO)  # Set to WARNING for console output
 console_handler.setFormatter(
-    logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    logging.Formatter(
+        "%(asctime)s - %(filename)s - %(name)s - %(funcName)s - %(levelname)s - %(message)s"
+    )
 )
 
-# Create a logger for the matching module
-matching_logger = logging.getLogger("matching")
-matching_file_handler = logging.FileHandler(
-    acbm.logs_path / prepend_datetime("matching.log")
-)
-matching_file_handler.setLevel(logging.DEBUG)
-matching_file_handler.setFormatter(
-    logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-)
-matching_logger.addHandler(matching_file_handler)
-matching_logger.addHandler(console_handler)
 
-# Create a logger for the primary assignment (feasible)
-assigning_primary_feasible_logger = logging.getLogger("assigning_primary_feasible")
-assigning_primary_feasible_handler = logging.FileHandler(
-    acbm.logs_path / prepend_datetime("assigning_primary_feasible.log")
-)
-assigning_primary_feasible_handler.setLevel(logging.DEBUG)
-assigning_primary_feasible_handler.setFormatter(
-    logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-)
-assigning_primary_feasible_logger.addHandler(assigning_primary_feasible_handler)
-assigning_primary_feasible_logger.addHandler(console_handler)
-
-# Create a logger for the primary assignment (locations)
-assigning_primary_locations_logger = logging.getLogger("assigning_primary_locations")
-assigning_primary_locations_handler = logging.FileHandler(
-    acbm.logs_path / prepend_datetime("assigning_primary_locations.log")
-)
-assigning_primary_locations_handler.setLevel(logging.DEBUG)
-assigning_primary_locations_handler.setFormatter(
-    logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-)
-assigning_primary_locations_logger.addHandler(assigning_primary_locations_handler)
-assigning_primary_locations_logger.addHandler(console_handler)
+def create_logger(name, log_file):
+    logger = logging.getLogger(name)
+    logger.setLevel(
+        logging.DEBUG
+    )  # Ensure the logger captures all messages at DEBUG level and above
+    if not logger.hasHandlers():  # Check if the logger already has handlers
+        file_handler = logging.FileHandler(acbm.logs_path / prepend_datetime(log_file))
+        file_handler.setLevel(logging.DEBUG)  # Set to DEBUG for file output
+        file_handler.setFormatter(
+            logging.Formatter(
+                "%(asctime)s - %(filename)s - %(name)s - %(funcName)s - %(levelname)s - %(message)s"
+            )
+        )
+        logger.addHandler(file_handler)
+        logger.addHandler(console_handler)
+        # avoid logs from being propagated to the root logger (so that they don't show in the notebook)
+        logger.propagate = False
+    return logger
 
 
-# Create a logger for the secondary assignment
-assigning_secondary_locations_logger = logging.getLogger(
-    "assigning_secondary_locations"
+# Create loggers for different modules
+matching_logger = create_logger("matching", "matching.log")
+assigning_primary_feasible_logger = create_logger(
+    "assigning_primary_feasible", "assigning_primary_feasible.log"
 )
-assigning_secondary_locations_handler = logging.FileHandler(
-    acbm.logs_path / prepend_datetime("assigning_secondary_locations.log")
+assigning_primary_zones_logger = create_logger(
+    "assigning_primary_zone", "assigning_primary_zone.log"
 )
-assigning_secondary_locations_handler.setLevel(logging.DEBUG)
-assigning_secondary_locations_handler.setFormatter(
-    logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+assigning_secondary_zones_logger = create_logger(
+    "assigning_secondary_zone", "assigning_secondary_zone.log"
 )
-assigning_secondary_locations_logger.addHandler(assigning_secondary_locations_handler)
-assigning_secondary_locations_logger.addHandler(console_handler)
+assigning_facility_locations_logger = create_logger(
+    "assigning_facility_locations", "assigning_facility_locations.log"
+)
