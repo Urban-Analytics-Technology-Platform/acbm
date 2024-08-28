@@ -260,10 +260,15 @@ def plot_desire_lines(
 
     # filter to only include rows where activity_geom is not NA
     activity_chains_plot = activity_chains_plot[
-        activity_chains_plot["activity_geom"].notna()
+        activity_chains_plot["end_location_geometry"].notna()
+        & activity_chains_plot["start_location_geometry"].notna()
     ]
+
     activity_chains_plot["line_geometry"] = activity_chains_plot.apply(
-        lambda row: LineString([row["location"], row["activity_geom"]]), axis=1
+        lambda row: LineString(
+            [row["start_location_geometry"], row["end_location_geometry"]]
+        ),
+        axis=1,
     )
 
     # Convert to GeoDataFrame and set the geometry column to 'line_geometry'
@@ -372,6 +377,7 @@ def plot_scatter_actual_reported(
     y_label: str,
     title_prefix: str,
     activity_type: str,
+    activity_type_col: str,
     save_dir: Optional[str] = None,
 ):
     """
@@ -385,16 +391,25 @@ def plot_scatter_actual_reported(
     - y_label: Label for the y-axis.
     - title_prefix: Prefix for the plot titles.
     - activity_type: Type of activity to plot.
+    - activity_type_col: Column name for the activity type.
     - save_dir: Directory to save the plots. If None, plots are not saved.
     """
 
     activity_chains_plot = activities.copy()
+    # only include rows where the activity type is the one we are interested in
+    activity_chains_plot = activity_chains_plot[
+        activity_chains_plot[activity_type_col] == activity_type
+    ]
     # filter to only include rows where activity_geom is not NA
     activity_chains_plot = activity_chains_plot[
-        activity_chains_plot["activity_geom"].notna()
+        activity_chains_plot["end_location_geometry"].notna()
+        & activity_chains_plot["start_location_geometry"].notna()
     ]
     activity_chains_plot["line_geometry"] = activity_chains_plot.apply(
-        lambda row: LineString([row["location"], row["activity_geom"]]), axis=1
+        lambda row: LineString(
+            [row["start_location_geometry"], row["end_location_geometry"]]
+        ),
+        axis=1,
     )
     # Set the geometry column to 'line_geometry'
     activity_chains_plot = activity_chains_plot.set_geometry("line_geometry")
@@ -406,8 +421,6 @@ def plot_scatter_actual_reported(
     activity_chains_plot = activity_chains_plot.to_crs(epsg=3857)
     # calculate the length of the line_geometry in meters
     activity_chains_plot["length"] = activity_chains_plot["line_geometry"].length
-
-    activity_chains_plot.head(10)
 
     # convert crs back to 4326
     activity_chains_plot = activity_chains_plot.to_crs(epsg=4326)
