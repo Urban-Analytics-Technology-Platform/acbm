@@ -2,13 +2,14 @@ from typing import Optional
 
 import pandas as pd
 
-from acbm.logger_config import assigning_primary_locations_logger as logger
+from acbm.logger_config import assigning_primary_zones_logger as logger
 
 
 def select_zone(
     row: pd.Series,
     possible_zones: dict,
     activities_per_zone: pd.DataFrame,
+    id_col: str,
     weighting: str = "none",
     zone_id_col: str = "OA21CD",
 ) -> str:
@@ -43,6 +44,8 @@ def select_zone(
     zone_id: str
         The column name of the zone id in activities_per_zone. The ids should also match the nested key in
         possible_zones {key: {KEY: value}}
+    id_col: str
+        The column name of the activity_id. It matches the key in the possible_zones dictionary
 
     Returns
     -------
@@ -56,16 +59,17 @@ def select_zone(
         error_message = f"Invalid value for weighting: {weighting}. Allowed values are {allowed_weightings}."
         raise ValueError(error_message)
 
-    # get the values from possible_zones_school that match the index of the row
+    # get the values from possible_zones that match the index of the row
     # use try/except as some activities might have no possible zones
     try:
-        activity_i_options = list(possible_zones[row.name].values())
+        activity_id = row[id_col]
+        activity_i_options = list(possible_zones[activity_id].values())
         if not activity_i_options:  # Check if the list is empty
-            logger.info(f"Activity {row.name}: No zones available")
+            logger.info(f"Activity {activity_id}: No zones available")
             return "NA"
         # log the number of options for the specific index
         logger.debug(
-            f"Activity {row.name}: Initial number of options for activity = {len(activity_i_options[0])}"
+            f"Activity {activity_id}: Initial number of options for activity = {len(activity_i_options[0])}"
         )
 
         # Attempt 1: filter activities_per_zone_df to only include possible_zones
@@ -74,7 +78,7 @@ def select_zone(
             & (activities_per_zone[zone_id_col].isin(activity_i_options[0]))
         ]
         logger.debug(
-            f"Activity {row.name}: Number of options after filtering by education type: {len(options)}"
+            f"Activity {activity_id}: Number of options after filtering by education type: {len(options)}"
         )
 
         # Attempt 2: if no options meet the conditions, relax the constraint by considering all education types
@@ -86,64 +90,64 @@ def select_zone(
                 & (activities_per_zone[zone_id_col].isin(activity_i_options[0]))
             ]
             logger.debug(
-                f"Activity {row.name}: Number of options after first relaxation: {len(options)}"
+                f"Activity {activity_id}: Number of options after first relaxation: {len(options)}"
             )
 
         # Attempt 3: if options is still empty, relax the constraint further by considering all possible zones
         # regardless of activities
         if options.empty:
             logger.info(
-                f"Activity {row.name}: No zones with required facility type. Selecting from all possible zones"
+                f"Activity {activity_id}: No zones with required facility type. Selecting from all possible zones"
             )
             options = activities_per_zone[
                 activities_per_zone[zone_id_col].isin(activity_i_options[0])
             ]
             logger.debug(
-                f"Activity {row.name}: Number of options after second relaxation: {len(options)}"
+                f"Activity {activity_id}: Number of options after second relaxation: {len(options)}"
             )
 
         # Attempt 4: if options is still empty (there were no options in possible_zones), return NA
         if options.empty:
-            logger.info(f"Activity {row.name}: No options available. Returning NA")
+            logger.info(f"Activity {activity_id}: No options available. Returning NA")
             return "NA"
 
         # Sample based on "weighting" argument
         if weighting == "floor_area":
             # check the sum of floor_area is not zero
             if options["floor_area"].sum() != 0:
-                logger.debug(f"Activity {row.name}: sampling based on floor area")
+                logger.debug(f"Activity {activity_id}: sampling based on floor area")
                 selected_zone = options.sample(1, weights="floor_area")[
                     zone_id_col
                 ].values[0]
             elif options["counts"].sum() != 0:
                 logger.debug(
-                    f"Activity {row.name}: No floor area data. sampling based on counts"
+                    f"Activity {activity_id}: No floor area data. sampling based on counts"
                 )
                 selected_zone = options.sample(1, weights="counts")[zone_id_col].values[
                     0
                 ]
             else:
                 logger.debug(
-                    f"Activity {row.name}: No floor area or count data. sampling randomly"
+                    f"Activity {activity_id}: No floor area or count data. sampling randomly"
                 )
                 selected_zone = options.sample(1)[zone_id_col].values[0]
         elif weighting == "counts":
             if options["counts"].sum() != 0:
-                logger.debug(f"Activity {row.name}: sampling based on counts")
+                logger.debug(f"Activity {activity_id}: sampling based on counts")
                 selected_zone = options.sample(1, weights="counts")[zone_id_col].values[
                     0
                 ]
             else:
-                logger.debug(f"Activity {row.name}: No count data. sampling randomly")
+                logger.debug(f"Activity {activity_id}: No count data. sampling randomly")
                 selected_zone = options.sample(1)[zone_id_col].values[0]
         else:
-            logger.debug(f"Activity {row.name}: sampling randomly")
+            logger.debug(f"Activity {activity_id}: sampling randomly")
             selected_zone = options.sample(1)[zone_id_col].values[0]
 
         return selected_zone
 
     except KeyError:
-        logger.info(f"KeyError: Key {row.name} in possible_zones has no values")
+        logger.info(f"KeyError: Key {activity_id} in possible_zones has no values")
         return "NA"
 
 

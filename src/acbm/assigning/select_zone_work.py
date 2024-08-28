@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import pulp
 
-from acbm.logger_config import assigning_primary_locations_logger as logger
+from acbm.logger_config import assigning_primary_zones_logger as logger
 
 
 @dataclass

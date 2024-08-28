@@ -7,7 +7,7 @@ from pam.activity import DiscretionaryTrips
 from pam.core import Population
 from pam.planner.od import ODFactory
 
-from acbm.logger_config import assigning_secondary_locations_logger as logger
+from acbm.logger_config import assigning_secondary_zones_logger as logger
 
 
 def set_home_ozone(data: pd.DataFrame, oact_col: str, ozone_col: str, hzone_col: str):
