@@ -2,11 +2,11 @@ import geopandas as gpd
 import pandas as pd
 
 import acbm
-from acbm.assigning.primary_select import (
+from acbm.assigning.select_zone_primary import (
     fill_missing_zones,
     select_zone,
 )
-from acbm.logger_config import assigning_primary_locations_logger as logger
+from acbm.logger_config import assigning_primary_zones_logger as logger
 from acbm.preprocessing import add_location
 
 #### LOAD DATA ####
@@ -109,6 +109,7 @@ activity_chains_edu["dzone"] = activity_chains_edu.apply(
         row=row,
         possible_zones=possible_zones_school,
         activities_per_zone=activities_per_zone,
+        id_col="id",
         weighting="floor_area",
         zone_id_col="OA21CD",
     ),

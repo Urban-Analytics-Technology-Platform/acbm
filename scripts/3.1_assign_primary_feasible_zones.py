@@ -4,7 +4,7 @@ import geopandas as gpd
 import pandas as pd
 
 import acbm
-from acbm.assigning.primary_feasible import get_possible_zones
+from acbm.assigning.feasible_zones_primary import get_possible_zones
 from acbm.assigning.utils import (
     get_activities_per_zone,
     intrazone_time,
