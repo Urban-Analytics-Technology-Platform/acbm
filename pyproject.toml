@@ -41,7 +41,7 @@ libpysal = "^4.11.0"
 click = "^8.1.7"
 tomlkit = "^0.13.0"
 cml-pam = "0.3.2"
-gdal = "3.8.4"
+gdal = ">=3.8.4"
 [tool.poetry.dev-dependencies]
 pytest = ">= 6"
 pytest-cov = ">= 3"
