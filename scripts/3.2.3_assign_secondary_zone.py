@@ -9,7 +9,6 @@ This script is used to assign discretionary activities to locations based on a s
 
 import geopandas as gpd
 import numpy as np
-import pam
 import pandas as pd
 from pam import write
 from pam.planner.od import ODFactory, ODMatrix
