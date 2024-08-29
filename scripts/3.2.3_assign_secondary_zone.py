@@ -89,15 +89,6 @@ activity_chains_work = pd.read_pickle(
 )
 
 
-# remove activity_id and activity_geom columns from activity_chains_edu and activity_chains_work
-# TODO: remove them upsteam and create a script specifically for select_facility functionality
-activity_chains_edu = activity_chains_edu.drop(columns=["activity_id", "activity_geom"])
-
-activity_chains_work = activity_chains_work.drop(
-    columns=["activity_id", "activity_geom"]
-)
-
-
 # --- Process the data
 
 # get all activity chains where dact is home
