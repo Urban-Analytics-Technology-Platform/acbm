@@ -3,10 +3,9 @@ from copy import deepcopy
 import numpy as np
 import pam
 import pandas as pd
+
 from pam.planner.choice_location import DiscretionaryTrips
-
 from acbm.logger_config import assigning_secondary_locations_logger as logger
-
 
 def set_home_ozone(data: pd.DataFrame, oact_col: str, ozone_col: str, hzone_col: str):
     """
@@ -35,6 +34,7 @@ def shift_and_fill_column(
     initial_value_col: str | None = None,
     oact_col: str | None = None,
     hzone_col: str | None = None,
+
 ) -> pd.DataFrame:
     """
     Fill the 'target_col' column by shifting the 'source_col' column within each group defined by 'group_col'.
@@ -168,7 +168,6 @@ def update_population_plans(
     Update the plans in a population object using the DiscretionaryTrips planner
 
     """
-
     people_list = list(population.people())
     for i, plan in enumerate(population.plans()):
         try:

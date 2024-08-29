@@ -15,12 +15,12 @@ from pam.planner.od import ODFactory, ODMatrix
 from pam.read import load_travel_diary
 
 import acbm
-from acbm.assigning.secondary_select import (
+from acbm.assigning.select_zone_secondary import (
     create_od_matrices,
     shift_and_fill_column,
     update_population_plans,
 )
-from acbm.logger_config import assigning_secondary_locations_logger as logger
+from acbm.logger_config import assigning_secondary_zones_logger as logger
 from acbm.preprocessing import add_location
 
 # --- Load in the data
