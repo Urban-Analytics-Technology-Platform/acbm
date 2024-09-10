@@ -1,9 +1,9 @@
-import logging
-from typing import Optional
+from typing import Optional, Tuple
 
 import geopandas as gpd
 import numpy as np
 import pandas as pd
+from shapely import Point
 
 from acbm.logger_config import assigning_facility_locations_logger as logger
 
@@ -20,7 +20,7 @@ def _select_facility(
     fallback_to_random: bool = False,
     neighboring_zones: Optional[dict] = None,
     gdf_sample_col: Optional[str] = None,
-) -> dict:
+) -> dict[str, Tuple[str, Point] | Tuple[float, float]]:
     """
     Select a suitable facility based on the activity type and a specific zone from a GeoDataFrame.
     Optionally:
@@ -58,7 +58,8 @@ def _select_facility(
     Returns
     -------
     dict
-        Dictionary containing the id and geometry of the chosen facility. Returns {'id': np.nan, 'geometry': np.nan} if no suitable facility is found.
+        Dictionary containing the id and geometry of the chosen facility. Returns
+        {unique_id_col: (np.nan, np.nan)} if no suitable facility is found.
     """
     # ----- Step 1. Find valid facilities in the destination zone
 
@@ -66,7 +67,9 @@ def _select_facility(
     destination_zone = row[row_destination_zone_col]
     if pd.isna(destination_zone):
         logger.info(f"Activity {row.name}: Destination zone is NA")
-        return {"id": np.nan, "geometry": np.nan}
+        # return {"id": np.nan, "geometry": np.nan}
+        # TODO: check this replacement is correct
+        return {row[unique_id_col]: (np.nan, np.nan)}
 
     # Filter facilities within the specified destination zone
     facilities_in_zone = facilities_gdf[
@@ -167,7 +170,7 @@ def select_facility(
     neighboring_zones: Optional[dict] = None,
     fallback_type: Optional[str] = None,
     fallback_to_random: bool = False,
-) -> pd.DataFrame:
+) -> dict[str, Tuple[str, Point] | Tuple[float, float]]:
     """
     Select facilities for each row in the DataFrame based on the provided logic.
 
@@ -175,6 +178,8 @@ def select_facility(
     ----------
     df : pd.DataFrame
         DataFrame containing the activity chains.
+    unique_id_col (str):
+        Unique ID of activity a facility is being selected for.
     facilities_gdf : gpd.GeoDataFrame
         GeoDataFrame containing facilities to sample from.
     row_destination_zone_col : str
@@ -192,14 +197,14 @@ def select_facility(
 
     Returns
     -------
-    pd.DataFrame
-        DataFrame containing the selected facilities for each row.
+    dict[str, Tuple[str, Point ] | Tuple[float, float]]: Unique ID column as
+        keys with selected facility ID and facility ID's geometry, or (np.nan, np.nan)
     """
     # Initialize a dictionary to store the selected facilities
     selected_facilities = {}
 
     # Select a facility for each row in the DataFrame
-    for index, row in df.iterrows():
+    for _, row in df.iterrows():
         selected_facility = _select_facility(
             row=row,
             unique_id_col=unique_id_col,
