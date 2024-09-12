@@ -1,5 +1,6 @@
 import math
 import os
+from pathlib import Path
 from typing import Optional
 
 import geopandas as gpd
@@ -229,7 +230,7 @@ def plot_desire_lines(
     bin_size: int,
     boundaries: gpd.GeoDataFrame,
     sample_size: Optional[int] = None,
-    save_dir: Optional[str] = None,
+    save_dir: str | None | Path = None,
 ) -> None:
     """
     Plots activity chains for a given activity type, bin size, geographical boundaries, and an optional sample size.
@@ -378,7 +379,7 @@ def plot_scatter_actual_reported(
     title_prefix: str,
     activity_type: str,
     activity_type_col: str,
-    save_dir: Optional[str] = None,
+    save_dir: str | None | Path = None,
 ):
     """
     Plots scatter plots with trend lines for different modes in activity chains.
