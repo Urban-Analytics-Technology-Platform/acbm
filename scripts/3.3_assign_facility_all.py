@@ -265,8 +265,14 @@ activity_chains_all = activity_chains_all[
 ]
 
 
-# save as parquet
-activity_chains_all.to_parquet(
+# save as parquet: note to serialize the geometries, need to convert
+# non-missing values to e.g. wkt
+geom_cols = ["start_location_geometry", "end_location_geometry"]
+for col in geom_cols:
+    activity_chains_all.loc[:, col + "_wkt"] = activity_chains_all[col].map(
+        lambda point: point if pd.isna(point) else point.wkt
+    )
+activity_chains_all.drop(columns=geom_cols).to_parquet(
     acbm.root_path / "data/processed/activities_pam/legs_with_locations.parquet"
 )
 
