@@ -53,18 +53,28 @@ jobs:
           miniforge-version: latest
           use-mamba: true
 
-      - name: Install GDAL
+      - name: Create conda environment
+        shell: bash -el {0}
         run: |
-            mamba install conda-forge::gdal
-            python -m pip install .[test]
+          conda create --name gdal_env python=${{ matrix.python-version }} -y
+
+      - name: Install GDAL
+        shell: bash -el {0}
+        run: |
+          conda activate gdal_env
+          mamba install conda-forge::gdal
 
       - name: Install package
-        run: python -m pip install .[test]
+        shell: bash -el {0}
+        run: |
+          conda activate gdal_env
+          python -m pip install .[test]
 
       - name: Test package
-        run: >-
-          python -m pytest -ra --cov --cov-report=xml --cov-report=term
-          --durations=20
+        shell: bash -el {0}
+        run: |
+          conda activate gdal_env
+          python -m pytest -ra --cov --cov-report=xml --cov-report=term --durations=20
 
       - name: Upload coverage report
         uses: codecov/codecov-action@v4.0.1
