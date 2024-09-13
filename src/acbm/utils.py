@@ -1,7 +1,16 @@
 from datetime import datetime
+from typing import Any
 
 import numpy as np
+import tomlkit
 from sklearn.metrics import mean_squared_error
+
+import acbm
+
+
+def get_config(config: str) -> dict[Any, Any]:
+    with open(acbm.root_path / config, "rb") as f:
+        return tomlkit.load(f)
 
 
 def prepend_datetime(s: str, delimiter: str = "_") -> str:
