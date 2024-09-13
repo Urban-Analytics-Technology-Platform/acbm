@@ -1,21 +1,21 @@
 import click
 import numpy as np
-import tomlkit
 from uatk_spc.builder import Builder
 
 import acbm
+from acbm.utils import get_config
 
 
 @click.command()
 # TODO: add override for case when seed provided from CLI
 # @click.option("--seed", default=1, help="Seed for random state", type=int)
-@click.option("--config", prompt="Filepath relative to repo root of config", type=str)
-def main(config):
-    # Read config
-    with open(acbm.root_path / config, "rb") as f:
-        config_dict = tomlkit.load(f)
-    seed = config_dict["parameters"]["seed"]
-    region = config_dict["parameters"]["region"]
+@click.option(
+    "--config_file", prompt="Filepath relative to repo root of config", type=str
+)
+def main(config_file):
+    config = get_config(config_file)
+    seed = config["parameters"]["seed"]
+    region = config["parameters"]["region"]
 
     # Seed RNG
     np.random.seed(seed)

@@ -23,12 +23,14 @@ from acbm.utils import get_config
 
 
 @click.command()
-@click.option("--config", prompt="Filepath relative to repo root of config", type=str)
-def main(config):
-    config_loaded = get_config(config)
+@click.option(
+    "--config_file", prompt="Filepath relative to repo root of config", type=str
+)
+def main(config_file):
+    config = get_config(config_file)
 
     # Seed RNG
-    SEED = config_loaded["seed"]
+    SEED = config["parameters"]["seed"]
     np.random.seed(SEED)
 
     pd.set_option("display.max_columns", None)
@@ -89,7 +91,10 @@ def main(config):
     unique_households = spc["household"].unique()
     # Sample a subset of households
     sampled_households = pd.Series(unique_households).sample(
-        n=min(config_loaded["number_of_households"], unique_households),
+        n=min(
+            config["parameters"]["number_of_households"],
+            unique_households.shape[0],
+        ),
         random_state=SEED,
     )
     # Filter the original DataFrame based on the sampled households
