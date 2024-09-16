@@ -455,7 +455,7 @@ def plot_scatter_actual_reported(
         # Plot the scatter plot
         ax = axs[i]
         ax.scatter(
-            subset_mode[x_col], subset_mode[y_col] / 1000, alpha=0.3
+            subset_mode[x_col], subset_mode[y_col] / 1000, alpha=0.1, lw=0
         )  # Use a single color for all plots
 
         # Calculate and plot the trend line
