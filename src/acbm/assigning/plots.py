@@ -18,6 +18,7 @@ def plot_workzone_assignment_line(
     selection_type: str = "random",
     sort_by: str = "assigned",
     save_dir: Optional[str] = None,
+    display: bool = False,
 ):
     """
     Plot the demand_actual and demand_assigned values for n origin_zones in subplots with two plots per row.
@@ -36,6 +37,12 @@ def plot_workzone_assignment_line(
     sort_by : str
         Column to sort the origin_zones by when selecting the top n. Options: 'actual', 'assigned'
         'actual': Sort by the actual demand, 'assigned': Sort by the assigned
+
+    save_dir: str
+        Output directory for saving plots.
+
+    display: bool
+        Whether to display plots by calling `plt.show()`.
 
     Returns
     -------
@@ -120,7 +127,8 @@ def plot_workzone_assignment_line(
         plt.savefig(plot_path)
         print(f"Plot saved to {plot_path}")
 
-    plt.show()
+    if display:
+        plt.show()
 
 
 def plot_workzone_assignment_heatmap(
@@ -129,6 +137,7 @@ def plot_workzone_assignment_heatmap(
     selection_type: str = "random",
     sort_by: str = "assigned",
     save_dir: Optional[str] = None,
+    display: bool = False,
 ):
     """
     Create three heatmaps side by side showing the aggregated difference between actual and assigned demand percentages
@@ -220,7 +229,8 @@ def plot_workzone_assignment_heatmap(
         plt.savefig(plot_path)
         print(f"Plot saved to {plot_path}")
 
-    plt.show()
+    if display:
+        plt.show()
 
 
 def plot_desire_lines(
@@ -380,6 +390,7 @@ def plot_scatter_actual_reported(
     activity_type: str,
     activity_type_col: str,
     save_dir: str | None | Path = None,
+    display: bool = False,
 ):
     """
     Plots scatter plots with trend lines for different modes in activity chains.
@@ -394,6 +405,7 @@ def plot_scatter_actual_reported(
     - activity_type: Type of activity to plot.
     - activity_type_col: Column name for the activity type.
     - save_dir: Directory to save the plots. If None, plots are not saved.
+    - display: Whether to display plots by calling `plt.show()`.
     """
 
     activity_chains_plot = activities.copy()
@@ -468,4 +480,5 @@ def plot_scatter_actual_reported(
         print(f"Plot saved to {plot_path}")
 
     # Display the plot
-    plt.show()
+    if display:
+        plt.show()
