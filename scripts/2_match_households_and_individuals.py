@@ -2,13 +2,13 @@ import os
 import pickle as pkl
 from pathlib import Path
 
-import click
 import numpy as np
 import pandas as pd
 
 # from joblib import Parallel, delayed
 # from tqdm import trange
 import acbm
+from acbm.assigning.cli import acbm_cli
 from acbm.logger_config import matching_logger as logger
 from acbm.matching import match_categorical, match_individuals
 from acbm.preprocessing import (
@@ -22,10 +22,7 @@ from acbm.preprocessing import (
 from acbm.utils import get_config
 
 
-@click.command()
-@click.option(
-    "--config_file", prompt="Filepath relative to repo root of config", type=str
-)
+@acbm_cli
 def main(config_file):
     config = get_config(config_file)
 

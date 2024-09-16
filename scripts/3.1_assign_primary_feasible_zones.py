@@ -1,11 +1,11 @@
 import pickle as pkl
 
-import click
 import geopandas as gpd
 import numpy as np
 import pandas as pd
 
 import acbm
+from acbm.assigning.cli import acbm_cli
 from acbm.assigning.feasible_zones_primary import get_possible_zones
 from acbm.assigning.utils import (
     get_activities_per_zone,
@@ -18,10 +18,7 @@ from acbm.preprocessing import add_locations_to_activity_chains
 from acbm.utils import get_config
 
 
-@click.command()
-@click.option(
-    "--config_file", prompt="Filepath relative to repo root of config", type=str
-)
+@acbm_cli
 def main(config_file):
     config = get_config(config_file)
     np.random.seed(config["parameters"]["seed"])

@@ -1,17 +1,12 @@
-import click
 import numpy as np
 from uatk_spc.builder import Builder
 
 import acbm
+from acbm.assigning.cli import acbm_cli
 from acbm.utils import get_config
 
 
-@click.command()
-# TODO: add override for case when seed provided from CLI
-# @click.option("--seed", default=1, help="Seed for random state", type=int)
-@click.option(
-    "--config_file", prompt="Filepath relative to repo root of config", type=str
-)
+@acbm_cli
 def main(config_file):
     config = get_config(config_file)
     seed = config["parameters"]["seed"]
