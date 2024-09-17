@@ -439,5 +439,5 @@ def main(config_file):
     write.to_csv(population, dir=(acbm.root_path / "data/processed/activities_pam"))
 
 
-if __name__ == "__name__":
+if __name__ == "__main__":
     main()
