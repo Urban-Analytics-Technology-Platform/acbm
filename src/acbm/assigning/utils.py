@@ -240,11 +240,10 @@ def _get_activities_per_zone_df(activities_per_zone: dict) -> pd.DataFrame:
 def zones_to_time_matrix(
     zones: gpd.GeoDataFrame,
     id_col: Optional[str] = None,
-    to_dict: Optional[bool] = False,
-) -> dict:
+) -> pd.DataFrame:
     """
     Calculates the distance matrix between the centroids of the given zones and returns it as a DataFrame. The matrix also adds
-    a column for all the different modes, with travel time (seconds) based on approximate speeds
+    a column for all the different modes, with travel time (seconds) based on approximate speeds.
 
     The function first converts the CRS of the zones to EPSG:27700 and calculates the centroids of the zones.
     Then, it calculates the distance matrix between the centroids and reshapes it from a wide format to a long format.
@@ -252,27 +251,16 @@ def zones_to_time_matrix(
 
     Parameters
     ----------
-    zones: (gpd.GeoDataFrame):
+    zones: gpd.GeoDataFrame
         A GeoDataFrame containing the zones.
-    id_col (str, optional):
+    id_col: str, optional
         The name of the column in the zones GeoDataFrame to use as the ID. If None, the index values are used. Default is None.
 
     Returns
     -------
-    if to_dict = False
-        pd.DataFrame: A dataframe containing the distance matrix. The columns are:
-    '{id_col}_from', '{id_col}_to', 'distance', {time}_{mode} with a column for each mode in the dictionary
-    if to_dict = True
-        converts the data to a dictionary
-        keys: a tuple representing ({id_col}_from, {id_col}_to)
-        values: another dictionary with the following keys:
-            - 'distance': a float representing the distance between the two locations.
-            - 'time_car': a float representing the travel time by car between the two locations.
-            - 'time_pt': a float representing the travel time by public transport between the two locations.
-            - 'time_cycle': a float representing the travel time by bicycle between the two locations.
-            - 'time_walk': a float representing the travel time on foot between the two locations.
-            - 'time_average': a float representing the average travel time between the two locations.
-        a value can be accessed using eg: dict[({id_col}_from, {id_col}_to)]['time_car']
+    pd.DataFrame
+        A DataFrame containing the distance matrix with travel times for different modes.
+        Columns: {id_col}_from, {id_col}_to, distance, mode, time
     """
 
     zones = zones.to_crs(epsg=27700)
@@ -302,15 +290,18 @@ def zones_to_time_matrix(
         "average": 15 * 1000 / 3600,
     }
 
-    # add travel time estimates (per mode)
+    # Create a list to hold the long-format data
+    long_format_data = []
+
+    # Calculate travel times and append to the list
     for mode, speed in mode_speeds_mps.items():
-        distances[f"time_{mode}"] = distances["distance"] / speed
+        mode_data = distances.copy()
+        mode_data["mode"] = mode
+        mode_data["time"] = mode_data["distance"] / speed
+        long_format_data.append(mode_data)
 
-    if to_dict:
-        # convert to a dictionary
-        return distances.set_index([f"{id_col}_from", f"{id_col}_to"]).to_dict("index")
-
-    return distances
+    # Concatenate the list into a single DataFrame
+    return pd.concat(long_format_data, ignore_index=True)
 
 
 def filter_matrix_to_boundary(
