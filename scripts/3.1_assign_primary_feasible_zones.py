@@ -1,7 +1,6 @@
 import pickle as pkl
 
 import geopandas as gpd
-import numpy as np
 import pandas as pd
 
 import acbm
@@ -15,13 +14,13 @@ from acbm.assigning.utils import (
 )
 from acbm.logger_config import assigning_primary_feasible_logger as logger
 from acbm.preprocessing import add_locations_to_activity_chains
-from acbm.utils import get_config
+from acbm.utils import get_config, init_rng
 
 
 @acbm_cli
 def main(config_file):
     config = get_config(config_file)
-    np.random.seed(config["parameters"]["seed"])
+    init_rng(config)
 
     #### LOAD DATA ####
 

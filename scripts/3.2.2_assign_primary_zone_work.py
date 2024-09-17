@@ -13,11 +13,14 @@ from acbm.assigning.select_zone_work import WorkZoneAssignment
 from acbm.assigning.utils import filter_matrix_to_boundary
 from acbm.logger_config import assigning_primary_zones_logger as logger
 from acbm.preprocessing import add_locations_to_activity_chains
-from acbm.utils import calculate_rmse
+from acbm.utils import calculate_rmse, get_config, init_rng
 
 
 @acbm_cli
-def main(_config_file):
+def main(config_file):
+    config = get_config(config_file)
+    init_rng(config)
+
     #### LOAD DATA ####
 
     # --- Possible zones for each activity (calculated in 3.1_assign_possible_zones.py)

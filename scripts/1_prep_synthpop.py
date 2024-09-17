@@ -1,19 +1,16 @@
-import numpy as np
 from uatk_spc.builder import Builder
 
 import acbm
 from acbm.assigning.cli import acbm_cli
-from acbm.utils import get_config
+from acbm.utils import get_config, init_rng
 
 
 @acbm_cli
 def main(config_file):
     config = get_config(config_file)
-    seed = config["parameters"]["seed"]
-    region = config["parameters"]["region"]
+    init_rng(config)
 
-    # Seed RNG
-    np.random.seed(seed)
+    region = config["parameters"]["region"]
 
     # Pick a region with SPC output saved
     path = acbm.root_path / "data/external/spc_output/raw/"

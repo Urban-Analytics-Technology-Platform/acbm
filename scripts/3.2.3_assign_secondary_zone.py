@@ -23,12 +23,15 @@ from acbm.assigning.select_zone_secondary import (
 )
 from acbm.logger_config import assigning_secondary_zones_logger as logger
 from acbm.preprocessing import add_location
+from acbm.utils import get_config, init_rng
 
 
 @acbm_cli
-def main(_config_file):
-    # --- Load in the data
+def main(config_file):
+    config = get_config(config_file)
+    init_rng(config)
 
+    # --- Load in the data
     logger.info("Loading: activity chains")
 
     activity_chains = pd.read_parquet(

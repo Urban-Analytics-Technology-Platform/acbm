@@ -13,6 +13,14 @@ def get_config(config: str) -> dict[Any, Any]:
         return tomlkit.load(f)
 
 
+def init_rng(config: dict):
+    try:
+        np.random.seed(config["parameters"]["seed"])
+    except Exception as err:
+        msg = f"config does not provide a rng seed with err: {err}"
+        ValueError(msg)
+
+
 def prepend_datetime(s: str, delimiter: str = "_") -> str:
     current_date = datetime.now().strftime("%Y-%m-%d")
     return f"{current_date}{delimiter}{s}"

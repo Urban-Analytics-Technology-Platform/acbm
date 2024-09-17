@@ -19,7 +19,7 @@ from acbm.preprocessing import (
     transform_by_group,
     truncate_values,
 )
-from acbm.utils import get_config
+from acbm.utils import get_config, init_rng
 
 
 @acbm_cli
@@ -27,8 +27,7 @@ def main(config_file):
     config = get_config(config_file)
 
     # Seed RNG
-    SEED = config["parameters"]["seed"]
-    np.random.seed(SEED)
+    init_rng(config)
 
     pd.set_option("display.max_columns", None)
 
@@ -86,13 +85,12 @@ def main(config_file):
 
     # Identify unique households
     unique_households = spc["household"].unique()
-    # Sample a subset of households
+    # Sample a subset of households, RNG seeded above with `init_rng``
     sampled_households = pd.Series(unique_households).sample(
         n=min(
             config["parameters"]["number_of_households"],
             unique_households.shape[0],
         ),
-        random_state=SEED,
     )
     # Filter the original DataFrame based on the sampled households
     spc = spc[spc["household"].isin(sampled_households)]
