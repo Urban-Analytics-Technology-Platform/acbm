@@ -308,11 +308,9 @@ def zones_to_time_matrix(
 
     if to_dict:
         # convert to a dictionary
-        distances_dict = distances.set_index(
-            [f"{id_col}_from", f"{id_col}_to"]
-        ).to_dict("index")
+        return distances.set_index([f"{id_col}_from", f"{id_col}_to"]).to_dict("index")
 
-    return distances_dict
+    return distances
 
 
 def filter_matrix_to_boundary(
