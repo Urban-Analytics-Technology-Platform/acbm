@@ -3,9 +3,9 @@ import pandas as pd
 from libpysal.weights import Queen
 
 import acbm
-from acbm.assigning.cli import acbm_cli
 from acbm.assigning.plots import plot_desire_lines, plot_scatter_actual_reported
 from acbm.assigning.select_facility import map_activity_locations, select_facility
+from acbm.cli import acbm_cli
 from acbm.logger_config import assigning_facility_locations_logger as logger
 from acbm.utils import get_config, init_rng
 

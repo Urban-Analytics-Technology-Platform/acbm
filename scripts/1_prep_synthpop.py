@@ -1,7 +1,7 @@
 from uatk_spc.builder import Builder
 
 import acbm
-from acbm.assigning.cli import acbm_cli
+from acbm.cli import acbm_cli
 from acbm.utils import get_config, init_rng
 
 

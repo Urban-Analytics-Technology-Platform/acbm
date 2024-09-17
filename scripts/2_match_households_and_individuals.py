@@ -8,7 +8,7 @@ import pandas as pd
 # from joblib import Parallel, delayed
 # from tqdm import trange
 import acbm
-from acbm.assigning.cli import acbm_cli
+from acbm.cli import acbm_cli
 from acbm.logger_config import matching_logger as logger
 from acbm.matching import match_categorical, match_individuals
 from acbm.preprocessing import (

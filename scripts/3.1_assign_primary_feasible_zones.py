@@ -4,7 +4,6 @@ import geopandas as gpd
 import pandas as pd
 
 import acbm
-from acbm.assigning.cli import acbm_cli
 from acbm.assigning.feasible_zones_primary import get_possible_zones
 from acbm.assigning.utils import (
     get_activities_per_zone,
@@ -12,6 +11,7 @@ from acbm.assigning.utils import (
     replace_intrazonal_travel_time,
     zones_to_time_matrix,
 )
+from acbm.cli import acbm_cli
 from acbm.logger_config import assigning_primary_feasible_logger as logger
 from acbm.preprocessing import add_locations_to_activity_chains
 from acbm.utils import get_config, init_rng
