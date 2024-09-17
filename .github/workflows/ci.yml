@@ -42,13 +42,39 @@ jobs:
           python-version: ${{ matrix.python-version }}
           allow-prereleases: true
 
+      - name: Setup Miniconda
+        uses: conda-incubator/setup-miniconda@v3.0.4
+        with:
+          auto-update-conda: true
+          python-version: ${{ matrix.python-version }}
+          channels: conda-forge
+          channel-priority: strict
+          auto-activate-base: false
+          miniforge-version: latest
+          use-mamba: true
+
+      - name: Create conda environment
+        shell: bash -el {0}
+        run: |
+          conda create --name gdal_env python=${{ matrix.python-version }} -y
+
+      - name: Install GDAL
+        shell: bash -el {0}
+        run: |
+          conda activate gdal_env
+          mamba install conda-forge::gdal
+
       - name: Install package
-        run: python -m pip install .[test]
+        shell: bash -el {0}
+        run: |
+          conda activate gdal_env
+          python -m pip install .[test]
 
       - name: Test package
-        run: >-
-          python -m pytest -ra --cov --cov-report=xml --cov-report=term
-          --durations=20
+        shell: bash -el {0}
+        run: |
+          conda activate gdal_env
+          python -m pytest -ra --cov --cov-report=xml --cov-report=term --durations=20
 
       - name: Upload coverage report
         uses: codecov/codecov-action@v4.0.1

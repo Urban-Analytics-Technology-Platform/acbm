@@ -1,5 +1,6 @@
 import math
 import os
+from pathlib import Path
 from typing import Optional
 
 import geopandas as gpd
@@ -16,7 +17,8 @@ def plot_workzone_assignment_line(
     n: int,
     selection_type: str = "random",
     sort_by: str = "assigned",
-    save_dir: Optional[str] = None,
+    save_dir: str | Path | None = None,
+    display: bool = False,
 ):
     """
     Plot the demand_actual and demand_assigned values for n origin_zones in subplots with two plots per row.
@@ -35,6 +37,12 @@ def plot_workzone_assignment_line(
     sort_by : str
         Column to sort the origin_zones by when selecting the top n. Options: 'actual', 'assigned'
         'actual': Sort by the actual demand, 'assigned': Sort by the assigned
+
+    save_dir: str
+        Output directory for saving plots.
+
+    display: bool
+        Whether to display plots by calling `plt.show()`.
 
     Returns
     -------
@@ -119,7 +127,8 @@ def plot_workzone_assignment_line(
         plt.savefig(plot_path)
         print(f"Plot saved to {plot_path}")
 
-    plt.show()
+    if display:
+        plt.show()
 
 
 def plot_workzone_assignment_heatmap(
@@ -127,7 +136,8 @@ def plot_workzone_assignment_heatmap(
     n: int,
     selection_type: str = "random",
     sort_by: str = "assigned",
-    save_dir: Optional[str] = None,
+    save_dir: str | Path | None = None,
+    display: bool = False,
 ):
     """
     Create three heatmaps side by side showing the aggregated difference between actual and assigned demand percentages
@@ -219,7 +229,8 @@ def plot_workzone_assignment_heatmap(
         plt.savefig(plot_path)
         print(f"Plot saved to {plot_path}")
 
-    plt.show()
+    if display:
+        plt.show()
 
 
 def plot_desire_lines(
@@ -229,7 +240,7 @@ def plot_desire_lines(
     bin_size: int,
     boundaries: gpd.GeoDataFrame,
     sample_size: Optional[int] = None,
-    save_dir: Optional[str] = None,
+    save_dir: str | Path | None = None,
 ) -> None:
     """
     Plots activity chains for a given activity type, bin size, geographical boundaries, and an optional sample size.
@@ -260,10 +271,15 @@ def plot_desire_lines(
 
     # filter to only include rows where activity_geom is not NA
     activity_chains_plot = activity_chains_plot[
-        activity_chains_plot["activity_geom"].notna()
+        activity_chains_plot["end_location_geometry"].notna()
+        & activity_chains_plot["start_location_geometry"].notna()
     ]
+
     activity_chains_plot["line_geometry"] = activity_chains_plot.apply(
-        lambda row: LineString([row["location"], row["activity_geom"]]), axis=1
+        lambda row: LineString(
+            [row["start_location_geometry"], row["end_location_geometry"]]
+        ),
+        axis=1,
     )
 
     # Convert to GeoDataFrame and set the geometry column to 'line_geometry'
@@ -372,7 +388,9 @@ def plot_scatter_actual_reported(
     y_label: str,
     title_prefix: str,
     activity_type: str,
-    save_dir: Optional[str] = None,
+    activity_type_col: str,
+    save_dir: str | Path | None = None,
+    display: bool = False,
 ):
     """
     Plots scatter plots with trend lines for different modes in activity chains.
@@ -385,16 +403,26 @@ def plot_scatter_actual_reported(
     - y_label: Label for the y-axis.
     - title_prefix: Prefix for the plot titles.
     - activity_type: Type of activity to plot.
+    - activity_type_col: Column name for the activity type.
     - save_dir: Directory to save the plots. If None, plots are not saved.
+    - display: Whether to display plots by calling `plt.show()`.
     """
 
     activity_chains_plot = activities.copy()
+    # only include rows where the activity type is the one we are interested in
+    activity_chains_plot = activity_chains_plot[
+        activity_chains_plot[activity_type_col] == activity_type
+    ]
     # filter to only include rows where activity_geom is not NA
     activity_chains_plot = activity_chains_plot[
-        activity_chains_plot["activity_geom"].notna()
+        activity_chains_plot["end_location_geometry"].notna()
+        & activity_chains_plot["start_location_geometry"].notna()
     ]
     activity_chains_plot["line_geometry"] = activity_chains_plot.apply(
-        lambda row: LineString([row["location"], row["activity_geom"]]), axis=1
+        lambda row: LineString(
+            [row["start_location_geometry"], row["end_location_geometry"]]
+        ),
+        axis=1,
     )
     # Set the geometry column to 'line_geometry'
     activity_chains_plot = activity_chains_plot.set_geometry("line_geometry")
@@ -406,8 +434,6 @@ def plot_scatter_actual_reported(
     activity_chains_plot = activity_chains_plot.to_crs(epsg=3857)
     # calculate the length of the line_geometry in meters
     activity_chains_plot["length"] = activity_chains_plot["line_geometry"].length
-
-    activity_chains_plot.head(10)
 
     # convert crs back to 4326
     activity_chains_plot = activity_chains_plot.to_crs(epsg=4326)
@@ -429,7 +455,7 @@ def plot_scatter_actual_reported(
         # Plot the scatter plot
         ax = axs[i]
         ax.scatter(
-            subset_mode[x_col], subset_mode[y_col] / 1000, alpha=0.3
+            subset_mode[x_col], subset_mode[y_col] / 1000, alpha=0.1, lw=0
         )  # Use a single color for all plots
 
         # Calculate and plot the trend line
@@ -454,4 +480,5 @@ def plot_scatter_actual_reported(
         print(f"Plot saved to {plot_path}")
 
     # Display the plot
-    plt.show()
+    if display:
+        plt.show()
