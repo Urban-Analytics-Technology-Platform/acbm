@@ -72,52 +72,39 @@ activity_chains = activity_chains.drop("index_right", axis=1)
 
 logger.info("Loading travel time matrix")
 
+# TODO: check config file to see if we have a travel time matrix. If not, create one
 travel_times = pd.read_parquet(
-    acbm.root_path / "data/external/travel_times/oa/travel_time_matrix_acbm.parquet"
+    acbm.root_path / "data/external/travel_times/oa/travel_time_matrix.parquet"
 )
 
 logger.info("Travel time matrix loaded")
 
-logger.info("Merging travel time matrix with boundaries")
+# # Load the configuration file
+# config_file_path = 'config.toml'
+# travel_time_matrix_path = acbm.root_path / "data/external/travel_times/oa/travel_time_matrix.parquet"
 
-# convert from_id and to_id to int to match the boundaries data type
-travel_times = travel_times.astype({"from_id": int, "to_id": int})
+# with open(config_file_path, 'r') as config_file:
+#     config = toml.load(config_file)
 
-# merge travel_times with boundaries
-travel_times = travel_times.merge(
-    boundaries[["OBJECTID", "OA21CD"]],
-    left_on="from_id",
-    right_on="OBJECTID",
-    how="left",
-)
-travel_times = travel_times.drop(columns="OBJECTID")
+# # Check if travel_times is set to true and try to load the travel time matrix
+# if config.get('travel_times') == True:
+#     try:
+#         travel_times = pd.read_parquet(travel_time_matrix_path)
+#         print("Travel time matrix loaded successfully.")
+#     except Exception as e:
+#         logger.info(f"Failed to load travel time matrix: {e}")
+#         logger.info("Creating a new travel time matrix.")
+#         # Create a new travel time matrix based on distances between zones
+#         travel_times = zones_to_time_matrix(zones = boundaries, id_col = "OA21CD")
+#         # TODO: save the travel time matrix
 
-travel_times = travel_times.merge(
-    boundaries[["OBJECTID", "OA21CD"]],
-    left_on="to_id",
-    right_on="OBJECTID",
-    how="left",
-    suffixes=("_from", "_to"),
-)
-travel_times = travel_times.drop(columns="OBJECTID")
+# # If travel_times is not true or loading failed, create a new travel time matrix
+# if config.get('travel_times') != True:
+#     logger.info("No travel time matrix found. Creating a new travel time matrix.")
+#     # Create a new travel time matrix based on distances between zones
+#     travel_times = zones_to_time_matrix(zones = boundaries, id_col = "OA21CD")
 
-# #### Travel distance matrix
-#
-# Some areas aren't reachable by specific modes. We create a travel distance matrix
-# to fall back on when the, inplace=Truere are no travel time calculations
-
-logger.info("Creating travel time estimates")
-
-travel_time_estimates = zones_to_time_matrix(
-    zones=boundaries, id_col="OA21CD", to_dict=True
-)
-
-with open(
-    acbm.root_path / "data/interim/assigning/travel_time_estimates.pkl", "wb"
-) as f:
-    pkl.dump(travel_time_estimates, f)
-
-logger.info("Travel time estimates created")
+# logger.info("Travel time estimates created")
 
 # --- Intrazonal trip times
 #
@@ -132,7 +119,7 @@ logger.info("Travel time estimates created")
 
 logger.info("Creating intrazonal travel time estimates")
 
-intrazone_times = intrazone_time(boundaries.set_index("OBJECTID"))
+intrazone_times = intrazone_time(zones=boundaries, key_column="OA21CD")
 
 logger.info("Intrazonal travel time estimates created")
 
