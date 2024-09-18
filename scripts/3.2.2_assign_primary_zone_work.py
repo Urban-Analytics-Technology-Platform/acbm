@@ -9,7 +9,10 @@ from acbm.assigning.plots import (
     plot_workzone_assignment_line,
 )
 from acbm.assigning.select_zone_work import WorkZoneAssignment
-from acbm.assigning.utils import filter_matrix_to_boundary
+from acbm.assigning.utils import (
+    activity_chains_for_assignment,
+    filter_matrix_to_boundary,
+)
 from acbm.cli import acbm_cli
 from acbm.logger_config import assigning_primary_zones_logger as logger
 from acbm.preprocessing import add_locations_to_activity_chains
@@ -48,9 +51,7 @@ def main(config_file):
     osm_data_gdf = gpd.GeoDataFrame(osm_data_gdf, geometry="geometry", crs="EPSG:4326")
 
     # --- Activity chains
-    activity_chains = pd.read_parquet(
-        acbm.root_path / "data/interim/matching/spc_with_nts_trips.parquet"
-    )
+    activity_chains = activity_chains_for_assignment()
     activity_chains = add_locations_to_activity_chains(activity_chains)
     activity_chains = activity_chains[activity_chains["TravDay"] == 3]  # Wednesday
 

@@ -6,6 +6,7 @@ from acbm.assigning.select_zone_primary import (
     fill_missing_zones,
     select_zone,
 )
+from acbm.assigning.utils import activity_chains_for_assignment
 from acbm.cli import acbm_cli
 from acbm.logger_config import assigning_primary_zones_logger as logger
 from acbm.preprocessing import add_location
@@ -54,9 +55,7 @@ def main(config_file):
     # --- Activity chains
     logger.info("Loading activity chains")
 
-    activity_chains = pd.read_parquet(
-        acbm.root_path / "data/interim/matching/spc_with_nts_trips.parquet"
-    )
+    activity_chains = activity_chains_for_assignment()
     activity_chains = activity_chains[activity_chains["TravDay"] == 3]  # Wednesday
 
     logger.info("Filtering activity chains for trip purpose: education")

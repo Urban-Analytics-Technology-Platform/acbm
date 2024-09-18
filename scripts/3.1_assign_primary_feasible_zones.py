@@ -6,6 +6,7 @@ import pandas as pd
 import acbm
 from acbm.assigning.feasible_zones_primary import get_possible_zones
 from acbm.assigning.utils import (
+    activity_chains_for_assignment,
     get_activities_per_zone,
     intrazone_time,
     replace_intrazonal_travel_time,
@@ -24,22 +25,9 @@ def main(config_file):
 
     #### LOAD DATA ####
 
-    columns = [
-        "TravDay",
-        "OA11CD",
-        "dact",
-        "mode",
-        "tst",
-        "id",
-        "TripTotalTime",
-        "education_type",
-    ]
     # --- Activity chains
     logger.info("Loading activity chains")
-    activity_chains = pd.read_parquet(
-        acbm.root_path / "data/interim/matching/spc_with_nts_trips.parquet",
-        columns=columns,
-    )
+    activity_chains = activity_chains_for_assignment()
     logger.info("Activity chains loaded")
 
     # Filter to a specific day of the week
