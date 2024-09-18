@@ -24,10 +24,21 @@ def main(config_file):
 
     #### LOAD DATA ####
 
+    columns = [
+        "TravDay",
+        "OA11CD",
+        "dact",
+        "mode",
+        "tst",
+        "id",
+        "TripTotalTime",
+        "education_type",
+    ]
     # --- Activity chains
     logger.info("Loading activity chains")
     activity_chains = pd.read_parquet(
-        acbm.root_path / "data/interim/matching/spc_with_nts_trips.parquet"
+        acbm.root_path / "data/interim/matching/spc_with_nts_trips.parquet",
+        columns=columns,
     )
     logger.info("Activity chains loaded")
 
