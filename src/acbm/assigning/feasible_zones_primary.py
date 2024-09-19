@@ -2,7 +2,10 @@ from typing import Optional
 
 import geopandas as gpd
 import pandas as pd
+import pandera as pa
 from pandarallel import pandarallel
+from pandera import Check, Column, DataFrameSchema
+from pandera.errors import SchemaErrors
 
 from acbm.assigning.utils import (
     _map_day_to_wkday_binary,
@@ -12,6 +15,53 @@ from acbm.assigning.utils import (
 from acbm.logger_config import assigning_primary_feasible_logger as logger
 
 pandarallel.initialize(progress_bar=True)
+
+
+# --- Schemas for validation
+
+activity_chains_schema = DataFrameSchema(
+    {
+        "mode": Column(str),
+        "TravDay": Column(pa.Float, Check.isin([1, 2, 3, 4, 5, 6, 7]), nullable=True),
+        "tst": Column(pa.Float, Check.less_than_or_equal_to(1440), nullable=True),
+        "TripTotalTime": Column(pa.Float, nullable=True),
+        # TODO: add more columns ...
+    },
+    strict=False,
+)
+
+activities_per_zone_schema = DataFrameSchema(
+    {
+        "counts": Column(pa.Int),
+        "floor_area": Column(pa.Float),
+        "activity": Column(str),
+    },
+    strict=False,
+)
+
+boundaries_schema = DataFrameSchema(
+    {
+        "geometry": Column("geometry"),
+    },
+    strict=False,
+)
+
+travel_times_schema = DataFrameSchema(
+    {
+        "mode": Column(str),
+        "weekday": Column(pa.Float, Check.isin([0, 1]), nullable=True),
+        # "time_of_day": Column(str, nullable=True),
+        "time": Column(float),
+    },
+    strict=False,
+)
+
+input_schemas = {
+    "activity_chains": activity_chains_schema,
+    "activities_per_zone": activities_per_zone_schema,
+    "boundaries": boundaries_schema,
+    "travel_times": travel_times_schema,
+}
 
 
 def get_possible_zones(
@@ -61,6 +111,22 @@ def get_possible_zones(
         165: {'E00059012': ['E00056918','E00056952', 'E00056923']}
         }
     """
+
+    # Validate inputs lazily
+    try:
+        activity_chains = input_schemas["activity_chains"].validate(
+            activity_chains, lazy=True
+        )
+        activities_per_zone = input_schemas["activities_per_zone"].validate(
+            activities_per_zone, lazy=True
+        )
+        boundaries = input_schemas["boundaries"].validate(boundaries, lazy=True)
+        travel_times = input_schemas["travel_times"].validate(travel_times, lazy=True)
+
+    except SchemaErrors as e:
+        print("Validation failed with errors:")
+        print(e.failure_cases)  # prints all the validation errors at once
+        return None
 
     if travel_times is None:
         logger.info("Travel time matrix not provided: Creating travel times estimates")
