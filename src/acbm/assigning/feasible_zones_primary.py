@@ -3,6 +3,7 @@ from pandarallel import pandarallel
 
 from acbm.assigning.utils import _map_day_to_wkday_binary, _map_time_to_day_part
 from acbm.logger_config import assigning_primary_feasible_logger as logger
+from acbm.utils import Config
 
 pandarallel.initialize(progress_bar=True)
 
@@ -238,7 +239,7 @@ def _get_possible_zones(
 
     # filter the travel_times dataframe by trip_origin and activity_purpose
     travel_times_filtered_origin_mode = travel_times[
-        travel_times["OA21CD_from"] == origin_zone
+        travel_times[Config.get_origin_zone_id(zone_id)] == origin_zone
     ]
     # do we include only zones that have an activity that matches the activity purpose?
     if filter_by_activity:
@@ -253,9 +254,9 @@ def _get_possible_zones(
 
         # keep only the zones that have the activity purpose
         travel_times_filtered_origin_mode = travel_times_filtered_origin_mode[
-            travel_times_filtered_origin_mode["OA21CD_to"].isin(
-                filtered_activities_per_zone[zone_id]
-            )
+            travel_times_filtered_origin_mode[
+                Config.get_destination_zone_id(zone_id)
+            ].isin(filtered_activities_per_zone[zone_id])
         ]
     # how many zones are reachable?
     logger.debug(
@@ -293,7 +294,9 @@ def _get_possible_zones(
 
     # create dictionary with key = origin_zone and values = list of travel_times_filtered.OA21CD_to
     return (
-        travel_times_filtered_time.groupby("OA21CD_from")["OA21CD_to"]
+        travel_times_filtered_time.groupby(Config.get_origin_zone_id(zone_id))[
+            Config.get_destination_zone_id(zone_id)
+        ]
         .apply(list)
         .to_dict()
     )

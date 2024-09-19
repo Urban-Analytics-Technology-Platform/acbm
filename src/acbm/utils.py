@@ -22,6 +22,14 @@ class Config:
     def get_zone_id(self) -> str:
         return self.config["parameters"]["zone_id"]
 
+    @classmethod
+    def get_origin_zone_id(cls, zone_id: str) -> str:
+        return zone_id + "_from"
+
+    @classmethod
+    def get_destination_zone_id(cls, zone_id: str) -> str:
+        return zone_id + "_to"
+
     def get_config(self) -> dict[str, Any]:
         return self.config
 

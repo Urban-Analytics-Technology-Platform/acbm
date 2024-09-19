@@ -31,6 +31,7 @@ from acbm.utils import Config
 def main(config_file):
     config = Config(config_file)
     config.init_rng()
+    zone_id = config.get_zone_id()
 
     # --- Load in the data
     logger.info("Loading: activity chains")
@@ -377,7 +378,12 @@ def main(config_file):
     # Get unique zone labels for matrix
     # TODO: get these from boundary/zone layer instead
     zone_labels = pd.unique(
-        travel_times[["OA21CD_from", "OA21CD_to"]].values.ravel("K")
+        travel_times[
+            [
+                config.get_origin_zone_id(zone_id),
+                config.get_destination_zone_id(zone_id),
+            ]
+        ].values.ravel("K")
     )
     zone_labels = tuple(zone_labels)  # PAM function needs a tuple
 
@@ -387,8 +393,8 @@ def main(config_file):
         value_column="travel_time_p50",
         zone_labels=zone_labels,
         fill_value=300,  # replace missing travel times with 6 hours (they are unreachable)
-        zone_from="OA21CD_from",
-        zone_to="OA21CD_to",
+        zone_from=config.get_origin_zone_id(zone_id),
+        zone_to=config.get_destination_zone_id(zone_id),
     )
 
     matrix_od_probs = create_od_matrices(
@@ -400,8 +406,8 @@ def main(config_file):
         # 1 used instead of 0 to avoid (ValueError: Total of weights must be finite) in weighted sampling
         # (https://github.com/arup-group/pam/blob/c8bff760fbf92f93f95ff90e4e2af7bbe107c7e3/src/pam/planner/utils_planner.py#L17)
         fill_value=1,
-        zone_from="OA21CD_from",
-        zone_to="OA21CD_to",
+        zone_from=config.get_origin_zone_id(zone_id),
+        zone_to=config.get_destination_zone_id(zone_id),
     )
 
     # Create ODMatrix objects
