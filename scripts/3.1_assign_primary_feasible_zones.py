@@ -226,6 +226,7 @@ def main(config_file):
         key_col="id",
         filter_by_activity=True,
         activity_col="education_type",
+        zone_id=config.get_zone_id(),
         time_tolerance=0.3,
     )
 
@@ -251,6 +252,7 @@ def main(config_file):
         key_col="id",
         filter_by_activity=True,
         activity_col="dact",
+        zone_id=config.get_zone_id(),
         time_tolerance=0.3,
     )
 

@@ -14,8 +14,9 @@ def get_possible_zones(
     activities_per_zone: pd.DataFrame,
     activity_col: str,
     key_col: str,
+    zone_id: str,
     filter_by_activity: bool = False,
-    time_tolerance: int = 0.2,
+    time_tolerance: float = 0.2,
 ) -> dict:
     """
     Get possible zones for all activity chains in the dataset. This function loops over the travel_times dataframe and filters by mode, time of day and weekday/weekend.
@@ -149,6 +150,7 @@ def get_possible_zones(
                                     activities_per_zone=activities_per_zone,
                                     filter_by_activity=filter_by_activity,
                                     activity_col=activity_col,
+                                    zone_id=zone_id,
                                     time_tolerance=time_tolerance,
                                 )
                             },
@@ -178,6 +180,7 @@ def get_possible_zones(
                             activities_per_zone=activities_per_zone,
                             filter_by_activity=filter_by_activity,
                             activity_col=activity_col,
+                            zone_id=zone_id,
                             time_tolerance=time_tolerance,
                         )
                     },
