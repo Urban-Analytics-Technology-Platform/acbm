@@ -86,7 +86,7 @@ def main(config_file):
     # Sample a subset of households, RNG seeded above with `init_rng``
     sampled_households = pd.Series(unique_households).sample(
         n=min(
-            config["parameters"]["number_of_households"],
+            config.get_config()["parameters"]["number_of_households"],
             unique_households.shape[0],
         ),
     )
