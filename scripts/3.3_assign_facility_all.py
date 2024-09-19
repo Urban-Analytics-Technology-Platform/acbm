@@ -67,7 +67,7 @@ def main(config_file):
 
     osm_data_gdf = gpd.sjoin(
         osm_data_gdf,
-        boundaries[["OA21CD", "geometry"]],
+        boundaries[[config.get_zone_id(), "geometry"]],
         how="inner",
         predicate="within",
     )
@@ -79,7 +79,9 @@ def main(config_file):
     logger.info("1. Calculating neighboring zones")
 
     # get neighbors
-    zone_neighbors = Queen.from_dataframe(boundaries, idVariable="OA21CD").neighbors
+    zone_neighbors = Queen.from_dataframe(
+        boundaries, idVariable=config.get_zone_id()
+    ).neighbors
 
     # - HOME LOCATIONS
     logger.info("2. Selecting HOME locations")
@@ -96,7 +98,7 @@ def main(config_file):
         facilities_gdf=osm_data_gdf,
         row_destination_zone_col="dzone",
         row_activity_type_col="destination activity",
-        gdf_facility_zone_col="OA21CD",
+        gdf_facility_zone_col=config.get_zone_id(),
         gdf_facility_type_col="activities",
         gdf_sample_col="floor_area",
         neighboring_zones=zone_neighbors,
@@ -118,7 +120,7 @@ def main(config_file):
         facilities_gdf=osm_data_gdf,
         row_destination_zone_col="dzone",
         row_activity_type_col="destination activity",
-        gdf_facility_zone_col="OA21CD",
+        gdf_facility_zone_col=config.get_zone_id(),
         gdf_facility_type_col="activities",
         gdf_sample_col="floor_area",
         neighboring_zones=zone_neighbors,
@@ -157,7 +159,7 @@ def main(config_file):
         facilities_gdf=osm_data_gdf,
         row_destination_zone_col="dzone",
         row_activity_type_col="education_type",
-        gdf_facility_zone_col="OA21CD",
+        gdf_facility_zone_col=config.get_zone_id(),
         gdf_facility_type_col="activities",
         gdf_sample_col="floor_area",
         neighboring_zones=zone_neighbors,
@@ -195,7 +197,7 @@ def main(config_file):
         facilities_gdf=osm_data_gdf,
         row_destination_zone_col="dzone",
         row_activity_type_col="purp",
-        gdf_facility_zone_col="OA21CD",
+        gdf_facility_zone_col=config.get_zone_id(),
         gdf_facility_type_col="activities",
         gdf_sample_col="floor_area",
         neighboring_zones=zone_neighbors,

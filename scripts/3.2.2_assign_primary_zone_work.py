@@ -162,8 +162,8 @@ def main(config_file):
         travel_demand_clipped = filter_matrix_to_boundary(
             boundary=boundaries,
             matrix=travel_demand_clipped,
-            boundary_id_col="OA21CD",
-            matrix_id_col="OA21CD",
+            boundary_id_col=config.get_zone_id(),
+            matrix_id_col=config.get_zone_id(),
             type="both",
         )
 

@@ -65,7 +65,7 @@ def main(config_file):
     # Spatial join to identify which polygons each point is in
     activity_chains = gpd.sjoin(
         activity_chains,
-        boundaries[["OA21CD", "geometry"]],
+        boundaries[[config.get_zone_id(), "geometry"]],
         how="left",
         predicate="within",
     )
@@ -93,7 +93,7 @@ def main(config_file):
 
     # merge travel_times with boundaries
     travel_times = travel_times.merge(
-        boundaries[["OBJECTID", "OA21CD"]],
+        boundaries[["OBJECTID", config.get_zone_id()]],
         left_on="from_id",
         right_on="OBJECTID",
         how="left",
@@ -101,7 +101,7 @@ def main(config_file):
     travel_times = travel_times.drop(columns="OBJECTID")
 
     travel_times = travel_times.merge(
-        boundaries[["OBJECTID", "OA21CD"]],
+        boundaries[["OBJECTID", config.get_zone_id()]],
         left_on="to_id",
         right_on="OBJECTID",
         how="left",
@@ -117,7 +117,7 @@ def main(config_file):
     logger.info("Creating travel time estimates")
 
     travel_time_estimates = zones_to_time_matrix(
-        zones=boundaries, id_col="OA21CD", to_dict=True
+        zones=boundaries, id_col=config.get_zone_id(), to_dict=True
     )
 
     with open(
@@ -182,7 +182,10 @@ def main(config_file):
     logger.info("Getting the number of activities in each zone")
     # spatial join to identify which zone each point in osm_data is in
     osm_data_gdf = gpd.sjoin(
-        osm_data, boundaries[["OA21CD", "geometry"]], how="inner", predicate="within"
+        osm_data,
+        boundaries[[config.get_zone_id(), "geometry"]],
+        how="inner",
+        predicate="within",
     )
     # save as pickle
     osm_data_gdf.to_pickle(
@@ -190,7 +193,10 @@ def main(config_file):
     )
 
     activities_per_zone = get_activities_per_zone(
-        zones=boundaries, zone_id_col="OA21CD", activity_pts=osm_data, return_df=True
+        zones=boundaries,
+        zone_id_col=config.get_zone_id(),
+        activity_pts=osm_data,
+        return_df=True,
     )
 
     activities_per_zone.to_parquet(

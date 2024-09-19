@@ -200,7 +200,8 @@ def _get_possible_zones(
     activities_per_zone: pd.DataFrame,
     filter_by_activity: bool,
     activity_col: str,
-    time_tolerance: int = 0.2,
+    zone_id: str,
+    time_tolerance: float = 0.2,
 ) -> dict:
     """
     Get possible zones for a given activity chain
@@ -231,7 +232,7 @@ def _get_possible_zones(
     # get the travel time
     travel_time = activity["TripTotalTime"]
     # get the origin zone
-    origin_zone = activity["OA21CD"]
+    origin_zone = activity[zone_id]
     # get the activity purpose
     activity_purpose = activity[activity_col]
 
@@ -253,7 +254,7 @@ def _get_possible_zones(
         # keep only the zones that have the activity purpose
         travel_times_filtered_origin_mode = travel_times_filtered_origin_mode[
             travel_times_filtered_origin_mode["OA21CD_to"].isin(
-                filtered_activities_per_zone["OA21CD"]
+                filtered_activities_per_zone[zone_id]
             )
         ]
     # how many zones are reachable?

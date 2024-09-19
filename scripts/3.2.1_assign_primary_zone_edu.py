@@ -83,7 +83,7 @@ def main(config_file):
     # Spatial join to identify which polygons each point is in
     activity_chains_edu = gpd.sjoin(
         activity_chains_edu,
-        boundaries[["OA21CD", "geometry"]],
+        boundaries[[config.get_zone_id(), "geometry"]],
         how="left",
         predicate="within",
     )
@@ -119,8 +119,8 @@ def main(config_file):
             possible_zones=possible_zones_school,
             activities_per_zone=activities_per_zone,
             id_col="id",
+            zone_id_col=config.get_zone_id(),
             weighting="floor_area",
-            zone_id_col="OA21CD",
         ),
         axis=1,
     )

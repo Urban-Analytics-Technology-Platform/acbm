@@ -10,8 +10,8 @@ def select_zone(
     possible_zones: dict,
     activities_per_zone: pd.DataFrame,
     id_col: str,
+    zone_id_col: str,
     weighting: str = "none",
-    zone_id_col: str = "OA21CD",
 ) -> str:
     """
     Select a zone for an activity. For each activity, we have a list of possible zones
@@ -158,6 +158,7 @@ def fill_missing_zones(
     travel_times_est: dict,
     activities_per_zone: pd.DataFrame,
     activity_col: str,
+    zone_id: str,
     use_mode: bool = False,
 ):
     """
@@ -188,9 +189,9 @@ def fill_missing_zones(
 
     """
     activity_purpose = activity[activity_col]
-    from_zone = activity["OA21CD"]
+    from_zone = activity[zone_id]
     to_zones = activities_per_zone[activities_per_zone["activity"] == activity_purpose][
-        "OA21CD"
+        zone_id
     ].tolist()
 
     logger.debug(

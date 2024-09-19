@@ -73,7 +73,7 @@ def main(config_file):
     # Spatial join to identify which polygons each point is in
     activity_chains = gpd.sjoin(
         activity_chains,
-        boundaries[["OA21CD", "geometry"]],
+        boundaries[[config.get_zone_id(), "geometry"]],
         how="left",
         predicate="within",
     )
@@ -111,7 +111,7 @@ def main(config_file):
 
     logger.info("Preprocessing: Adding dzone for all home activities")
     # replace dzone column with OA21CD. For all home activities, the destination is home
-    activity_chains_home["dzone"] = activity_chains_home["OA21CD"]
+    activity_chains_home["dzone"] = activity_chains_home[config.get_zone_id()]
     activity_chains_home.head(10)
 
     logger.info("Preprocessing: Combining all activity chains")
@@ -130,7 +130,7 @@ def main(config_file):
 
     logger.info("Preprocessing: Adding hzone column")
     # Add hzone column (PAM needs one)
-    activity_chains_all["hzone"] = activity_chains_all["OA21CD"]
+    activity_chains_all["hzone"] = activity_chains_all[config.get_zone_id()]
 
     # TODO find out why some hzone values are NaN
     logger.info("Preprocessing: Filling NaN values in hzone column")
@@ -322,7 +322,7 @@ def main(config_file):
 
     # merge travel_times with boundaries
     travel_times = travel_times.merge(
-        boundaries[["OBJECTID", "OA21CD"]],
+        boundaries[["OBJECTID", config.get_zone_id()]],
         left_on="from_id",
         right_on="OBJECTID",
         how="left",
@@ -330,7 +330,7 @@ def main(config_file):
     travel_times = travel_times.drop(columns="OBJECTID")
 
     travel_times = travel_times.merge(
-        boundaries[["OBJECTID", "OA21CD"]],
+        boundaries[["OBJECTID", config.get_zone_id()]],
         left_on="to_id",
         right_on="OBJECTID",
         how="left",
@@ -352,14 +352,14 @@ def main(config_file):
 
     # group by zone and get sum of counts and floor_area
     activities_per_zone = (
-        activities_per_zone.groupby("OA21CD")
+        activities_per_zone.groupby(config.get_zone_id())
         .agg({"counts": "sum", "floor_area": "sum"})
         .reset_index()
     )
 
     # Merge to get floor_area for origin
     merged_df = travel_times.merge(
-        activities_per_zone, left_on="OA21CD_to", right_on="OA21CD"
+        activities_per_zone, left_on="OA21CD_to", right_on=config.get_zone_id()
     )
 
     # Calculate the visit_probability: it is a funciton of floor_area and travel time
