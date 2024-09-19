@@ -15,13 +15,13 @@ from acbm.assigning.utils import (
 from acbm.cli import acbm_cli
 from acbm.logger_config import assigning_primary_feasible_logger as logger
 from acbm.preprocessing import add_locations_to_activity_chains
-from acbm.utils import get_config, init_rng
+from acbm.utils import Config
 
 
 @acbm_cli
 def main(config_file):
-    config = get_config(config_file)
-    init_rng(config)
+    config = Config(config_file)
+    config.init_rng()
 
     #### LOAD DATA ####
 

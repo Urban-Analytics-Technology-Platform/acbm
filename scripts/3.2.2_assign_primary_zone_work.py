@@ -16,13 +16,13 @@ from acbm.assigning.utils import (
 from acbm.cli import acbm_cli
 from acbm.logger_config import assigning_primary_zones_logger as logger
 from acbm.preprocessing import add_locations_to_activity_chains
-from acbm.utils import calculate_rmse, get_config, init_rng
+from acbm.utils import Config, calculate_rmse
 
 
 @acbm_cli
 def main(config_file):
-    config = get_config(config_file)
-    init_rng(config)
+    config = Config(config_file)
+    config.init_rng()
 
     #### LOAD DATA ####
 

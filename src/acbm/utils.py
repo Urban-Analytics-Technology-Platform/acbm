@@ -5,20 +5,33 @@ import numpy as np
 import tomlkit
 from sklearn.metrics import mean_squared_error
 
-import acbm
 
+class Config:
+    config: dict[str, Any]
 
-def get_config(config: str) -> dict[Any, Any]:
-    with open(acbm.root_path / config, "rb") as f:
-        return tomlkit.load(f)
+    def __init__(self, filepath) -> None:
+        with open(filepath, "rb") as f:
+            self.config = tomlkit.load(f)
 
+    def get_seed(self) -> int:
+        return self.config["parameters"]["seed"]
 
-def init_rng(config: dict):
-    try:
-        np.random.seed(config["parameters"]["seed"])
-    except Exception as err:
-        msg = f"config does not provide a rng seed with err: {err}"
-        ValueError(msg)
+    def get_region(self) -> int:
+        return self.config["parameters"]["region"]
+
+    def get_zone_id(self) -> str:
+        return self.config["parameters"]["zone_id"]
+
+    def get_config(self) -> dict[str, Any]:
+        return self.config
+
+    # TODO: consider moving to method in config
+    def init_rng(self):
+        try:
+            np.random.seed(self.get_seed())
+        except Exception as err:
+            msg = f"config does not provide a rng seed with err: {err}"
+            ValueError(msg)
 
 
 def prepend_datetime(s: str, delimiter: str = "_") -> str:

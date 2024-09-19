@@ -19,15 +19,13 @@ from acbm.preprocessing import (
     transform_by_group,
     truncate_values,
 )
-from acbm.utils import get_config, init_rng
+from acbm.utils import Config
 
 
 @acbm_cli
 def main(config_file):
-    config = get_config(config_file)
-
-    # Seed RNG
-    init_rng(config)
+    config = Config(config_file)
+    config.init_rng()
 
     pd.set_option("display.max_columns", None)
 

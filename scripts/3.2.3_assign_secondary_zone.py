@@ -24,13 +24,13 @@ from acbm.assigning.utils import activity_chains_for_assignment
 from acbm.cli import acbm_cli
 from acbm.logger_config import assigning_secondary_zones_logger as logger
 from acbm.preprocessing import add_location
-from acbm.utils import get_config, init_rng
+from acbm.utils import Config
 
 
 @acbm_cli
 def main(config_file):
-    config = get_config(config_file)
-    init_rng(config)
+    config = Config(config_file)
+    config.init_rng()
 
     # --- Load in the data
     logger.info("Loading: activity chains")
