@@ -19,6 +19,15 @@ def activity_chains_for_assignment() -> pd.DataFrame:
         "TripTotalTime",
         "education_type",
         "TripID",
+        # Required for 3.2.3
+        "household",
+        "seq",
+        "oact",
+        "nts_ind_id",
+        "nts_hh_id",
+        "age_years",
+        "TripDisIncSW",
+        "tet",
     ]
     return pd.read_parquet(
         acbm.root_path / "data/interim/matching/spc_with_nts_trips.parquet",

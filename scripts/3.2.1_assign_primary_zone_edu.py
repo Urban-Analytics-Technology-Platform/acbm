@@ -147,6 +147,7 @@ def main(config_file):
             activity=row,
             travel_times_est=travel_time_estimates,
             activities_per_zone=activities_per_zone,
+            zone_id=config.get_zone_id(),
             activity_col="education_type",
         ),
         axis=1,
