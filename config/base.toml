@@ -3,3 +3,4 @@ seed = 0
 region = "leeds"
 number_of_households = 10000
 zone_id = "OA21CD"
+travel_times = true
