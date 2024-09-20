@@ -10,12 +10,12 @@ from acbm.assigning.utils import activity_chains_for_assignment
 from acbm.cli import acbm_cli
 from acbm.logger_config import assigning_primary_zones_logger as logger
 from acbm.preprocessing import add_location
-from acbm.utils import Config
+from acbm.utils import load_config
 
 
 @acbm_cli
 def main(config_file):
-    config = Config(config_file)
+    config = load_config(config_file)
     # TODO: consider if RNG seed needs to be distinct for different assignments
     config.init_rng()
 
@@ -83,7 +83,7 @@ def main(config_file):
     # Spatial join to identify which polygons each point is in
     activity_chains_edu = gpd.sjoin(
         activity_chains_edu,
-        boundaries[[config.get_zone_id(), "geometry"]],
+        boundaries[[config.zone_id, "geometry"]],
         how="left",
         predicate="within",
     )
@@ -119,7 +119,7 @@ def main(config_file):
             possible_zones=possible_zones_school,
             activities_per_zone=activities_per_zone,
             id_col="id",
-            zone_id_col=config.get_zone_id(),
+            zone_id_col=config.zone_id,
             weighting="floor_area",
         ),
         axis=1,
@@ -147,7 +147,7 @@ def main(config_file):
             activity=row,
             travel_times_est=travel_time_estimates,
             activities_per_zone=activities_per_zone,
-            zone_id=config.get_zone_id(),
+            zone_id=config.zone_id,
             activity_col="education_type",
         ),
         axis=1,

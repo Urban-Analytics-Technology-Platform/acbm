@@ -4,3 +4,4 @@ region = "leeds"
 number_of_households = 500
 zone_id = "OA21CD"
 travel_times = true
+max_zones = 8

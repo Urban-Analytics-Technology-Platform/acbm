@@ -2,14 +2,14 @@ from uatk_spc.builder import Builder
 
 import acbm
 from acbm.cli import acbm_cli
-from acbm.utils import Config
+from acbm.utils import load_config
 
 
 @acbm_cli
 def main(config_file):
-    config = Config(config_file)
+    config = load_config(config_file)
     config.init_rng()
-    region = config.get_region()
+    region = config.region
 
     # Pick a region with SPC output saved
     path = acbm.root_path / "data/external/spc_output/raw/"

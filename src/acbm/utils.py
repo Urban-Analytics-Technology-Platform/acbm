@@ -1,45 +1,62 @@
+from dataclasses import dataclass
 from datetime import datetime
-from typing import Any
+from pathlib import Path
 
 import numpy as np
 import tomlkit
+from pydantic import BaseModel, Field
 from sklearn.metrics import mean_squared_error
 
 
-class Config:
-    config: dict[str, Any]
+@dataclass(frozen=True)
+class Parameters(BaseModel):
+    seed: int
+    region: str
+    number_of_households: int | None
+    zone_id: str
+    travel_times: bool
+    max_zones: int | None
 
-    def __init__(self, filepath) -> None:
-        with open(filepath, "rb") as f:
-            self.config = tomlkit.load(f)
 
-    def get_seed(self) -> int:
-        return self.config["parameters"]["seed"]
+class Config(BaseModel):
+    parameters: Parameters = Field(description="Config: parameters.")
 
-    def get_region(self) -> int:
-        return self.config["parameters"]["region"]
+    @property
+    def seed(self) -> int:
+        return self.parameters.seed
 
-    def get_zone_id(self) -> str:
-        return self.config["parameters"]["zone_id"]
+    @property
+    def region(self) -> str:
+        return self.parameters.region
+
+    @property
+    def zone_id(self) -> str:
+        return self.parameters.zone_id
+
+    @property
+    def max_zones(self) -> int:
+        return self.parameters.max_zones
 
     @classmethod
-    def get_origin_zone_id(cls, zone_id: str) -> str:
+    def origin_zone_id(cls, zone_id: str) -> str:
         return zone_id + "_from"
 
     @classmethod
-    def get_destination_zone_id(cls, zone_id: str) -> str:
+    def destination_zone_id(cls, zone_id: str) -> str:
         return zone_id + "_to"
-
-    def get_config(self) -> dict[str, Any]:
-        return self.config
 
     # TODO: consider moving to method in config
     def init_rng(self):
         try:
-            np.random.seed(self.get_seed())
+            np.random.seed(self.seed)
         except Exception as err:
             msg = f"config does not provide a rng seed with err: {err}"
             ValueError(msg)
+
+
+def load_config(filepath: str | Path) -> Config:
+    with open(filepath, "rb") as f:
+        return Config.model_validate(tomlkit.load(f))
 
 
 def prepend_datetime(s: str, delimiter: str = "_") -> str:

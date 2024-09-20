@@ -7,12 +7,12 @@ from acbm.assigning.plots import plot_desire_lines, plot_scatter_actual_reported
 from acbm.assigning.select_facility import map_activity_locations, select_facility
 from acbm.cli import acbm_cli
 from acbm.logger_config import assigning_facility_locations_logger as logger
-from acbm.utils import Config
+from acbm.utils import load_config
 
 
 @acbm_cli
 def main(config_file):
-    config = Config(config_file)
+    config = load_config(config_file)
     config.init_rng()
 
     # --- Load data: activity chains
@@ -67,7 +67,7 @@ def main(config_file):
 
     osm_data_gdf = gpd.sjoin(
         osm_data_gdf,
-        boundaries[[config.get_zone_id(), "geometry"]],
+        boundaries[[config.zone_id, "geometry"]],
         how="inner",
         predicate="within",
     )
@@ -80,7 +80,7 @@ def main(config_file):
 
     # get neighbors
     zone_neighbors = Queen.from_dataframe(
-        boundaries, idVariable=config.get_zone_id()
+        boundaries, idVariable=config.zone_id
     ).neighbors
 
     # - HOME LOCATIONS
@@ -98,7 +98,7 @@ def main(config_file):
         facilities_gdf=osm_data_gdf,
         row_destination_zone_col="dzone",
         row_activity_type_col="destination activity",
-        gdf_facility_zone_col=config.get_zone_id(),
+        gdf_facility_zone_col=config.zone_id,
         gdf_facility_type_col="activities",
         gdf_sample_col="floor_area",
         neighboring_zones=zone_neighbors,
@@ -120,7 +120,7 @@ def main(config_file):
         facilities_gdf=osm_data_gdf,
         row_destination_zone_col="dzone",
         row_activity_type_col="destination activity",
-        gdf_facility_zone_col=config.get_zone_id(),
+        gdf_facility_zone_col=config.zone_id,
         gdf_facility_type_col="activities",
         gdf_sample_col="floor_area",
         neighboring_zones=zone_neighbors,
@@ -159,7 +159,7 @@ def main(config_file):
         facilities_gdf=osm_data_gdf,
         row_destination_zone_col="dzone",
         row_activity_type_col="education_type",
-        gdf_facility_zone_col=config.get_zone_id(),
+        gdf_facility_zone_col=config.zone_id,
         gdf_facility_type_col="activities",
         gdf_sample_col="floor_area",
         neighboring_zones=zone_neighbors,
@@ -197,7 +197,7 @@ def main(config_file):
         facilities_gdf=osm_data_gdf,
         row_destination_zone_col="dzone",
         row_activity_type_col="purp",
-        gdf_facility_zone_col=config.get_zone_id(),
+        gdf_facility_zone_col=config.zone_id,
         gdf_facility_type_col="activities",
         gdf_sample_col="floor_area",
         neighboring_zones=zone_neighbors,

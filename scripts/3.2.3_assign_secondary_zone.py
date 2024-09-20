@@ -24,14 +24,14 @@ from acbm.assigning.utils import activity_chains_for_assignment
 from acbm.cli import acbm_cli
 from acbm.logger_config import assigning_secondary_zones_logger as logger
 from acbm.preprocessing import add_location
-from acbm.utils import Config
+from acbm.utils import load_config
 
 
 @acbm_cli
 def main(config_file):
-    config = Config(config_file)
+    config = load_config(config_file)
     config.init_rng()
-    zone_id = config.get_zone_id()
+    zone_id = config.zone_id
 
     # --- Load in the data
     logger.info("Loading: activity chains")
@@ -74,7 +74,7 @@ def main(config_file):
     # Spatial join to identify which polygons each point is in
     activity_chains = gpd.sjoin(
         activity_chains,
-        boundaries[[config.get_zone_id(), "geometry"]],
+        boundaries[[config.zone_id, "geometry"]],
         how="left",
         predicate="within",
     )
@@ -112,7 +112,7 @@ def main(config_file):
 
     logger.info("Preprocessing: Adding dzone for all home activities")
     # replace dzone column with OA21CD. For all home activities, the destination is home
-    activity_chains_home["dzone"] = activity_chains_home[config.get_zone_id()]
+    activity_chains_home["dzone"] = activity_chains_home[config.zone_id]
     activity_chains_home.head(10)
 
     logger.info("Preprocessing: Combining all activity chains")
@@ -131,7 +131,7 @@ def main(config_file):
 
     logger.info("Preprocessing: Adding hzone column")
     # Add hzone column (PAM needs one)
-    activity_chains_all["hzone"] = activity_chains_all[config.get_zone_id()]
+    activity_chains_all["hzone"] = activity_chains_all[config.zone_id]
 
     # TODO find out why some hzone values are NaN
     logger.info("Preprocessing: Filling NaN values in hzone column")
@@ -323,7 +323,7 @@ def main(config_file):
 
     # merge travel_times with boundaries
     travel_times = travel_times.merge(
-        boundaries[["OBJECTID", config.get_zone_id()]],
+        boundaries[["OBJECTID", config.zone_id]],
         left_on="from_id",
         right_on="OBJECTID",
         how="left",
@@ -331,7 +331,7 @@ def main(config_file):
     travel_times = travel_times.drop(columns="OBJECTID")
 
     travel_times = travel_times.merge(
-        boundaries[["OBJECTID", config.get_zone_id()]],
+        boundaries[["OBJECTID", config.zone_id]],
         left_on="to_id",
         right_on="OBJECTID",
         how="left",
@@ -353,14 +353,14 @@ def main(config_file):
 
     # group by zone and get sum of counts and floor_area
     activities_per_zone = (
-        activities_per_zone.groupby(config.get_zone_id())
+        activities_per_zone.groupby(config.zone_id)
         .agg({"counts": "sum", "floor_area": "sum"})
         .reset_index()
     )
 
     # Merge to get floor_area for origin
     merged_df = travel_times.merge(
-        activities_per_zone, left_on="OA21CD_to", right_on=config.get_zone_id()
+        activities_per_zone, left_on="OA21CD_to", right_on=config.zone_id
     )
 
     # Calculate the visit_probability: it is a funciton of floor_area and travel time
@@ -380,8 +380,8 @@ def main(config_file):
     zone_labels = pd.unique(
         travel_times[
             [
-                config.get_origin_zone_id(zone_id),
-                config.get_destination_zone_id(zone_id),
+                config.origin_zone_id(zone_id),
+                config.destination_zone_id(zone_id),
             ]
         ].values.ravel("K")
     )
@@ -393,8 +393,8 @@ def main(config_file):
         value_column="travel_time_p50",
         zone_labels=zone_labels,
         fill_value=300,  # replace missing travel times with 6 hours (they are unreachable)
-        zone_from=config.get_origin_zone_id(zone_id),
-        zone_to=config.get_destination_zone_id(zone_id),
+        zone_from=config.origin_zone_id(zone_id),
+        zone_to=config.destination_zone_id(zone_id),
     )
 
     matrix_od_probs = create_od_matrices(
@@ -406,8 +406,8 @@ def main(config_file):
         # 1 used instead of 0 to avoid (ValueError: Total of weights must be finite) in weighted sampling
         # (https://github.com/arup-group/pam/blob/c8bff760fbf92f93f95ff90e4e2af7bbe107c7e3/src/pam/planner/utils_planner.py#L17)
         fill_value=1,
-        zone_from=config.get_origin_zone_id(zone_id),
-        zone_to=config.get_destination_zone_id(zone_id),
+        zone_from=config.origin_zone_id(zone_id),
+        zone_to=config.destination_zone_id(zone_id),
     )
 
     # Create ODMatrix objects

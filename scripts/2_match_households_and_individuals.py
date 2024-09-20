@@ -19,12 +19,12 @@ from acbm.preprocessing import (
     transform_by_group,
     truncate_values,
 )
-from acbm.utils import Config
+from acbm.utils import load_config
 
 
 @acbm_cli
 def main(config_file):
-    config = Config(config_file)
+    config = load_config(config_file)
     config.init_rng()
 
     pd.set_option("display.max_columns", None)
@@ -85,9 +85,10 @@ def main(config_file):
     unique_households = spc["household"].unique()
     # Sample a subset of households, RNG seeded above with `init_rng``
     sampled_households = pd.Series(unique_households).sample(
-        n=min(
-            config.get_config()["parameters"]["number_of_households"],
-            unique_households.shape[0],
+        n=(
+            config.parameters.number_of_households
+            if config.parameters.number_of_households is not None
+            else unique_households.shape[0]
         ),
     )
     # Filter the original DataFrame based on the sampled households

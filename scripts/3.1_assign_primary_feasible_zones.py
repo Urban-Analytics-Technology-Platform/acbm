@@ -15,12 +15,12 @@ from acbm.assigning.utils import (
 from acbm.cli import acbm_cli
 from acbm.logger_config import assigning_primary_feasible_logger as logger
 from acbm.preprocessing import add_locations_to_activity_chains
-from acbm.utils import Config
+from acbm.utils import load_config
 
 
 @acbm_cli
 def main(config_file):
-    config = Config(config_file)
+    config = load_config(config_file)
     config.init_rng()
 
     #### LOAD DATA ####
@@ -65,7 +65,7 @@ def main(config_file):
     # Spatial join to identify which polygons each point is in
     activity_chains = gpd.sjoin(
         activity_chains,
-        boundaries[[config.get_zone_id(), "geometry"]],
+        boundaries[[config.zone_id, "geometry"]],
         how="left",
         predicate="within",
     )
@@ -93,7 +93,7 @@ def main(config_file):
 
     # merge travel_times with boundaries
     travel_times = travel_times.merge(
-        boundaries[["OBJECTID", config.get_zone_id()]],
+        boundaries[["OBJECTID", config.zone_id]],
         left_on="from_id",
         right_on="OBJECTID",
         how="left",
@@ -101,7 +101,7 @@ def main(config_file):
     travel_times = travel_times.drop(columns="OBJECTID")
 
     travel_times = travel_times.merge(
-        boundaries[["OBJECTID", config.get_zone_id()]],
+        boundaries[["OBJECTID", config.zone_id]],
         left_on="to_id",
         right_on="OBJECTID",
         how="left",
@@ -117,7 +117,7 @@ def main(config_file):
     logger.info("Creating travel time estimates")
 
     travel_time_estimates = zones_to_time_matrix(
-        zones=boundaries, id_col=config.get_zone_id(), to_dict=True
+        zones=boundaries, id_col=config.zone_id, to_dict=True
     )
 
     with open(
@@ -183,7 +183,7 @@ def main(config_file):
     # spatial join to identify which zone each point in osm_data is in
     osm_data_gdf = gpd.sjoin(
         osm_data,
-        boundaries[[config.get_zone_id(), "geometry"]],
+        boundaries[[config.zone_id, "geometry"]],
         how="inner",
         predicate="within",
     )
@@ -194,7 +194,7 @@ def main(config_file):
 
     activities_per_zone = get_activities_per_zone(
         zones=boundaries,
-        zone_id_col=config.get_zone_id(),
+        zone_id_col=config.zone_id,
         activity_pts=osm_data,
         return_df=True,
     )
@@ -226,7 +226,7 @@ def main(config_file):
         key_col="id",
         filter_by_activity=True,
         activity_col="education_type",
-        zone_id=config.get_zone_id(),
+        zone_id=config.zone_id,
         time_tolerance=0.3,
     )
 
@@ -252,7 +252,7 @@ def main(config_file):
         key_col="id",
         filter_by_activity=True,
         activity_col="dact",
-        zone_id=config.get_zone_id(),
+        zone_id=config.zone_id,
         time_tolerance=0.3,
     )
 

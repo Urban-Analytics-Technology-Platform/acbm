@@ -16,12 +16,12 @@ from acbm.assigning.utils import (
 from acbm.cli import acbm_cli
 from acbm.logger_config import assigning_primary_zones_logger as logger
 from acbm.preprocessing import add_locations_to_activity_chains
-from acbm.utils import Config, calculate_rmse
+from acbm.utils import calculate_rmse, load_config
 
 
 @acbm_cli
 def main(config_file):
-    config = Config(config_file)
+    config = load_config(config_file)
     config.init_rng()
 
     #### LOAD DATA ####
@@ -163,8 +163,8 @@ def main(config_file):
         travel_demand_clipped = filter_matrix_to_boundary(
             boundary=boundaries,
             matrix=travel_demand_clipped,
-            boundary_id_col=config.get_zone_id(),
-            matrix_id_col=config.get_zone_id(),
+            boundary_id_col=config.zone_id,
+            matrix_id_col=config.zone_id,
             type="both",
         )
 
@@ -202,7 +202,10 @@ def main(config_file):
     )
 
     assignments_df = zone_assignment.select_work_zone_optimization(
-        use_percentages=True, weight_max_dev=0.2, weight_total_dev=0.8, max_zones=8
+        use_percentages=True,
+        weight_max_dev=0.2,
+        weight_total_dev=0.8,
+        max_zones=config.max_zones,
     )
 
     # Add assigned zones to activity_chains_work. Replace dzone with assigned_zone
