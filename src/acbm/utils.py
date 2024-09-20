@@ -12,10 +12,10 @@ from sklearn.metrics import mean_squared_error
 class Parameters(BaseModel):
     seed: int
     region: str
-    number_of_households: int | None
+    number_of_households: int | None = None
     zone_id: str
     travel_times: bool
-    max_zones: int | None
+    max_zones: int
 
 
 class Config(BaseModel):

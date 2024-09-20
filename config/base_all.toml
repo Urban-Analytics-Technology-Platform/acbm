@@ -1,6 +1,6 @@
 [parameters]
 seed = 0
 region = "leeds"
-number_of_households = 1_000_000_000
 zone_id = "OA21CD"
 travel_times = true
+max_zones = 4
