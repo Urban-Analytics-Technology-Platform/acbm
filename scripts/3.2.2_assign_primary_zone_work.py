@@ -11,6 +11,7 @@ from acbm.assigning.plots import (
 from acbm.assigning.select_zone_work import WorkZoneAssignment
 from acbm.assigning.utils import (
     activity_chains_for_assignment,
+    cols_for_assignment_work,
     filter_matrix_to_boundary,
 )
 from acbm.cli import acbm_cli
@@ -51,7 +52,7 @@ def main(config_file):
     osm_data_gdf = gpd.GeoDataFrame(osm_data_gdf, geometry="geometry", crs="EPSG:4326")
 
     # --- Activity chains
-    activity_chains = activity_chains_for_assignment()
+    activity_chains = activity_chains_for_assignment(cols_for_assignment_work())
     activity_chains = add_locations_to_activity_chains(activity_chains)
     activity_chains = activity_chains[activity_chains["TravDay"] == 3]  # Wednesday
 
@@ -202,9 +203,10 @@ def main(config_file):
     )
 
     assignments_df = zone_assignment.select_work_zone_optimization(
-        use_percentages=True,
-        weight_max_dev=0.2,
-        weight_total_dev=0.8,
+        # use_percentages=True,
+        use_percentages=False,
+        weight_max_dev=0.0,
+        weight_total_dev=1.0,
         max_zones=config.max_zones,
     )
 

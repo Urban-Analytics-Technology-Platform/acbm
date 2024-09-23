@@ -139,7 +139,8 @@ def main(config_file):
     logger.info("a. Adding eduction type as fallback")
     # load in activity chains
     spc_with_nts = pd.read_parquet(
-        acbm.root_path / "data/interim/matching/spc_with_nts_trips.parquet"
+        acbm.root_path / "data/interim/matching/spc_with_nts_trips.parquet",
+        columns=["id", "education_type", "seq", "TripTotalTime", "TripDisIncSW"],
     )
     # we get one row per id
     spc_with_nts_edu = spc_with_nts[["id", "education_type"]].drop_duplicates(

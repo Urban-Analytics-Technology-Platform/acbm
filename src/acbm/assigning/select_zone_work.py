@@ -352,8 +352,8 @@ class WorkZoneAssignment:
     def select_work_zone_optimization(
         self,
         use_percentages: bool = False,
-        weight_max_dev: int = 0.5,
-        weight_total_dev: int = 0.5,
+        weight_max_dev: float = 0.5,
+        weight_total_dev: float = 0.5,
         max_zones: int = 10,
     ) -> pd.DataFrame:
         """
@@ -519,6 +519,7 @@ class WorkZoneAssignment:
             + weight_total_dev * pulp.lpSum(deviation_vars.values()),
             "WeightedObjective",
         )
+
         prob.solve()
 
         if pulp.LpStatus[prob.status] != "Optimal":

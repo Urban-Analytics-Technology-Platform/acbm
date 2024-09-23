@@ -7,19 +7,10 @@ import pandas as pd
 import acbm
 
 
-def activity_chains_for_assignment() -> pd.DataFrame:
+def cols_for_assignment_all() -> list[str]:
     """Gets activity chains with subset of columns required for assignment."""
-    columns = [
-        "TravDay",
-        "OA11CD",
-        "dact",
-        "mode",
-        "tst",
-        "id",
-        "TripTotalTime",
-        "education_type",
-        "TripID",
-        # Required for 3.2.3
+    return [
+        *cols_for_assignment_edu(),
         "household",
         "seq",
         "oact",
@@ -29,6 +20,32 @@ def activity_chains_for_assignment() -> pd.DataFrame:
         "TripDisIncSW",
         "tet",
     ]
+
+
+def cols_for_assignment_edu() -> list[str]:
+    """Gets activity chains with subset of columns required for assignment."""
+    return [
+        "TravDay",
+        "OA11CD",
+        "dact",
+        "mode",
+        "tst",
+        "id",
+        "TripTotalTime",
+        "education_type",
+        "TripID",
+    ]
+
+
+def cols_for_assignment_work() -> list[str]:
+    return cols_for_assignment_edu()
+
+
+def activity_chains_for_assignment(columns: list[str] | None = None) -> pd.DataFrame:
+    """Gets activity chains with subset of columns required for assignment."""
+    if columns is None:
+        columns = cols_for_assignment_all()
+
     return pd.read_parquet(
         acbm.root_path / "data/interim/matching/spc_with_nts_trips.parquet",
         columns=columns,
