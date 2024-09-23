@@ -9,6 +9,7 @@ import pandas as pd
 # from tqdm import trange
 import acbm
 from acbm.cli import acbm_cli
+from acbm.config import load_config
 from acbm.logger_config import matching_logger as logger
 from acbm.matching import match_categorical, match_individuals
 from acbm.preprocessing import (
@@ -19,7 +20,6 @@ from acbm.preprocessing import (
     transform_by_group,
     truncate_values,
 )
-from acbm.utils import load_config
 
 
 @acbm_cli

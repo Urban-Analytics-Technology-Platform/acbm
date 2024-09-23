@@ -15,9 +15,10 @@ from acbm.assigning.utils import (
     filter_matrix_to_boundary,
 )
 from acbm.cli import acbm_cli
+from acbm.config import load_config
 from acbm.logger_config import assigning_primary_zones_logger as logger
 from acbm.preprocessing import add_locations_to_activity_chains
-from acbm.utils import calculate_rmse, load_config
+from acbm.utils import calculate_rmse
 
 
 @acbm_cli
@@ -203,11 +204,10 @@ def main(config_file):
     )
 
     assignments_df = zone_assignment.select_work_zone_optimization(
-        # use_percentages=True,
-        use_percentages=False,
-        weight_max_dev=0.0,
-        weight_total_dev=1.0,
-        max_zones=config.max_zones,
+        use_percentages=config.work_assignment.use_percentages,
+        weight_max_dev=config.work_assignment.weight_max_dev,
+        weight_total_dev=config.work_assignment.weight_total_dev,
+        max_zones=config.work_assignment.max_zones,
     )
 
     # Add assigned zones to activity_chains_work. Replace dzone with assigned_zone
@@ -257,20 +257,20 @@ def main(config_file):
     workzone_assignment_opt["pct_of_o_total_actual"] = workzone_assignment_opt.groupby(
         "origin_zone"
     )["demand_actual"].transform(lambda x: (x / x.sum()) * 100)
-    workzone_assignment_opt[
-        "pct_of_o_total_assigned"
-    ] = workzone_assignment_opt.groupby("origin_zone")["demand_assigned"].transform(
-        lambda x: (x / x.sum()) * 100
+    workzone_assignment_opt["pct_of_o_total_assigned"] = (
+        workzone_assignment_opt.groupby(
+            "origin_zone"
+        )["demand_assigned"].transform(lambda x: (x / x.sum()) * 100)
     )
 
     # (3) For each OD pair, demand as % of total demand to each destination
     workzone_assignment_opt["pct_of_d_total_actual"] = workzone_assignment_opt.groupby(
         "assigned_zone"
     )["demand_actual"].transform(lambda x: (x / x.sum()) * 100)
-    workzone_assignment_opt[
-        "pct_of_d_total_assigned"
-    ] = workzone_assignment_opt.groupby("assigned_zone")["demand_assigned"].transform(
-        lambda x: (x / x.sum()) * 100
+    workzone_assignment_opt["pct_of_d_total_assigned"] = (
+        workzone_assignment_opt.groupby(
+            "assigned_zone"
+        )["demand_assigned"].transform(lambda x: (x / x.sum()) * 100)
     )
 
     # Define the output file path

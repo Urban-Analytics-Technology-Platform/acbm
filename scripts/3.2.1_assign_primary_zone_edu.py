@@ -11,9 +11,9 @@ from acbm.assigning.utils import (
     cols_for_assignment_edu,
 )
 from acbm.cli import acbm_cli
+from acbm.config import load_config
 from acbm.logger_config import assigning_primary_zones_logger as logger
 from acbm.preprocessing import add_location
-from acbm.utils import load_config
 
 
 @acbm_cli

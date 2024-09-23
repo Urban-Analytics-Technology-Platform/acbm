@@ -24,9 +24,9 @@ from acbm.assigning.utils import (
     activity_chains_for_assignment,
 )
 from acbm.cli import acbm_cli
+from acbm.config import load_config
 from acbm.logger_config import assigning_secondary_zones_logger as logger
 from acbm.preprocessing import add_location
-from acbm.utils import load_config
 
 
 @acbm_cli

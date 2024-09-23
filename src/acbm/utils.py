@@ -1,62 +1,7 @@
-from dataclasses import dataclass
 from datetime import datetime
-from pathlib import Path
 
 import numpy as np
-import tomlkit
-from pydantic import BaseModel, Field
 from sklearn.metrics import mean_squared_error
-
-
-@dataclass(frozen=True)
-class Parameters(BaseModel):
-    seed: int
-    region: str
-    number_of_households: int | None = None
-    zone_id: str
-    travel_times: bool
-    max_zones: int
-
-
-class Config(BaseModel):
-    parameters: Parameters = Field(description="Config: parameters.")
-
-    @property
-    def seed(self) -> int:
-        return self.parameters.seed
-
-    @property
-    def region(self) -> str:
-        return self.parameters.region
-
-    @property
-    def zone_id(self) -> str:
-        return self.parameters.zone_id
-
-    @property
-    def max_zones(self) -> int:
-        return self.parameters.max_zones
-
-    @classmethod
-    def origin_zone_id(cls, zone_id: str) -> str:
-        return zone_id + "_from"
-
-    @classmethod
-    def destination_zone_id(cls, zone_id: str) -> str:
-        return zone_id + "_to"
-
-    # TODO: consider moving to method in config
-    def init_rng(self):
-        try:
-            np.random.seed(self.seed)
-        except Exception as err:
-            msg = f"config does not provide a rng seed with err: {err}"
-            ValueError(msg)
-
-
-def load_config(filepath: str | Path) -> Config:
-    with open(filepath, "rb") as f:
-        return Config.model_validate(tomlkit.load(f))
 
 
 def prepend_datetime(s: str, delimiter: str = "_") -> str:

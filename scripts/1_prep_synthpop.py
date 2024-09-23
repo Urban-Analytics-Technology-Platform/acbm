@@ -2,7 +2,7 @@ from uatk_spc.builder import Builder
 
 import acbm
 from acbm.cli import acbm_cli
-from acbm.utils import load_config
+from acbm.config import load_config
 
 
 @acbm_cli
