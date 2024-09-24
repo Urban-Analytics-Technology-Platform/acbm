@@ -2,8 +2,8 @@ import pandas as pd
 from pandarallel import pandarallel
 
 from acbm.assigning.utils import _map_day_to_wkday_binary, _map_time_to_day_part
+from acbm.config import Config
 from acbm.logger_config import assigning_primary_feasible_logger as logger
-from acbm.utils import Config
 
 pandarallel.initialize(progress_bar=True)
 

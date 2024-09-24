@@ -133,6 +133,8 @@ def main(config_file):
         id_col="pid",
     )
 
+    logger.info(f"Shape of activity chains work: {activity_chains_work.shape}")
+
     # - EDUCATION LOCATIONS
     logger.info("4. Selecting EDUCATION locations")
 
@@ -166,6 +168,8 @@ def main(config_file):
         neighboring_zones=zone_neighbors,
         fallback_type="education",
     )
+
+    logger.info(f"Shape of activity chains edu: {activity_chains_edu.shape}")
 
     # Map the activity_id and activity_geometry to the activity_chains_home_df DataFrame
     activity_chains_edu = map_activity_locations(

@@ -89,12 +89,30 @@ def main(config_file):
 
     logger.info("Loading: data on primary activities")
 
-    activity_chains_edu = pd.read_pickle(
-        acbm.root_path / "data/interim/assigning/activity_chains_education.pkl"
-    )
+    def merge_columns_from_other(df: pd.DataFrame, other: pd.DataFrame) -> pd.DataFrame:
+        return df.merge(
+            other[
+                [
+                    col
+                    for col in other.columns
+                    if col not in df.columns or col in ["id", "seq"]
+                ]
+            ],
+            on=["id", "seq"],
+            how="left",
+        )
 
-    activity_chains_work = pd.read_pickle(
-        acbm.root_path / "data/interim/assigning/activity_chains_work.pkl"
+    activity_chains_edu = merge_columns_from_other(
+        pd.read_pickle(
+            acbm.root_path / "data/interim/assigning/activity_chains_education.pkl"
+        ),
+        activity_chains,
+    )
+    activity_chains_work = merge_columns_from_other(
+        pd.read_pickle(
+            acbm.root_path / "data/interim/assigning/activity_chains_work.pkl"
+        ),
+        activity_chains,
     )
 
     # --- Process the data

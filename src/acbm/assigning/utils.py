@@ -12,7 +12,6 @@ def cols_for_assignment_all() -> list[str]:
     return [
         *cols_for_assignment_edu(),
         "household",
-        "seq",
         "oact",
         "nts_ind_id",
         "nts_hh_id",
@@ -31,6 +30,7 @@ def cols_for_assignment_edu() -> list[str]:
         "mode",
         "tst",
         "id",
+        "seq",
         "TripTotalTime",
         "education_type",
         "TripID",
