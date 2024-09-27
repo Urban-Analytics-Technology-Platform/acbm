@@ -10,6 +10,7 @@ from acbm.assigning.utils import (
     get_activities_per_zone,
     intrazone_time,
     replace_intrazonal_travel_time,
+    zones_to_time_matrix,
 )
 from acbm.cli import acbm_cli
 from acbm.config import load_config
@@ -77,41 +78,29 @@ def main(config_file):
     # are compared to the travel times of the individual's actual trips from the nts
     # (`tst`/`TripStart` and `tet`/`TripEnd`)
 
-    logger.info("Loading travel time matrix")
-
-    # TODO: check config file to see if we have a travel time matrix. If not, create one
-    travel_times = pd.read_parquet(
+    # TODO: move to config
+    travel_time_matrix_path = (
         acbm.root_path / "data/external/travel_times/oa/travel_time_matrix.parquet"
     )
 
-    logger.info("Travel time matrix loaded")
-
-    # # Load the configuration file
-    # config_file_path = 'config.toml'
-    # travel_time_matrix_path = acbm.root_path / "data/external/travel_times/oa/travel_time_matrix.parquet"
-
-    # with open(config_file_path, 'r') as config_file:
-    #     config = toml.load(config_file)
-
-    # # Check if travel_times is set to true and try to load the travel time matrix
-    # if config.get('travel_times') == True:
-    #     try:
-    #         travel_times = pd.read_parquet(travel_time_matrix_path)
-    #         print("Travel time matrix loaded successfully.")
-    #     except Exception as e:
-    #         logger.info(f"Failed to load travel time matrix: {e}")
-    #         logger.info("Creating a new travel time matrix.")
-    #         # Create a new travel time matrix based on distances between zones
-    #         travel_times = zones_to_time_matrix(zones = boundaries, id_col = "OA21CD")
-    #         # TODO: save the travel time matrix
-
-    # # If travel_times is not true or loading failed, create a new travel time matrix
-    # if config.get('travel_times') != True:
-    #     logger.info("No travel time matrix found. Creating a new travel time matrix.")
-    #     # Create a new travel time matrix based on distances between zones
-    #     travel_times = zones_to_time_matrix(zones = boundaries, id_col = "OA21CD")
-
-    # logger.info("Travel time estimates created")
+    if config.parameters.travel_times:
+        logger.info("Loading travel time matrix")
+        try:
+            travel_times = pd.read_parquet(travel_time_matrix_path)
+            print("Travel time matrix loaded successfully.")
+        except Exception as e:
+            logger.info(
+                f"Failed to load travel time matrix: {e}. Check that you have a "
+                "travel_times matrix at {travel_time_matrix_path}. Otherwise set "
+                "travel_times to false in config"
+            )
+            raise e
+    else:
+        # If travel_times is not true or loading failed, create a new travel time matrix
+        logger.info("No travel time matrix found. Creating a new travel time matrix.")
+        # Create a new travel time matrix based on distances between zones
+        travel_times = zones_to_time_matrix(zones=boundaries, id_col="OA21CD")
+        logger.info("Travel time estimates created")
 
     # --- Intrazonal trip times
     #
@@ -119,7 +108,7 @@ def main(config_file):
     # that are within a specified % threshold from the reported time in the NTS.
     # A threshold percentage from a non zero number never equals 0, so intrazonal trips
     # are not found. The problem is also explained in this issue #30
-    #
+
     # Below, we assign intrazonal trips a non-zero time based on the zone area
 
     # get intrazone travel time estimates per mode
@@ -137,7 +126,7 @@ def main(config_file):
     travel_times = replace_intrazonal_travel_time(
         travel_times=travel_times,
         intrazonal_estimates=intrazone_times,
-        column_to_replace="travel_time_p50",
+        column_to_replace="time",
     )
 
     logger.info("Intrazonal travel times replaced")
