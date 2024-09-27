@@ -1,0 +1,11 @@
+[parameters]
+seed = 0
+region = "leeds"
+zone_id = "OA21CD"
+travel_times = true
+
+[work_assignment]
+use_percentages = false
+weight_max_dev = 0.0
+weight_total_dev = 1.0
+max_zones = 4

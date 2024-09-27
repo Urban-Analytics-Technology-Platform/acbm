@@ -2,6 +2,7 @@ import pandas as pd
 from pandarallel import pandarallel
 
 from acbm.assigning.utils import _map_day_to_wkday_binary, _map_time_to_day_part
+from acbm.config import Config
 from acbm.logger_config import assigning_primary_feasible_logger as logger
 
 pandarallel.initialize(progress_bar=True)
@@ -13,8 +14,9 @@ def get_possible_zones(
     activities_per_zone: pd.DataFrame,
     activity_col: str,
     key_col: str,
+    zone_id: str,
     filter_by_activity: bool = False,
-    time_tolerance: int = 0.2,
+    time_tolerance: float = 0.2,
 ) -> dict:
     """
     Get possible zones for all activity chains in the dataset. This function loops over the travel_times dataframe and filters by mode, time of day and weekday/weekend.
@@ -148,6 +150,7 @@ def get_possible_zones(
                                     activities_per_zone=activities_per_zone,
                                     filter_by_activity=filter_by_activity,
                                     activity_col=activity_col,
+                                    zone_id=zone_id,
                                     time_tolerance=time_tolerance,
                                 )
                             },
@@ -177,6 +180,7 @@ def get_possible_zones(
                             activities_per_zone=activities_per_zone,
                             filter_by_activity=filter_by_activity,
                             activity_col=activity_col,
+                            zone_id=zone_id,
                             time_tolerance=time_tolerance,
                         )
                     },
@@ -200,7 +204,8 @@ def _get_possible_zones(
     activities_per_zone: pd.DataFrame,
     filter_by_activity: bool,
     activity_col: str,
-    time_tolerance: int = 0.2,
+    zone_id: str,
+    time_tolerance: float = 0.2,
 ) -> dict:
     """
     Get possible zones for a given activity chain
@@ -231,13 +236,13 @@ def _get_possible_zones(
     # get the travel time
     travel_time = activity["TripTotalTime"]
     # get the origin zone
-    origin_zone = activity["OA21CD"]
+    origin_zone = activity[zone_id]
     # get the activity purpose
     activity_purpose = activity[activity_col]
 
     # filter the travel_times dataframe by trip_origin and activity_purpose
     travel_times_filtered_origin_mode = travel_times[
-        travel_times["OA21CD_from"] == origin_zone
+        travel_times[Config.origin_zone_id(zone_id)] == origin_zone
     ]
     # do we include only zones that have an activity that matches the activity purpose?
     if filter_by_activity:
@@ -252,8 +257,8 @@ def _get_possible_zones(
 
         # keep only the zones that have the activity purpose
         travel_times_filtered_origin_mode = travel_times_filtered_origin_mode[
-            travel_times_filtered_origin_mode["OA21CD_to"].isin(
-                filtered_activities_per_zone["OA21CD"]
+            travel_times_filtered_origin_mode[Config.destination_zone_id(zone_id)].isin(
+                filtered_activities_per_zone[zone_id]
             )
         ]
     # how many zones are reachable?
@@ -292,7 +297,9 @@ def _get_possible_zones(
 
     # create dictionary with key = origin_zone and values = list of travel_times_filtered.OA21CD_to
     return (
-        travel_times_filtered_time.groupby("OA21CD_from")["OA21CD_to"]
+        travel_times_filtered_time.groupby(Config.origin_zone_id(zone_id))[
+            Config.destination_zone_id(zone_id)
+        ]
         .apply(list)
         .to_dict()
     )

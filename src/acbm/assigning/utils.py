@@ -4,6 +4,53 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 
+import acbm
+
+
+def cols_for_assignment_all() -> list[str]:
+    """Gets activity chains with subset of columns required for assignment."""
+    return [
+        *cols_for_assignment_edu(),
+        "household",
+        "oact",
+        "nts_ind_id",
+        "nts_hh_id",
+        "age_years",
+        "TripDisIncSW",
+        "tet",
+    ]
+
+
+def cols_for_assignment_edu() -> list[str]:
+    """Gets activity chains with subset of columns required for assignment."""
+    return [
+        "TravDay",
+        "OA11CD",
+        "dact",
+        "mode",
+        "tst",
+        "id",
+        "seq",
+        "TripTotalTime",
+        "education_type",
+        "TripID",
+    ]
+
+
+def cols_for_assignment_work() -> list[str]:
+    return cols_for_assignment_edu()
+
+
+def activity_chains_for_assignment(columns: list[str] | None = None) -> pd.DataFrame:
+    """Gets activity chains with subset of columns required for assignment."""
+    if columns is None:
+        columns = cols_for_assignment_all()
+
+    return pd.read_parquet(
+        acbm.root_path / "data/interim/matching/spc_with_nts_trips.parquet",
+        columns=columns,
+    )
+
 
 def _map_time_to_day_part(
     minutes: int, time_of_day_mapping: Optional[dict] = None
