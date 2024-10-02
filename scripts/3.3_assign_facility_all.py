@@ -49,15 +49,13 @@ def main(config_file):
     )
 
     # --- Load data: Boundaries
-    logger.info("Loading boundaries data")
-
-    where_clause = "MSOA21NM LIKE '%Leeds%'"
+    logger.info("Loading study area boundaries")
 
     boundaries = gpd.read_file(
-        acbm.root_path / "data/external/boundaries/oa_england.geojson",
-        where=where_clause,
+        acbm.root_path / "data/external/boundaries/study_area_zones.geojson"
     )
-    boundaries = boundaries.to_crs(epsg=4326)
+
+    logger.info("Study area boundaries loaded")
 
     # --- Prepprocess: add zone column to POI data
     logger.info("Adding zone column to POI data")

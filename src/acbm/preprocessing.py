@@ -4,9 +4,101 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 from pyproj import Transformer
-from shapely import Point
+from shapely.geometry import MultiPolygon, Point
 
 import acbm
+
+# ----- PREPROCESSING BOUNDARIES
+
+
+def edit_boundary_resolution(
+    study_area: gpd.GeoDataFrame, geography: str
+) -> gpd.GeoDataFrame:
+    """
+    This function takes a GeoDataFrame and a geography resolution as input and returns
+    a GeoDataFrame with the specified geography resolution. It dissolves OA boundaries
+    to MSOA boundaries if the geography resolution is set to "MSOA". Otherwise, it
+    retains the original OA boundaries. Currently it only works for OA and MSOA
+
+    Parameters
+    ----------
+    study_area : gpd.GeoDataFrame
+        A GeoDataFrame containing the study area boundaries
+    geography : str
+        A string specifying the geography resolution. It can be either "OA" or "MSOA"
+
+    Returns
+    -------
+    gpd.GeoDataFrame
+        A GeoDataFrame containing the study area boundaries with the specified geography
+
+    """
+    # Drop unnecessary columns
+    columns_to_drop = ["GlobalID", "OA21CD", "LSOA21CD", "LSOA21NM"]
+    study_area = study_area.drop(
+        columns=[col for col in columns_to_drop if col in study_area.columns]
+    )
+
+    # Dissolve based on the specified geography
+    if geography == "MSOA":
+        print("converting from OA to MSOA")
+        study_area = study_area.dissolve(by="MSOA21CD").reset_index()
+    elif geography == "OA":
+        print("keeping original OA boundaries")
+
+    # Ensure all geometries are MultiPolygon
+    study_area["geometry"] = study_area["geometry"].apply(
+        lambda geom: MultiPolygon([geom]) if geom.geom_type == "Polygon" else geom
+    )
+
+    return study_area
+
+
+# TODO: create spatial filter option
+def filter_boundaries(boundaries, column, values):
+    """
+    Filter the boundaries GeoDataFrame by the specified column and values.
+
+    Parameters
+    ----------
+
+    boundaries: gpd.GeoDataFrame): The GeoDataFrame containing the boundaries.
+    column: str
+        The column to filter by (e.g., 'LEP22NM1', 'LAD22NM', 'rgn22nm').
+    values: list
+        The list of values to keep in the specified column.
+
+    Returns
+    -------
+    gpd.GeoDataFrame
+        The filtered GeoDataFrame.
+
+    Raises
+    ------
+    ValueError
+        If the specified column does not exist in the GeoDataFrame.
+        If any of the specified values are not present in the column.
+    """
+
+    # Check if the column exists in the GeoDataFrame
+    if column not in boundaries.columns:
+        error_message = f"Column '{column}' does not exist in the GeoDataFrame."
+        raise ValueError(error_message)
+
+    # Check if all values are present in the specified column
+    unique_values = boundaries[column].unique()
+    missing_values = [value for value in values if value not in unique_values]
+    if missing_values:
+        error_message = (
+            f"Values {missing_values} are not present in the column '{column}'."
+        )
+        raise ValueError(error_message)
+
+    # Filter boundaries layer by column = values
+    return boundaries[boundaries[column].isin(values)]
+
+
+# ----- MATCHING
 
 
 def nts_filter_by_year(

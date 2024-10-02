@@ -45,15 +45,11 @@ def main(config_file):
 
     logger.info("Preprocessing: Adding OA21CD to the data")
 
-    where_clause = "MSOA21NM LIKE '%Leeds%'"
-
     boundaries = gpd.read_file(
-        acbm.root_path / "data/external/boundaries/oa_england.geojson",
-        where=where_clause,
+        acbm.root_path / "data/external/boundaries/study_area_zones.geojson"
     )
 
-    # convert boundaries to 4326
-    boundaries = boundaries.to_crs(epsg=4326)
+    logger.info("Study area boundaries loaded")
 
     # --- Assign activity home locations to boundaries zoning system
 
