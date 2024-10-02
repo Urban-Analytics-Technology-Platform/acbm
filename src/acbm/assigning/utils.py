@@ -287,11 +287,10 @@ def _get_activities_per_zone_df(activities_per_zone: dict) -> pd.DataFrame:
 def zones_to_time_matrix(
     zones: gpd.GeoDataFrame,
     id_col: Optional[str] = None,
-    to_dict: Optional[bool] = False,
-) -> dict:
+) -> pd.DataFrame:
     """
     Calculates the distance matrix between the centroids of the given zones and returns it as a DataFrame. The matrix also adds
-    a column for all the different modes, with travel time (seconds) based on approximate speeds
+    a column for all the different modes, with travel time (seconds) based on approximate speeds.
 
     The function first converts the CRS of the zones to EPSG:27700 and calculates the centroids of the zones.
     Then, it calculates the distance matrix between the centroids and reshapes it from a wide format to a long format.
@@ -299,27 +298,16 @@ def zones_to_time_matrix(
 
     Parameters
     ----------
-    zones: (gpd.GeoDataFrame):
+    zones: gpd.GeoDataFrame
         A GeoDataFrame containing the zones.
-    id_col (str, optional):
+    id_col: str, optional
         The name of the column in the zones GeoDataFrame to use as the ID. If None, the index values are used. Default is None.
 
     Returns
     -------
-    if to_dict = False
-        pd.DataFrame: A dataframe containing the distance matrix. The columns are:
-    '{id_col}_from', '{id_col}_to', 'distance', {time}_{mode} with a column for each mode in the dictionary
-    if to_dict = True
-        converts the data to a dictionary
-        keys: a tuple representing ({id_col}_from, {id_col}_to)
-        values: another dictionary with the following keys:
-            - 'distance': a float representing the distance between the two locations.
-            - 'time_car': a float representing the travel time by car between the two locations.
-            - 'time_pt': a float representing the travel time by public transport between the two locations.
-            - 'time_cycle': a float representing the travel time by bicycle between the two locations.
-            - 'time_walk': a float representing the travel time on foot between the two locations.
-            - 'time_average': a float representing the average travel time between the two locations.
-        a value can be accessed using eg: dict[({id_col}_from, {id_col}_to)]['time_car']
+    pd.DataFrame
+        A DataFrame containing the distance matrix with travel times for different modes.
+        Columns: {id_col}_from, {id_col}_to, distance, mode, time
     """
 
     zones = zones.to_crs(epsg=27700)
@@ -349,17 +337,18 @@ def zones_to_time_matrix(
         "average": 15 * 1000 / 3600,
     }
 
-    # add travel time estimates (per mode)
+    # Create a list to hold the long-format data
+    long_format_data = []
+
+    # Calculate travel times and append to the list
     for mode, speed in mode_speeds_mps.items():
-        distances[f"time_{mode}"] = distances["distance"] / speed
+        mode_data = distances.copy()
+        mode_data["mode"] = mode
+        mode_data["time"] = mode_data["distance"] / speed
+        long_format_data.append(mode_data)
 
-    if to_dict:
-        # convert to a dictionary
-        distances_dict = distances.set_index(
-            [f"{id_col}_from", f"{id_col}_to"]
-        ).to_dict("index")
-
-    return distances_dict
+    # Concatenate the list into a single DataFrame
+    return pd.concat(long_format_data, ignore_index=True)
 
 
 def filter_matrix_to_boundary(
@@ -422,7 +411,7 @@ def filter_matrix_to_boundary(
     return filtered_matrix
 
 
-def intrazone_time(zones: gpd.GeoDataFrame) -> dict:
+def intrazone_time(zones: gpd.GeoDataFrame, key_column: str) -> dict:
     """
     Estimate the time taken to travel within each zone.
 
@@ -434,6 +423,8 @@ def intrazone_time(zones: gpd.GeoDataFrame) -> dict:
     ----------
     zones : gpd.GeoDataFrame
         The GeoDataFrame containing the zones with zone IDs as the GeoDataFrame index.
+    key_column : str
+        The column name to use as the key for the dictionary.
 
     Returns
     -------
@@ -443,13 +434,14 @@ def intrazone_time(zones: gpd.GeoDataFrame) -> dict:
         {53506: {'car': 0.3, 'pt': 0.5, 'cycle': 0.5, 'walk': 1.4, 'average': 0.5},
     """
 
-    # convert zones to metric crs
+    # Convert zones to metric CRS
     zones = zones.to_crs(epsg=27700)
-    # get the sqrt of the area of each zone
+    # Calculate the area of each zone
     zones["area"] = zones["geometry"].area
+    # Calculate the average distance within each zone
     zones["average_dist"] = np.sqrt(zones["area"]) / 2
 
-    # mode speeds in m/s
+    # Mode speeds in m/s
     mode_speeds_mps = {
         "car": 20 * 1000 / 3600,
         "pt": 15 * 1000 / 3600,
@@ -458,13 +450,13 @@ def intrazone_time(zones: gpd.GeoDataFrame) -> dict:
         "average": 15 * 1000 / 3600,
     }
 
-    # Create (and return) a dictionary where key = zone and values = travel time in minutes
+    # Create and return a dictionary where key = specified column and values = travel time in minutes per mode
     return {
-        zone: {
-            mode: round((dist / speed) / 60, 1)
+        row[key_column]: {
+            mode: round((row["average_dist"] / speed) / 60, 1)
             for mode, speed in mode_speeds_mps.items()
         }
-        for zone, dist in zones["average_dist"].items()
+        for _, row in zones.iterrows()
     }
 
 
@@ -496,16 +488,28 @@ def replace_intrazonal_travel_time(
     # Copy the DataFrame to avoid modifying the original one
     travel_times_copy = travel_times.copy()
 
-    # Create a new column 'mode' by splitting the 'combination' column
-    travel_times_copy["mode"] = travel_times_copy["combination"].str.split("_").str[0]
+    # Dynamically identify the "from" and "to" columns
+    from_cols = travel_times_copy.columns[
+        travel_times_copy.columns.str.contains("from", case=False)
+    ]
+    to_cols = travel_times_copy.columns[
+        travel_times_copy.columns.str.contains("to", case=False)
+    ]
+
+    if len(from_cols) != 1 or len(to_cols) != 1:
+        error_message = "Expected exactly one 'from' column and one 'to' column, but found multiple."
+        raise ValueError(error_message)
+
+    from_col = from_cols[0]
+    to_col = to_cols[0]
 
     # Create a mask for intrazonal trips
-    intrazonal_mask = travel_times_copy["from_id"] == travel_times_copy["to_id"]
+    intrazonal_mask = travel_times_copy[from_col] == travel_times_copy[to_col]
 
     # Apply the intrazonal estimates using a vectorized operation
     travel_times_copy.loc[intrazonal_mask, column_to_replace] = travel_times_copy[
         intrazonal_mask
-    ].apply(lambda row: intrazonal_estimates[row["from_id"]][row["mode"]], axis=1)
+    ].apply(lambda row: intrazonal_estimates[row[from_col]][row["mode"]], axis=1)
 
     # Return the modified DataFrame
     return travel_times_copy

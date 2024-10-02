@@ -78,54 +78,29 @@ def main(config_file):
     # are compared to the travel times of the individual's actual trips from the nts
     # (`tst`/`TripStart` and `tet`/`TripEnd`)
 
-    logger.info("Loading travel time matrix")
-
-    travel_times = pd.read_parquet(
-        acbm.root_path / "data/external/travel_times/oa/travel_time_matrix_acbm.parquet"
+    # TODO: move to config
+    travel_time_matrix_path = (
+        acbm.root_path / "data/external/travel_times/oa/travel_time_matrix.parquet"
     )
 
-    logger.info("Travel time matrix loaded")
-
-    logger.info("Merging travel time matrix with boundaries")
-
-    # convert from_id and to_id to int to match the boundaries data type
-    travel_times = travel_times.astype({"from_id": int, "to_id": int})
-
-    # merge travel_times with boundaries
-    travel_times = travel_times.merge(
-        boundaries[["OBJECTID", config.zone_id]],
-        left_on="from_id",
-        right_on="OBJECTID",
-        how="left",
-    )
-    travel_times = travel_times.drop(columns="OBJECTID")
-
-    travel_times = travel_times.merge(
-        boundaries[["OBJECTID", config.zone_id]],
-        left_on="to_id",
-        right_on="OBJECTID",
-        how="left",
-        suffixes=("_from", "_to"),
-    )
-    travel_times = travel_times.drop(columns="OBJECTID")
-
-    # #### Travel distance matrix
-    #
-    # Some areas aren't reachable by specific modes. We create a travel distance matrix
-    # to fall back on when the, inplace=Truere are no travel time calculations
-
-    logger.info("Creating travel time estimates")
-
-    travel_time_estimates = zones_to_time_matrix(
-        zones=boundaries, id_col=config.zone_id, to_dict=True
-    )
-
-    with open(
-        acbm.root_path / "data/interim/assigning/travel_time_estimates.pkl", "wb"
-    ) as f:
-        pkl.dump(travel_time_estimates, f)
-
-    logger.info("Travel time estimates created")
+    if config.parameters.travel_times:
+        logger.info("Loading travel time matrix")
+        try:
+            travel_times = pd.read_parquet(travel_time_matrix_path)
+            print("Travel time matrix loaded successfully.")
+        except Exception as e:
+            logger.info(
+                f"Failed to load travel time matrix: {e}. Check that you have a "
+                "travel_times matrix at {travel_time_matrix_path}. Otherwise set "
+                "travel_times to false in config"
+            )
+            raise e
+    else:
+        # If travel_times is not true or loading failed, create a new travel time matrix
+        logger.info("No travel time matrix found. Creating a new travel time matrix.")
+        # Create a new travel time matrix based on distances between zones
+        travel_times = zones_to_time_matrix(zones=boundaries, id_col="OA21CD")
+        logger.info("Travel time estimates created")
 
     # --- Intrazonal trip times
     #
@@ -133,14 +108,15 @@ def main(config_file):
     # that are within a specified % threshold from the reported time in the NTS.
     # A threshold percentage from a non zero number never equals 0, so intrazonal trips
     # are not found. The problem is also explained in this issue #30
-    #
+
     # Below, we assign intrazonal trips a non-zero time based on the zone area
 
     # get intrazone travel time estimates per mode
 
     logger.info("Creating intrazonal travel time estimates")
 
-    intrazone_times = intrazone_time(boundaries.set_index("OBJECTID"))
+    # TODO: use config zone_id instead of OA21CD
+    intrazone_times = intrazone_time(zones=boundaries, key_column="OA21CD")
 
     logger.info("Intrazonal travel time estimates created")
 
@@ -150,7 +126,7 @@ def main(config_file):
     travel_times = replace_intrazonal_travel_time(
         travel_times=travel_times,
         intrazonal_estimates=intrazone_times,
-        column_to_replace="travel_time_p50",
+        column_to_replace="time",
     )
 
     logger.info("Intrazonal travel times replaced")
@@ -223,10 +199,11 @@ def main(config_file):
         activity_chains=activity_chains_edu,
         travel_times=travel_times,
         activities_per_zone=activities_per_zone,
+        boundaries=boundaries,
         key_col="id",
+        zone_id=config.zone_id,
         filter_by_activity=True,
         activity_col="education_type",
-        zone_id=config.zone_id,
         time_tolerance=0.3,
     )
 
@@ -249,10 +226,11 @@ def main(config_file):
         activity_chains=activity_chains_work,
         travel_times=travel_times,
         activities_per_zone=activities_per_zone,
+        boundaries=boundaries,
         key_col="id",
+        zone_id=config.zone_id,
         filter_by_activity=True,
         activity_col="dact",
-        zone_id=config.zone_id,
         time_tolerance=0.3,
     )
 

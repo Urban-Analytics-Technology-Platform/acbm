@@ -42,6 +42,7 @@ click = "^8.1.7"
 tomlkit = "^0.13.0"
 cml-pam = "0.3.2"
 gdal = "<=3.8.4"
+pandera = "^0.20.4"
 
 [tool.poetry.dev-dependencies]
 pytest = ">= 6"
