@@ -2,6 +2,7 @@
 
 set -e
 
+python scripts/0_preprocessing_inputs.py --config_file $1
 python scripts/1_prep_synthpop.py --config_file $1
 python scripts/2_match_households_and_individuals.py --config_file $1
 python scripts/3.1_assign_primary_feasible_zones.py --config_file $1
