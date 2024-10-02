@@ -4,6 +4,10 @@ region = "leeds"
 number_of_households = 10000
 zone_id = "OA21CD"
 travel_times = true
+boundary_geography = "OA"
+boundary_filter_column = "LEP22NM1"
+boundary_filter_values = ["Leeds City Region"]
+
 
 [work_assignment]
 use_percentages = true
