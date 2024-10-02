@@ -90,7 +90,8 @@ def filter_boundaries(boundaries, column, values):
     missing_values = [value for value in values if value not in unique_values]
     if missing_values:
         error_message = (
-            f"Values {missing_values} are not present in the column '{column}'."
+            f"Values {missing_values} are not present in the column '{column}'. "
+            f"Unique values in the column are: {unique_values}"
         )
         raise ValueError(error_message)
 
