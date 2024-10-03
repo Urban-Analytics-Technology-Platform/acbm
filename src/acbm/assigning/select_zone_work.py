@@ -1,4 +1,3 @@
-import random
 from dataclasses import dataclass, field
 from typing import Dict, List, Tuple
 
@@ -456,8 +455,10 @@ class WorkZoneAssignment:
                     selected_zones = [zones_in_flows[i] for i in selected_zones_indices]
                 elif feasible_zones:
                     # If no zones in actual_flows, select up to 10 random zones from feasible zones
-                    selected_zones = random.sample(
-                        feasible_zones, min(max_zones, len(feasible_zones))
+                    selected_zones = np.random.choice(
+                        feasible_zones,
+                        min(max_zones, len(feasible_zones)),
+                        replace=False,
                     )
 
                 for zone in selected_zones:
