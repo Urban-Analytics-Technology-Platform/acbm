@@ -4,8 +4,6 @@ region = "leeds"
 zone_id = "OA21CD"
 travel_times = true # Only set to true if you have travel time matrix at the level specified in boundary_geography
 boundary_geography = "OA"
-boundary_filter_column = "LEP22NM1"
-boundary_filter_values = ["Leeds City Region"]
 
 
 [work_assignment]
