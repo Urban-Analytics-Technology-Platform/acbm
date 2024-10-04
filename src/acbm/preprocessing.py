@@ -54,51 +54,6 @@ def edit_boundary_resolution(
     return study_area
 
 
-# TODO: create spatial filter option
-def filter_boundaries(boundaries, column, values):
-    """
-    Filter the boundaries GeoDataFrame by the specified column and values.
-
-    Parameters
-    ----------
-
-    boundaries: gpd.GeoDataFrame): The GeoDataFrame containing the boundaries.
-    column: str
-        The column to filter by (e.g., 'LEP22NM1', 'LAD22NM', 'rgn22nm').
-    values: list
-        The list of values to keep in the specified column.
-
-    Returns
-    -------
-    gpd.GeoDataFrame
-        The filtered GeoDataFrame.
-
-    Raises
-    ------
-    ValueError
-        If the specified column does not exist in the GeoDataFrame.
-        If any of the specified values are not present in the column.
-    """
-
-    # Check if the column exists in the GeoDataFrame
-    if column not in boundaries.columns:
-        error_message = f"Column '{column}' does not exist in the GeoDataFrame."
-        raise ValueError(error_message)
-
-    # Check if all values are present in the specified column
-    unique_values = boundaries[column].unique()
-    missing_values = [value for value in values if value not in unique_values]
-    if missing_values:
-        error_message = (
-            f"Values {missing_values} are not present in the column '{column}'. "
-            f"Unique values in the column are: {unique_values}"
-        )
-        raise ValueError(error_message)
-
-    # Filter boundaries layer by column = values
-    return boundaries[boundaries[column].isin(values)]
-
-
 # ----- MATCHING
 
 
