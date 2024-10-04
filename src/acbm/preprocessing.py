@@ -33,17 +33,23 @@ def edit_boundary_resolution(
         A GeoDataFrame containing the study area boundaries with the specified geography
 
     """
-    # Drop unnecessary columns
-    columns_to_drop = ["GlobalID", "OA21CD", "LSOA21CD", "LSOA21NM"]
-    study_area = study_area.drop(
-        columns=[col for col in columns_to_drop if col in study_area.columns]
-    )
-
     # Dissolve based on the specified geography
     if geography == "MSOA":
+        # Drop unnecessary columns (they are lower level than MSOA)
+        columns_to_drop = ["GlobalID", "OA21CD", "LSOA21CD", "LSOA21NM"]
+        study_area = study_area.drop(
+            columns=[col for col in columns_to_drop if col in study_area.columns]
+        )
+
         print("converting from OA to MSOA")
         study_area = study_area.dissolve(by="MSOA21CD").reset_index()
+
     elif geography == "OA":
+        # Drop unnecessary columns
+        columns_to_drop = ["GlobalID"]
+        study_area = study_area.drop(
+            columns=[col for col in columns_to_drop if col in study_area.columns]
+        )
         print("keeping original OA boundaries")
 
     # Ensure all geometries are MultiPolygon
