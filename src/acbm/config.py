@@ -14,8 +14,6 @@ class Parameters(BaseModel):
     zone_id: str
     travel_times: bool
     boundary_geography: str
-    boundary_filter_column: str
-    boundary_filter_values: list[str]
 
 
 @dataclass(frozen=True)
