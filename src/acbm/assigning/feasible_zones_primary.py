@@ -134,7 +134,7 @@ def get_possible_zones(
 
     if travel_times is None:
         logger.info("Travel time matrix not provided: Creating travel times estimates")
-        travel_times = zones_to_time_matrix(zones=boundaries, id_col="OA21CD")
+        travel_times = zones_to_time_matrix(zones=boundaries, id_col=zone_id)
 
     list_of_modes = activity_chains["mode"].unique()
     print(f"Unique modes found in the dataset are: {list_of_modes}")
