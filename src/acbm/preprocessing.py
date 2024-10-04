@@ -12,7 +12,7 @@ import acbm
 
 
 def edit_boundary_resolution(
-    study_area: gpd.GeoDataFrame, geography: str
+    study_area: gpd.GeoDataFrame, geography: str, zone_id: str
 ) -> gpd.GeoDataFrame:
     """
     This function takes a GeoDataFrame and a geography resolution as input and returns
@@ -26,6 +26,8 @@ def edit_boundary_resolution(
         A GeoDataFrame containing the study area boundaries
     geography : str
         A string specifying the geography resolution. It can be either "OA" or "MSOA"
+    zone_id : str
+        The column name of the zone identifier in the study_area GeoDataFrame
 
     Returns
     -------
@@ -36,20 +38,16 @@ def edit_boundary_resolution(
     # Dissolve based on the specified geography
     if geography == "MSOA":
         # Drop unnecessary columns (they are lower level than MSOA)
-        columns_to_drop = ["GlobalID", "OA21CD", "LSOA21CD", "LSOA21NM"]
-        study_area = study_area.drop(
-            columns=[col for col in columns_to_drop if col in study_area.columns]
-        )
+        study_area = study_area[[zone_id, "geometry"]]
 
         print("converting from OA to MSOA")
         study_area = study_area.dissolve(by="MSOA21CD").reset_index()
 
     elif geography == "OA":
         # Drop unnecessary columns
-        columns_to_drop = ["GlobalID"]
-        study_area = study_area.drop(
-            columns=[col for col in columns_to_drop if col in study_area.columns]
-        )
+        study_area = study_area[
+            [zone_id, "MSOA21CD", "geometry"]
+        ]  # we always need MSOA21CD to filter to study area
         print("keeping original OA boundaries")
 
     # Ensure all geometries are MultiPolygon
