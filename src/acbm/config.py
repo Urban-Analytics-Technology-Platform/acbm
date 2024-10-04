@@ -1,3 +1,4 @@
+import random
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -53,6 +54,7 @@ class Config(BaseModel):
     def init_rng(self):
         try:
             np.random.seed(self.seed)
+            random.seed(self.seed)
         except Exception as err:
             msg = f"config does not provide a rng seed with err: {err}"
             ValueError(msg)
