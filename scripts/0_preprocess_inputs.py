@@ -35,7 +35,9 @@ def main(config_file):
     boundary_geography = config.parameters.boundary_geography  # can only be OA or MSOA
     logger.info(f"2. Dissolving boundaries to {boundary_geography} level")
 
-    boundaries = edit_boundary_resolution(boundaries, boundary_geography)
+    boundaries = edit_boundary_resolution(
+        study_area=boundaries, geography=boundary_geography, zone_id=config.zone_id
+    )
 
     ## --- Filter to study area
     # we filter using msoa21cd values, which exist regardless of the boundary resolution
