@@ -63,7 +63,7 @@ def main(config_file):
     # Commuting matrices (from 2021 census)
 
     # TODO: consider making this configurable
-    commute_level = "OA"  # "OA" or "MSOA" data
+    commute_level = config.boundary_geography  # "OA" or "MSOA" data
 
     logger.info(f"Loading commuting matrices at {commute_level} level")
 
