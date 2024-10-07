@@ -40,6 +40,7 @@ def create_logger(name, log_file):
 
 
 # Create loggers for different modules
+preprocessing_logger = create_logger("preprocessing", "preprocessing.log")
 matching_logger = create_logger("matching", "matching.log")
 assigning_primary_feasible_logger = create_logger(
     "assigning_primary_feasible", "assigning_primary_feasible.log"

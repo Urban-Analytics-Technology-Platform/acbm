@@ -13,7 +13,6 @@ def main(config_file):
 
     # Pick a region with SPC output saved
     path = acbm.root_path / "data/external/spc_output/raw/"
-    region = "leeds"
 
     # Add people and households
     spc_people_hh = (

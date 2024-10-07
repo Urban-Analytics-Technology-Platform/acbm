@@ -35,14 +35,13 @@ def main(config_file):
 
     # --- boundaries
 
-    where_clause = "MSOA21NM LIKE '%Leeds%'"
+    logger.info("Loading study area boundaries")
 
     boundaries = gpd.read_file(
-        acbm.root_path / "data/external/boundaries/oa_england.geojson",
-        where=where_clause,
+        acbm.root_path / "data/external/boundaries/study_area_zones.geojson"
     )
 
-    boundaries = boundaries.to_crs(epsg=4326)
+    logger.info("Study area boundaries loaded")
 
     # osm POI data
 
@@ -64,7 +63,7 @@ def main(config_file):
     # Commuting matrices (from 2021 census)
 
     # TODO: consider making this configurable
-    commute_level = "OA"  # "OA" or "MSOA" data
+    commute_level = config.boundary_geography  # "OA" or "MSOA" data
 
     logger.info(f"Loading commuting matrices at {commute_level} level")
 

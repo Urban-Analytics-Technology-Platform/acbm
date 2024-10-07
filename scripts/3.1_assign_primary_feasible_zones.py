@@ -37,15 +37,10 @@ def main(config_file):
     # --- Study area boundaries
 
     logger.info("Loading study area boundaries")
-    where_clause = "MSOA21NM LIKE '%Leeds%'"
 
     boundaries = gpd.read_file(
-        acbm.root_path / "data/external/boundaries/oa_england.geojson",
-        where=where_clause,
+        acbm.root_path / "data/external/boundaries/study_area_zones.geojson"
     )
-
-    # convert boundaries to 4326
-    boundaries = boundaries.to_crs(epsg=4326)
 
     logger.info("Study area boundaries loaded")
 
@@ -99,7 +94,7 @@ def main(config_file):
         # If travel_times is not true or loading failed, create a new travel time matrix
         logger.info("No travel time matrix found. Creating a new travel time matrix.")
         # Create a new travel time matrix based on distances between zones
-        travel_times = zones_to_time_matrix(zones=boundaries, id_col="OA21CD")
+        travel_times = zones_to_time_matrix(zones=boundaries, id_col=config.zone_id)
         logger.info("Travel time estimates created")
 
     # --- Intrazonal trip times
@@ -115,8 +110,7 @@ def main(config_file):
 
     logger.info("Creating intrazonal travel time estimates")
 
-    # TODO: use config zone_id instead of OA21CD
-    intrazone_times = intrazone_time(zones=boundaries, key_column="OA21CD")
+    intrazone_times = intrazone_time(zones=boundaries, key_column=config.zone_id)
 
     logger.info("Intrazonal travel time estimates created")
 

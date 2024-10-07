@@ -14,6 +14,7 @@ class Parameters(BaseModel):
     number_of_households: int | None = None
     zone_id: str
     travel_times: bool
+    boundary_geography: str
 
 
 @dataclass(frozen=True)
