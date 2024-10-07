@@ -50,6 +50,10 @@ def edit_boundary_resolution(
         ]  # we always need MSOA21CD to filter to study area
         print("keeping original OA boundaries")
 
+    else:
+        msg = f"Invalid geography: '{geography}'. Expected 'OA' or 'MSOA'."
+        raise ValueError(msg)
+
     # Ensure all geometries are MultiPolygon
     study_area["geometry"] = study_area["geometry"].apply(
         lambda geom: MultiPolygon([geom]) if geom.geom_type == "Polygon" else geom
