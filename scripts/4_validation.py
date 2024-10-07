@@ -1,13 +1,16 @@
 import os
 
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 import seaborn as sns
 
 import acbm
 from acbm.logger_config import validation_logger as logger
-from acbm.validating.plots import plot_comparison, plot_intrazonal_trips
+from acbm.validating.plots import (
+    plot_activity_sequence_comparison,
+    plot_comparison,
+    plot_intrazonal_trips,
+)
 from acbm.validating.utils import calculate_od_distances, process_sequences
 
 # ----- Folder for validation plots
@@ -67,17 +70,8 @@ legs_acbm["tet_hour"] = legs_acbm["tet"].apply(lambda x: pd.to_datetime(x).hour)
 legs_nts["tst_hour"] = legs_nts["tst"] // 60
 legs_nts["tet_hour"] = legs_nts["tet"] // 60
 
-logger.info("3d. Preprocessing: Adding primary / secondary trip column")
 
-# Define the conditions for primary trips
-conditions_primary = (
-    (legs_acbm["oact"] == "home") & (legs_acbm["dact"].isin(["work", "education"]))
-) | ((legs_acbm["oact"].isin(["work", "education"])) & (legs_acbm["dact"] == "home"))
-
-# Add the trip_type column
-legs_acbm["trip_type"] = np.where(conditions_primary, "primary", "secondary")
-
-logger.info("3e. Preprocessing: Abbreviating column values for trip purpose")
+logger.info("3d. Preprocessing: Abbreviating column values for trip purpose")
 
 # Mapping dictionary
 activity_mapping = {
@@ -211,51 +205,13 @@ sequence_acbm = process_sequences(
 
 # Plot the comparison
 
-# join the two dataframes by 'activity_sequence'
-sequence_nts_acbm = sequence_nts.merge(
-    sequence_acbm, on="activity_sequence", how="inner"
-).sort_values(by="count_nts", ascending=False)
-
-# Get % contribution of each unique activity sequence
-sequence_nts_acbm["count_nts"] = (
-    sequence_nts_acbm["count_nts"] / sequence_nts_acbm["count_nts"].sum() * 100
+plot_activity_sequence_comparison(
+    sequence_nts=sequence_nts,
+    sequence_acbm=sequence_acbm,
+    activity_mapping=activity_mapping,
+    perc_cutoff=0.35,
+    save_path=validation_plots_path / "4_matching_activity_sequences.png",
 )
-sequence_nts_acbm["count_acbm"] = (
-    sequence_nts_acbm["count_acbm"] / sequence_nts_acbm["count_acbm"].sum() * 100
-)
-
-# Filter rows where both count columns are bigger than x %
-x = 0.35
-
-sequence_nts_acbm_filtered = sequence_nts_acbm[
-    (sequence_nts_acbm["count_nts"] > x) & (sequence_nts_acbm["count_acbm"] > x)
-]
-
-fig, ax = plt.subplots(figsize=(10, 6))
-
-sequence_nts_acbm_filtered.plot(
-    x="activity_sequence", y=["count_nts", "count_acbm"], kind="bar", ax=ax
-)
-
-plt.ylabel("Percentage of total trips")
-plt.title("Comparison of Activity Sequences between NTS and ACBM")
-
-# Add the color legend to the plot
-plt.legend(["NTS", "ACBM"], loc="upper right")
-# Generate custom legend
-legend_labels = [f"{abbr} = {full}" for abbr, full in activity_mapping.items()]
-custom_legend = " | ".join(legend_labels)
-# Add the custom legend below the chart
-plt.figtext(
-    0.5, -0.2, custom_legend, wrap=True, horizontalalignment="center", fontsize=12
-)
-
-# plt.show()
-
-# Save the plot
-plt.tight_layout()
-plt.savefig(validation_plots_path / "4_matching_activity_sequences.png")
-
 
 logger.info("4b. Validation (Assigning) - Trip Distance")
 

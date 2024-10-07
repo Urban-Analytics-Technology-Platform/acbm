@@ -268,7 +268,90 @@ def plot_comparison(
     # plt.show()
 
 
-# Intrazonal trips
+# ----- Activity sequences
+
+
+def plot_activity_sequence_comparison(
+    sequence_nts: pd.DataFrame,
+    sequence_acbm: pd.DataFrame,
+    activity_mapping: dict,
+    perc_cutoff: float = 0.35,
+    save_path: Optional[str] = None,
+) -> None:
+    """
+    Plots the comparison of activity sequences between NTS and ACBM.
+
+    Parameters
+    ----------
+    sequence_nts : pd.DataFrame
+        DataFrame containing the NTS activity sequences and counts.
+    sequence_acbm : pd.DataFrame
+        DataFrame containing the ACBM activity sequences and counts.
+    activity_mapping : dict
+        Dictionary mapping activity abbreviations to full names.
+    validation_plots_path : Path
+        Path to save the validation plot.
+    perc_cutoff : float, optional
+        Percentage threshold for filtering sequences. Default is 0.35.
+    save_path : str, optional
+        The file path to save the plot. Default is None.
+    plot_name : str, optional
+        Name of the plot file to save. Default is "4_matching_activity_sequences.png".
+
+    Returns
+    -------
+    None
+    """
+    # Join the two dataframes by 'activity_sequence'
+    sequence_nts_acbm = sequence_nts.merge(
+        sequence_acbm, on="activity_sequence", how="inner"
+    ).sort_values(by="count_nts", ascending=False)
+
+    # Get % contribution of each unique activity sequence
+    sequence_nts_acbm["count_nts"] = (
+        sequence_nts_acbm["count_nts"] / sequence_nts_acbm["count_nts"].sum() * 100
+    )
+    sequence_nts_acbm["count_acbm"] = (
+        sequence_nts_acbm["count_acbm"] / sequence_nts_acbm["count_acbm"].sum() * 100
+    )
+
+    # Filter rows where both count columns are bigger than x %
+    sequence_nts_acbm_filtered = sequence_nts_acbm[
+        (sequence_nts_acbm["count_nts"] > perc_cutoff)
+        & (sequence_nts_acbm["count_acbm"] > perc_cutoff)
+    ]
+
+    fig, ax = plt.subplots(figsize=(10, 6))
+
+    sequence_nts_acbm_filtered.plot(
+        x="activity_sequence", y=["count_nts", "count_acbm"], kind="bar", ax=ax
+    )
+
+    plt.ylabel("Percentage of total trips")
+    plt.title("Comparison of Activity Sequences between NTS and ACBM")
+
+    # Add the color legend to the plot
+    plt.legend(["NTS", "ACBM"], loc="upper right")
+    # Generate custom legend
+    legend_labels = [f"{abbr} = {full}" for abbr, full in activity_mapping.items()]
+    custom_legend = " | ".join(legend_labels)
+    # Add the custom legend below the chart
+    plt.figtext(
+        0.5, -0.2, custom_legend, wrap=True, horizontalalignment="center", fontsize=12
+    )
+
+    # Ensure tight layout
+    plt.tight_layout()
+
+    # Save the plot
+    if save_path:
+        plt.savefig(save_path, bbox_inches="tight")
+
+    # Optionally, show the plot
+    # plt.show()
+
+
+# ----- Intrazonal trips
 
 
 def _calculate_intrazonal_counts(
