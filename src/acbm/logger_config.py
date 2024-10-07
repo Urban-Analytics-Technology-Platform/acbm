@@ -53,3 +53,5 @@ assigning_secondary_zones_logger = create_logger(
 assigning_facility_locations_logger = create_logger(
     "assigning_facility_locations", "assigning_facility_locations.log"
 )
+
+validation_logger = create_logger("validation", "validation.log")
