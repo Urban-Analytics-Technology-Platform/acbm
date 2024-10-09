@@ -54,3 +54,7 @@ assigning_secondary_zones_logger = create_logger(
 assigning_facility_locations_logger = create_logger(
     "assigning_facility_locations", "assigning_facility_locations.log"
 )
+
+converting_to_matsim_logger = create_logger(
+    "converting_to_matsim", "converting_to_matsim.log"
+)
