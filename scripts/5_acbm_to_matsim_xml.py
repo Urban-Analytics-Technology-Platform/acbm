@@ -1,7 +1,10 @@
+from datetime import timedelta
+
 import geopandas as gpd
 import pandas as pd
 from pam import write
 from pam.read import load_travel_diary
+from pam.samplers.time import apply_jitter_to_plan
 from shapely import Point, wkt
 
 import acbm
@@ -322,7 +325,17 @@ population = load_travel_diary(
     # hhs_attributes = None,
 )
 
-logger.info("4.2 - Write to MATSim XML")
+logger.info("4.2 - Jittering plans")
+# TODO: Move this upstream
+for _, _, person in population.people():
+    apply_jitter_to_plan(
+        person.plan, jitter=timedelta(minutes=30), min_duration=timedelta(minutes=10)
+    )
+    # crop to 24-hours
+    person.plan.crop()
+
+
+logger.info("4.3 - Write to MATSim XML")
 
 write.write_matsim_population_v6(
     population=population,
