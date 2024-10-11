@@ -1,4 +1,3 @@
-import random
 from dataclasses import dataclass, field
 from typing import Dict, List, Tuple
 
@@ -352,8 +351,8 @@ class WorkZoneAssignment:
     def select_work_zone_optimization(
         self,
         use_percentages: bool = False,
-        weight_max_dev: int = 0.5,
-        weight_total_dev: int = 0.5,
+        weight_max_dev: float = 0.5,
+        weight_total_dev: float = 0.5,
         max_zones: int = 10,
     ) -> pd.DataFrame:
         """
@@ -456,8 +455,10 @@ class WorkZoneAssignment:
                     selected_zones = [zones_in_flows[i] for i in selected_zones_indices]
                 elif feasible_zones:
                     # If no zones in actual_flows, select up to 10 random zones from feasible zones
-                    selected_zones = random.sample(
-                        feasible_zones, min(max_zones, len(feasible_zones))
+                    selected_zones = np.random.choice(
+                        feasible_zones,
+                        min(max_zones, len(feasible_zones)),
+                        replace=False,
                     )
 
                 for zone in selected_zones:
@@ -519,6 +520,7 @@ class WorkZoneAssignment:
             + weight_total_dev * pulp.lpSum(deviation_vars.values()),
             "WeightedObjective",
         )
+
         prob.solve()
 
         if pulp.LpStatus[prob.status] != "Optimal":

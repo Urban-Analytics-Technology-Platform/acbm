@@ -4,9 +4,65 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 from pyproj import Transformer
-from shapely import Point
+from shapely.geometry import MultiPolygon, Point
 
 import acbm
+
+# ----- PREPROCESSING BOUNDARIES
+
+
+def edit_boundary_resolution(
+    study_area: gpd.GeoDataFrame, geography: str, zone_id: str
+) -> gpd.GeoDataFrame:
+    """
+    This function takes a GeoDataFrame and a geography resolution as input and returns
+    a GeoDataFrame with the specified geography resolution. It dissolves OA boundaries
+    to MSOA boundaries if the geography resolution is set to "MSOA". Otherwise, it
+    retains the original OA boundaries. Currently it only works for OA and MSOA
+
+    Parameters
+    ----------
+    study_area : gpd.GeoDataFrame
+        A GeoDataFrame containing the study area boundaries
+    geography : str
+        A string specifying the geography resolution. It can be either "OA" or "MSOA"
+    zone_id : str
+        The column name of the zone identifier in the study_area GeoDataFrame
+
+    Returns
+    -------
+    gpd.GeoDataFrame
+        A GeoDataFrame containing the study area boundaries with the specified geography
+
+    """
+    # Dissolve based on the specified geography
+    if geography == "MSOA":
+        # Drop unnecessary columns (they are lower level than MSOA)
+        study_area = study_area[[zone_id, "geometry"]]
+
+        print("converting from OA to MSOA")
+        study_area = study_area.dissolve(by="MSOA21CD").reset_index()
+
+    elif geography == "OA":
+        # Drop unnecessary columns
+        study_area = study_area[
+            [zone_id, "MSOA21CD", "geometry"]
+        ]  # we always need MSOA21CD to filter to study area
+        print("keeping original OA boundaries")
+
+    else:
+        msg = f"Invalid geography: '{geography}'. Expected 'OA' or 'MSOA'."
+        raise ValueError(msg)
+
+    # Ensure all geometries are MultiPolygon
+    study_area["geometry"] = study_area["geometry"].apply(
+        lambda geom: MultiPolygon([geom]) if geom.geom_type == "Polygon" else geom
+    )
+
+    return study_area
+
+
+# ----- MATCHING
 
 
 def nts_filter_by_year(

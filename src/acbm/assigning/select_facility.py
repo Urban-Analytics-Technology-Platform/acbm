@@ -248,11 +248,11 @@ def map_activity_locations(
     activity_chains_df["end_location_id"] = activity_chains_df[id_col].map(
         lambda pid: activity_locations_dict[pid][0]
         if pid in activity_locations_dict
-        else None
+        else pd.NA
     )
     activity_chains_df["end_location_geometry"] = activity_chains_df[id_col].map(
         lambda pid: activity_locations_dict[pid][1]
         if pid in activity_locations_dict
-        else None
+        else pd.NA
     )
     return activity_chains_df
