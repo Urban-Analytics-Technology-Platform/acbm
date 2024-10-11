@@ -1099,6 +1099,17 @@ def main(config_file):
     # save the file as a parquet file
     spc_edited_copy.to_parquet(get_interim_path("spc_with_nts_trips.parquet"))
 
+    # save the nts data for later use in validation
+    nts_individuals.to_parquet(
+        acbm.root_path / "data/external/nts/filtered/nts_individuals.parquet"
+    )
+    nts_households.to_parquet(
+        acbm.root_path / "data/external/nts/filtered/nts_households.parquet"
+    )
+    nts_trips.to_parquet(
+        acbm.root_path / "data/external/nts/filtered/nts_trips.parquet"
+    )
+
 
 if __name__ == "__main__":
     main()
