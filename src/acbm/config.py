@@ -51,6 +51,10 @@ class Config(BaseModel):
     def destination_zone_id(cls, zone_id: str) -> str:
         return zone_id + "_to"
 
+    @property
+    def boundary_geography(self) -> str:
+        return self.parameters.boundary_geography
+
     # TODO: consider moving to method in config
     def init_rng(self):
         try:
