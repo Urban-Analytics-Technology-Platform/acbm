@@ -96,6 +96,11 @@ def main(config_file):
         # Create a new travel time matrix based on distances between zones
         travel_times = zones_to_time_matrix(zones=boundaries, id_col=config.zone_id)
         logger.info("Travel time estimates created")
+        # save travel_times as parquet
+
+        travel_times.to_parquet(
+            acbm.root_path / "data/interim/assigning/travel_time_estimates.parquet"
+        )
 
     # --- Intrazonal trip times
     #
@@ -111,6 +116,10 @@ def main(config_file):
     logger.info("Creating intrazonal travel time estimates")
 
     intrazone_times = intrazone_time(zones=boundaries, key_column=config.zone_id)
+
+    # save intrazone_times to pickle
+    with open(acbm.root_path / "data/interim/assigning/intrazone_times.pkl", "wb") as f:
+        pkl.dump(intrazone_times, f)
 
     logger.info("Intrazonal travel time estimates created")
 

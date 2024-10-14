@@ -929,7 +929,7 @@ def main(config_file):
         df1_id="hid",
         df2_id="HouseholdID",
         matches_hh=matches_hh_level_sample,
-        show_progress=False,
+        show_progress=True,
     )
 
     # Add matches_ind values to spc_edited using map
