@@ -100,6 +100,10 @@ class MatcherExact:
             df_matched_dict_i = (
                 df_matched_chunk.groupby(df_pop_id)[df_sample_id].apply(list).to_dict()
             )
+            # Filter out NaN values from the lists
+            df_matched_dict_i = {
+                k: [x for x in v if pd.notna(x)] for k, v in df_matched_dict_i.items()
+            }
             results.update(df_matched_dict_i)
         return results
 
