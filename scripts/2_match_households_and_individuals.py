@@ -11,7 +11,7 @@ import acbm
 from acbm.cli import acbm_cli
 from acbm.config import load_config
 from acbm.logger_config import matching_logger as logger
-from acbm.matching import match_categorical, match_individuals
+from acbm.matching import MatcherExact, match_individuals
 from acbm.preprocessing import (
     count_per_group,
     # nts_filter_by_region,
@@ -763,7 +763,7 @@ def main(config_file):
         "rural_urban_4_categories",
     ]
 
-    # i want the value to be a list with spc_matching and nts_matching
+    # Dict with value qual to a list with spc_matching and nts_matching column names
     matching_dfs_dict = {
         column_name: [spc_value, nts_value]
         for column_name, spc_value, nts_value in zip(
@@ -771,34 +771,41 @@ def main(config_file):
         )
     }
 
-    # #### Match on a subset of columns (exclude salary, tenure, and employment status)
-    #
-    # To decide on the subset of columns to match on, we explore the results from different combinations. This is shown in a separate notebook: `2.1_sandbox-match_households.ipynb`.
+    # We match iteratively on a subset of columns. We start with all columns, and then remove
+    # one of the optionals columns at a time (relaxing the condition). Once a household has over n
+    # matches, we stop matching it to more matches. We continue until all optional columns are removed
 
-    # columns for matching
-    keys = [
+    # Define required columns for matching
+    required_columns = [
         "number_adults",
         "number_children",
-        "num_pension_age",
-        "number_cars",
-        "rural_urban_2_categories",
     ]
-    # extract equivalent column names from dictionary
-    spc_cols = [matching_dfs_dict[key][0] for key in keys]
-    nts_cols = [matching_dfs_dict[key][1] for key in keys]
 
-    # Match
+    # Define optional columns in order of importance (most to least important)
+    optional_columns = [
+        "number_cars",
+        "num_pension_age",
+        "rural_urban_2_categories",
+        "employment_status",
+        "tenure_status",
+    ]
 
-    matches_hh_level = match_categorical(
+    matcher_exact = MatcherExact(
         df_pop=spc_matching,
-        df_pop_cols=spc_cols,
         df_pop_id="hid",
         df_sample=nts_matching,
-        df_sample_cols=nts_cols,
         df_sample_id="HouseholdID",
+        matching_dict=matching_dfs_dict,
+        fixed_cols=required_columns,
+        optional_cols=optional_columns,
+        n_matches=10,
         chunk_size=50000,
         show_progress=True,
     )
+
+    # Match
+
+    matches_hh_level = matcher_exact.iterative_match_categorical()
 
     # Number of unmatched households
 

@@ -1,82 +1,164 @@
+from collections import defaultdict
+from dataclasses import dataclass, field
+from typing import Dict, List
+
 import numpy as np
 import pandas as pd
 from sklearn.neighbors import NearestNeighbors
 
-# categorical (exact) matching
+# categorical (exact) matching - (for household level)
 
 
-def match_categorical(
-    df_pop: pd.DataFrame,
-    df_pop_cols: list,
-    df_pop_id: str,
-    df_sample: pd.DataFrame,
-    df_sample_cols: list,
-    df_sample_id: str,
-    chunk_size: int,
-    show_progress=True,
-) -> dict:
-    """
-    Match the rows in two DataFrames based on specified columns.
-    The function matches the rows in df_pop to the rows in df_sample based
-    on the columns in df_pop_cols and df_sample_cols. The matching is done
-    in chunks to avoid memory issues.
-
-    Parameters
-    ----------
-    df_pop: pandas DataFrame
-        The DataFrame to be matched on
-    df_pop_cols: list
-        The columns to be used for matching in df_pop
+@dataclass
+class MatcherExact:
+    df_pop: pd.DataFrame
     df_pop_id: str
-        The column name that contains the unique identifier in df_pop
-        It is the key in the final dictionary
-    df_sample: pandas DataFrame
-        The DataFrame to be matched with
-    df_sample_cols: list
-        The columns to be used for matching in df_sample
+    df_sample: pd.DataFrame
     df_sample_id: str
-        The column name that contains the unique identifier in df_sample
-        It is the value in the final dictionary
-    chunk_size: int
-        The number of rows to process at a time
-    show_progress: bool
-        Whether to print the progress of the matching to the console
+    matching_dict: Dict[str, List[str]]
+    fixed_cols: List[str]
+    optional_cols: List[str]
+    n_matches: int = 5
+    chunk_size: int = 50000
+    show_progress: bool = True
+    matched_dict: Dict[str, List[str]] = field(
+        default_factory=lambda: defaultdict(list)
+    )
+    match_count: Dict[str, int] = field(default_factory=lambda: defaultdict(int))
 
-    Returns
-    -------
-    results: dict
-        A dictionary with the matched rows {df_pop_id: [df_sample_id]}
+    def __post_init__(self):
+        # Extract equivalent column names from dictionary
+        self.fixed_pop_cols = [self.matching_dict[col][0] for col in self.fixed_cols]
+        self.fixed_sample_cols = [self.matching_dict[col][1] for col in self.fixed_cols]
+        self.optional_pop_cols = [
+            self.matching_dict[col][0] for col in self.optional_cols
+        ]
+        self.optional_sample_cols = [
+            self.matching_dict[col][1] for col in self.optional_cols
+        ]
+        self.remaining_df_pop = self.df_pop.copy()
+        self.remaining_df_sample = self.df_sample.copy()
 
-    """
+    def _match_categorical(
+        self,
+        df_pop: pd.DataFrame,
+        df_pop_cols: List[str],
+        df_pop_id: str,
+        df_sample: pd.DataFrame,
+        df_sample_cols: List[str],
+        df_sample_id: str,
+        chunk_size: int,
+        show_progress: bool = True,
+    ) -> Dict[str, List[str]]:
+        """
+        Match the rows in two DataFrames based on specified columns.
+        The function matches the rows in df_pop to the rows in df_sample based
+        on the columns in df_pop_cols and df_sample_cols. The matching is done
+        in chunks to avoid memory issues.
 
-    # dictionary to store results
-    results = {}
+        Parameters
+        ----------
+        df_pop: pandas DataFrame
+            The DataFrame to be matched on
+        df_pop_cols: list
+            The columns to be used for matching in df_pop
+        df_pop_id: str
+            The column name that contains the unique identifier in df_pop
+            It is the key in the final dictionary
+        df_sample: pandas DataFrame
+            The DataFrame to be matched with
+        df_sample_cols: list
+            The columns to be used for matching in df_sample
+        df_sample_id: str
+            The column name that contains the unique identifier in df_sample
+            It is the value in the final dictionary
+        chunk_size: int
+            The number of rows to process at a time
+        show_progress: bool
+            Whether to print the progress of the matching to the console
 
-    # loop over the df_pop DataFrame in chunks
-    for i in range(0, df_pop.shape[0], chunk_size):
-        # filter the df_pop DataFrame to the current chunk
-        j = i + chunk_size
-        if show_progress:
-            print("matching rows ", i, "to", j, " out of ", df_pop.shape[0])
+        Returns
+        -------
+        results: dict
+            A dictionary with the matched rows {df_pop_id: [df_sample_id_1, df_sample_id_2, ...]}
+        """
+        results = {}
 
-        df_pop_chunk = df_pop.iloc[i:j]
+        # loop over the df_pop DataFrame in chunks
+        for i in range(0, df_pop.shape[0], chunk_size):
+            # Adjust chunk size if remaining rows are less than chunk size
+            j = min(i + chunk_size, df_pop.shape[0])
+            if show_progress:
+                print("matching rows ", i, "to", j, " out of ", df_pop.shape[0])
 
-        # merge the df_pop_chunk with the df_sample DataFrame
-        df_matched_chunk = df_pop_chunk.merge(
-            df_sample, left_on=df_pop_cols, right_on=df_sample_cols, how="left"
-        )
+            df_pop_chunk = df_pop.iloc[i:j]
+            # exact match through a join on the specified columns
+            df_matched_chunk = df_pop_chunk.merge(
+                df_sample, left_on=df_pop_cols, right_on=df_sample_cols, how="left"
+            )
+            # convert matched df to dictionary
+            df_matched_dict_i = (
+                df_matched_chunk.groupby(df_pop_id)[df_sample_id].apply(list).to_dict()
+            )
+            results.update(df_matched_dict_i)
+        return results
 
-        # convert the matched df to a dictionary:
-        df_matched_dict_i = (
-            df_matched_chunk.groupby(df_pop_id)[df_sample_id].apply(list).to_dict()
-        )
+    def iterative_match_categorical(self) -> Dict[str, List[str]]:
+        """
+        Perform categorical matching iteratively, relaxing constraints in each round by
+        removing one optional column at a time (optional columns are ordered by importance).
+        For each household in df_pop, we stop matching when if matches have exceeded
+        n_matches.
 
-        # add the dictionary to results{}
-        results.update(df_matched_dict_i)
-    return results
+        Returns
+        -------
+        dict
+            Dictionary with matched households.
+        """
+        for i in range(len(self.optional_pop_cols) + 1):
+            if i > 0:
+                self.optional_pop_cols.pop()
+                self.optional_sample_cols.pop()
+
+            current_pop_cols = self.fixed_pop_cols + self.optional_pop_cols
+            current_sample_cols = self.fixed_sample_cols + self.optional_sample_cols
+
+            print(f"Categorical matching level {i}: {current_pop_cols}")
+
+            current_matches = self._match_categorical(
+                df_pop=self.remaining_df_pop,
+                df_pop_cols=current_pop_cols,
+                df_pop_id=self.df_pop_id,
+                df_sample=self.remaining_df_sample,
+                df_sample_cols=current_sample_cols,
+                df_sample_id=self.df_sample_id,
+                chunk_size=self.chunk_size,
+                show_progress=self.show_progress,
+            )
+
+            for pop_id, sample_ids in current_matches.items():
+                unique_sample_ids = [
+                    sid for sid in sample_ids if sid not in self.matched_dict[pop_id]
+                ]
+                self.matched_dict[pop_id].extend(unique_sample_ids)
+                self.match_count[pop_id] += len(unique_sample_ids)
+
+            matched_ids = [
+                pop_id
+                for pop_id, count in self.match_count.items()
+                if count >= self.n_matches
+            ]
+            self.remaining_df_pop = self.remaining_df_pop[
+                ~self.remaining_df_pop[self.df_pop_id].isin(matched_ids)
+            ]
+
+            if self.remaining_df_pop.empty:
+                break
+
+        return dict(self.matched_dict)
 
 
-# propensity score matching
+# propensity score matching - (for individual level)
 
 
 def match_psm(df1: pd.DataFrame, df2: pd.DataFrame, matching_columns: list) -> dict:
