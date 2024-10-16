@@ -1,0 +1,13 @@
+[parameters]
+seed = 0
+region = "leeds"
+zone_id = "OA21CD"
+travel_times = true # Only set to true if you have travel time matrix at the level specified in boundary_geography
+boundary_geography = "OA"
+
+
+[work_assignment]
+use_percentages = false
+weight_max_dev = 0.0
+weight_total_dev = 1.0
+max_zones = 4

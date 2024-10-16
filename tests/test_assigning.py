@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from acbm.assigning.assigning import _map_day_to_wkday_binary
+from acbm.assigning.utils import _map_day_to_wkday_binary
 
 # applying to a single value
 
