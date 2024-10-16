@@ -1,0 +1,8 @@
+- filter: which POIs to keep
+
+- object_features: which features to retain
+    - can I retain isced to distinguish between primary and secondary schools? See here: https://wiki.openstreetmap.org/wiki/Tag:amenity%3Dschool
+
+- distance to nearest: list that can include any of the activities that you have included in activity mapping. e.g.:  ["transit", "education", "shop", "medical"],
+
+- fill_missing_activities: only include if you want to fill missing activities
