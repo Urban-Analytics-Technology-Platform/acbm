@@ -12,3 +12,8 @@ use_percentages = true
 weight_max_dev = 0.2
 weight_total_dev = 0.8
 max_zones = 8
+
+
+[postprocessing]
+pam_jitter = 30
+pam_min_duration = 10

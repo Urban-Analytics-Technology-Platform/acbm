@@ -25,10 +25,19 @@ class WorkAssignmentParams(BaseModel):
     max_zones: int
 
 
+@dataclass(frozen=True)
+class Postprocessing(BaseModel):
+    pam_jitter: int
+    pam_min_duration: int
+
+
 class Config(BaseModel):
     parameters: Parameters = Field(description="Config: parameters.")
     work_assignment: WorkAssignmentParams = Field(
         description="Config: parameters for work assignment."
+    )
+    postprocessing: Postprocessing = Field(
+        description="Config: parameters for postprocessing."
     )
 
     @property
