@@ -4,6 +4,7 @@ from typing import Dict, List
 
 import numpy as np
 import pandas as pd
+from joblib import Parallel, delayed
 from sklearn.neighbors import NearestNeighbors
 
 # categorical (exact) matching - (for household level)
@@ -264,20 +265,23 @@ def match_individuals(
     # Remove all unmateched households
     matches_hh = {key: value for key, value in matches_hh.items() if not pd.isna(value)}
 
-    # loop over all rows in the matches_hh dictionary
-    for i, (key, value) in enumerate(matches_hh.items(), 1):
+    def get_match(key, value):
         # Get the rows in df1 and df2 that correspond to the matched hids
         rows_df1 = df1[df1[df1_id] == key]
         rows_df2 = df2[df2[df2_id] == int(value)]
 
-        if show_progress:
-            # Print the iteration number and the number of keys in the dict
-            print(f"Matching for household {i} out of: {len(matches_hh)}")
-
         # apply the matching
-        match = match_psm(rows_df1, rows_df2, matching_columns)
+        return match_psm(rows_df1, rows_df2, matching_columns)
 
-        # append the results to the main dict
-        matches.update(match)
+    parallel = Parallel(n_jobs=-1, return_as="generator")
+    matches_list_of_dict = list(
+        parallel(
+            delayed(get_match)(key, value)
+            for (key, value) in enumerate(matches_hh.items())
+        )
+    )
+    matches_list_of_dict_new = {}
+    for d in matches_list_of_dict:
+        matches_list_of_dict_new.update(d)
 
     return matches
