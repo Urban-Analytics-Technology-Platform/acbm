@@ -837,23 +837,26 @@ def main(config_file):
     original list of values.
 
     """
+    # Randomly sample one match per household if it has one match or more
     matches_hh_level_sample = {
-        key: np.random.choice(value) for key, value in matches_hh_level.items()
-    }
-
-    # remove items in list where value is nan
-    matches_hh_level_sample = {
-        key: value
-        for key, value in matches_hh_level_sample.items()
-        if not pd.isna(value)
+        key: np.random.choice(value)
+        for key, value in matches_hh_level.items()
+        if value
+        and not pd.isna(
+            np.random.choice(value)
+        )  # Ensure the value list is not empty and the selected match is not NaN
     }
 
     # Multiple matches in case we want to try stochastic runs
 
-    # same logic as cell above, but repeat it multiple times and store each result as a separate dictionary in a list
+    # Same logic as above, but repeat it multiple times and store each result as a separate dictionary in a list
     matches_hh_level_sample_list = [
-        {key: np.random.choice(value) for key, value in matches_hh_level.items()}
-        for i in range(25)
+        {
+            key: np.random.choice(value)
+            for key, value in matches_hh_level.items()
+            if value and not pd.isna(np.random.choice(value))
+        }
+        for i in range(25)  # Repeat the process 25 times
     ]
 
     logger.info("Categorical matching: Random sampling complete")
