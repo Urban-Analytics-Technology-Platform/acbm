@@ -39,14 +39,12 @@ def main(config_file):
 
     # ### SPC
 
-    # useful variables
-    region = "leeds"
-
     logger.info("Loading SPC data")
 
     # Read in the spc data (parquet format)
     spc = pd.read_parquet(
-        acbm.root_path / "data/external/spc_output/" f"{region}_people_hh.parquet"
+        acbm.root_path / "data/external/spc_output/"
+        f"{config.region}_people_hh.parquet"
     )
 
     logger.info("Filtering SPC data to specific columns")
