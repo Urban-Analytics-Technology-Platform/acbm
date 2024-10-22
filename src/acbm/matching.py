@@ -264,13 +264,16 @@ def match_individuals(
     # Remove all unmateched households
     matches_hh = {key: value for key, value in matches_hh.items() if not pd.isna(value)}
 
-    # loop over all rows in the matches_hh dictionary
-    for i, (key, value) in enumerate(matches_hh.items(), 1):
-        # Get the rows in df1 and df2 that correspond to the matched hids
-        rows_df1 = df1[df1[df1_id] == key]
+    # loop over all groups of df1_id
+    for i, (key, rows_df1) in df1.groupby(df1_id):
+        try:
+            value = matches_hh[key]
+        except Exception:
+            # Continue if key not in matches_hh
+            continue
         rows_df2 = df2[df2[df2_id] == int(value)]
 
-        if show_progress:
+        if show_progress and i % 100 == 0:
             # Print the iteration number and the number of keys in the dict
             print(f"Matching for household {i} out of: {len(matches_hh)}")
 
