@@ -18,6 +18,11 @@ class Parameters(BaseModel):
 
 
 @dataclass(frozen=True)
+class MatchingParams(BaseModel):
+    load_hh: bool
+
+
+@dataclass(frozen=True)
 class WorkAssignmentParams(BaseModel):
     use_percentages: bool
     weight_max_dev: float
@@ -30,6 +35,7 @@ class Config(BaseModel):
     work_assignment: WorkAssignmentParams = Field(
         description="Config: parameters for work assignment."
     )
+    matching: MatchingParams = Field(description="Config: parameters for matching.")
 
     @property
     def seed(self) -> int:
