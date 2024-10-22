@@ -1127,7 +1127,7 @@ def main(config_file):
     ]
     nts_output_cols = [
         col for col in nts_trips.columns if col in cols_for_assignment_all()
-    ]
+    ] + ["IndividualID"]
 
     # merge the copy with nts_trips using IndividualID
     spc_edited_copy = spc_edited_copy[spc_output_cols].merge(
