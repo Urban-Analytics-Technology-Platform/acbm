@@ -265,7 +265,7 @@ def match_individuals(
     matches_hh = {key: value for key, value in matches_hh.items() if not pd.isna(value)}
 
     # loop over all groups of df1_id
-    for i, (key, rows_df1) in df1.groupby(df1_id):
+    for i, (key, rows_df1) in enumerate(df1.groupby(df1_id), 1):
         try:
             value = matches_hh[key]
         except Exception:
