@@ -877,6 +877,7 @@ def main(config_file):
         ) as f:
             pkl.dump(matches_hh_level_sample_list, f)
     else:
+        logger.info("Categorical matching: loading matched households")
         # Load matching result
         with open(
             get_interim_path("matches_hh_level_categorical_random_sample.pkl"), "rb"
@@ -973,6 +974,7 @@ def main(config_file):
         ) as f:
             pkl.dump(matches_ind, f)
     else:
+        logger.info("Statistical matching: loading matched individuals")
         with open(
             get_interim_path("matches_ind_level_categorical_random_sample.pkl"), "rb"
         ) as f:
