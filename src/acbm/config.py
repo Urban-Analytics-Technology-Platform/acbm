@@ -19,7 +19,8 @@ class Parameters(BaseModel):
 
 @dataclass(frozen=True)
 class MatchingParams(BaseModel):
-    load_hh: bool
+    load_hh: bool | None = False
+    load_ind: bool | None = False
 
 
 @dataclass(frozen=True)
