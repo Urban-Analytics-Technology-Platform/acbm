@@ -818,9 +818,6 @@ def main(config_file):
             f"{round((na_count / len(matches_hh_level)) * 100, 1)}% of households in the SPC had no match"
         )
 
-        ## add matches_hh_level as a column in spc_edited
-        spc_edited["nts_hh_id"] = spc_edited["hid"].map(matches_hh_level)
-
         # ### Random Sampling from matched households
 
         logger.info("Categorical matching: Randomly choosing one match per household")
@@ -864,6 +861,11 @@ def main(config_file):
 
         # Save results
         logger.info("Categorical matching: Saving results")
+
+        # matching results
+        with open(get_interim_path("matches_hh_level_categorical.pkl"), "wb") as f:
+            pkl.dump(matches_hh_level, f)
+
         # random sample
         with open(
             get_interim_path("matches_hh_level_categorical_random_sample.pkl"), "wb"
@@ -891,6 +893,10 @@ def main(config_file):
         ) as f:
             matches_hh_level_sample_list = pkl.load(f)
 
+    ## add matches_hh_level as a column in spc_edited
+    # TODO: update other scripts to only add this in-memory
+    # spc_edited["nts_hh_id"] = spc_edited["hid"].map(matches_hh_level)
+
     # Do the same at the df level. Add nts_hh_id_sample column to the spc df
 
     # # for each hid in spc_edited, sample a value from the nts_hh_id col.
@@ -909,45 +915,44 @@ def main(config_file):
     #
     #
 
+    # Create an 'age' column in the SPC that matches the NTS categories
+
+    # create a dictionary for reference on how the labels for "Age_B04ID" match the actual age brackets
+
+    # dict_nts_ind_age = {-10: 'DEAD',
+    #                     -8: 'NA',
+    #                     1: '0-4',
+    #                     2: '5-10',
+    #                     3: '11-16',
+    #                     4: '17-20',
+    #                     5: '21-29',
+    #                     6: '30-39',
+    #                     7: '40-49',
+    #                     8: '50-59',
+    #                     9: '60+'
+    #                     }
+
+    # Define the bins and labels based on dict_nts_ind_age
+    bins = [0, 4, 10, 16, 20, 29, 39, 49, 59, np.inf]
+    labels = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+
+    # Create a new column in spc_edited that maps the age_years to the keys of dict_nts_ind_age
+    spc_edited["age_group"] = (
+        pd.cut(spc_edited["age_years"], bins=bins, labels=labels)
+        .astype("int")
+        .fillna(-8)
+    )
+
+    # rename nts columns in preparation for matching
+
+    nts_individuals.rename(
+        columns={"Age_B04ID": "age_group", "Sex_B01ID": "sex"}, inplace=True
+    )
+
     if not config.matching.load_ind:
         logger.info("Statistical matching: MATCHING INDIVIDUALS")
 
-        # Create an 'age' column in the SPC that matches the NTS categories
-
-        # create a dictionary for reference on how the labels for "Age_B04ID" match the actual age brackets
-
-        # dict_nts_ind_age = {-10: 'DEAD',
-        #                     -8: 'NA',
-        #                     1: '0-4',
-        #                     2: '5-10',
-        #                     3: '11-16',
-        #                     4: '17-20',
-        #                     5: '21-29',
-        #                     6: '30-39',
-        #                     7: '40-49',
-        #                     8: '50-59',
-        #                     9: '60+'
-        #                     }
-
-        # Define the bins and labels based on dict_nts_ind_age
-        bins = [0, 4, 10, 16, 20, 29, 39, 49, 59, np.inf]
-        labels = [1, 2, 3, 4, 5, 6, 7, 8, 9]
-
-        # Create a new column in spc_edited that maps the age_years to the keys of dict_nts_ind_age
-        spc_edited["age_group"] = (
-            pd.cut(spc_edited["age_years"], bins=bins, labels=labels)
-            .astype("int")
-            .fillna(-8)
-        )
-
-        # rename nts columns in preparation for matching
-
-        nts_individuals.rename(
-            columns={"Age_B04ID": "age_group", "Sex_B01ID": "sex"}, inplace=True
-        )
-
         # PSM matching using internal match_individuals function
-
         matches_ind = match_individuals(
             df1=spc_edited,
             df2=nts_individuals,
@@ -957,16 +962,6 @@ def main(config_file):
             matches_hh=matches_hh_level_sample,
             show_progress=True,
         )
-
-        # Add matches_ind values to spc_edited using map
-        spc_edited["nts_ind_id"] = spc_edited.index.map(matches_ind)
-
-        # add the nts_individuals.IndividualID to spc_edit. The current nts_ind_id is the row index of nts_individuals
-        spc_edited["nts_ind_id"] = spc_edited["nts_ind_id"].map(
-            nts_individuals["IndividualID"]
-        )
-
-        logger.info("Statistical matching: Matching complete")
 
         # save random sample
         with open(
@@ -979,6 +974,16 @@ def main(config_file):
             get_interim_path("matches_ind_level_categorical_random_sample.pkl"), "rb"
         ) as f:
             matches_ind = pkl.load(f)
+
+    # Add matches_ind values to spc_edited using map
+    spc_edited["nts_ind_id"] = spc_edited.index.map(matches_ind)
+
+    # add the nts_individuals.IndividualID to spc_edit. The current nts_ind_id is the row index of nts_individuals
+    spc_edited["nts_ind_id"] = spc_edited["nts_ind_id"].map(
+        nts_individuals["IndividualID"]
+    )
+
+    logger.info("Statistical matching: Matching complete")
 
     # ### Match on multiple samples
 
