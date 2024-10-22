@@ -8,6 +8,7 @@ import pandas as pd
 # from joblib import Parallel, delayed
 # from tqdm import trange
 import acbm
+from acbm.assigning.utils import cols_for_assignment_all
 from acbm.cli import acbm_cli
 from acbm.config import load_config
 from acbm.logger_config import matching_logger as logger
@@ -1114,9 +1115,20 @@ def main(config_file):
     # convert the nts_ind_id column to int for merging
     spc_edited_copy["nts_ind_id"] = spc_edited_copy["nts_ind_id"].astype(int)
 
+    # Add output columns required for assignment scripts
+    spc_output_cols = [
+        col for col in spc_edited_copy.columns if col in cols_for_assignment_all()
+    ]
+    nts_output_cols = [
+        col for col in nts_trips.columns if col in cols_for_assignment_all()
+    ]
+
     # merge the copy with nts_trips using IndividualID
-    spc_edited_copy = spc_edited_copy.merge(
-        nts_trips, left_on="nts_ind_id", right_on="IndividualID", how="left"
+    spc_edited_copy = spc_edited_copy[spc_output_cols].merge(
+        nts_trips[nts_output_cols],
+        left_on="nts_ind_id",
+        right_on="IndividualID",
+        how="left",
     )
 
     # save the file as a parquet file
