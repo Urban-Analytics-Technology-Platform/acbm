@@ -893,9 +893,12 @@ def main(config_file):
         ) as f:
             matches_hh_level_sample_list = pkl.load(f)
 
+    # TODO: check if this:
+    #   - column is required and possibly update other scripts to add this column in-memory since it is large
+    #   - or can use the single sample hh for the new column
+    # For now, updated to use the sample dictionary
     ## add matches_hh_level as a column in spc_edited
-    # TODO: update other scripts to only add this in-memory
-    # spc_edited["nts_hh_id"] = spc_edited["hid"].map(matches_hh_level)
+    spc_edited["nts_hh_id"] = spc_edited["hid"].map(matches_hh_level_sample)
 
     # Do the same at the df level. Add nts_hh_id_sample column to the spc df
 
