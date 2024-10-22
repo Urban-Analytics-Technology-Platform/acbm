@@ -265,6 +265,9 @@ def match_individuals(
     matches_hh = {key: value for key, value in matches_hh.items() if not pd.isna(value)}
 
     # loop over all groups of df1_id
+    # note: for large populations looping through the groups (keys) of the
+    # large dataframe (assumed to be df1) is more efficient than looping
+    # over keys and subsetting on a key in each iteration.
     for i, (key, rows_df1) in enumerate(df1.groupby(df1_id), 1):
         try:
             value = matches_hh[key]
