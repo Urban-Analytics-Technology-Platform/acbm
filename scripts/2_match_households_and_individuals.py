@@ -773,30 +773,14 @@ def main(config_file):
         # We match iteratively on a subset of columns. We start with all columns, and then remove
         # one of the optionals columns at a time (relaxing the condition). Once a household has over n
         # matches, we stop matching it to more matches. We continue until all optional columns are removed
-
-        # Define required columns for matching
-        required_columns = [
-            "number_adults",
-            "number_children",
-        ]
-
-        # Define optional columns in order of importance (most to least important)
-        optional_columns = [
-            "number_cars",
-            "num_pension_age",
-            "rural_urban_2_categories",
-            "employment_status",
-            "tenure_status",
-        ]
-
         matcher_exact = MatcherExact(
             df_pop=spc_matching,
             df_pop_id="hid",
             df_sample=nts_matching,
             df_sample_id="HouseholdID",
             matching_dict=matching_dfs_dict,
-            fixed_cols=required_columns,
-            optional_cols=optional_columns,
+            fixed_cols=list(config.matching.required_columns),
+            optional_cols=list(config.matching.optional_columns),
             n_matches=10,
             chunk_size=50000,
             show_progress=True,

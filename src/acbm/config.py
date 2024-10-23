@@ -21,6 +21,19 @@ class Parameters(BaseModel):
 class MatchingParams(BaseModel):
     load_hh: bool | None = False
     load_ind: bool | None = False
+    # Define required columns for matching
+    required_columns: list[str] | tuple[str] = (
+        "number_adults",
+        "number_children",
+    )
+    # Define optional columns in order of importance (most to least important)
+    optional_columns: list[str] | tuple[str] = (
+        "number_cars",
+        "num_pension_age",
+        "rural_urban_2_categories",
+        "employment_status",
+        "tenure_status",
+    )
 
 
 @dataclass(frozen=True)
