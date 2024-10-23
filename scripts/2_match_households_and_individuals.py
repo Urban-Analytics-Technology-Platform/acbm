@@ -781,8 +781,8 @@ def main(config_file):
             matching_dict=matching_dfs_dict,
             fixed_cols=list(config.matching.required_columns),
             optional_cols=list(config.matching.optional_columns),
-            n_matches=10,
-            chunk_size=50000,
+            n_matches=config.matching.n_matches,
+            chunk_size=config.matching.chunk_size,
             show_progress=True,
         )
 

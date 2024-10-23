@@ -18,7 +18,7 @@ class MatcherExact:
     matching_dict: Dict[str, List[str]]
     fixed_cols: List[str]
     optional_cols: List[str]
-    n_matches: int = 5
+    n_matches: int | None = 10
     chunk_size: int = 50000
     show_progress: bool = True
     matched_dict: Dict[str, List[str]] = field(
@@ -147,11 +147,15 @@ class MatcherExact:
                 self.matched_dict[pop_id].extend(unique_sample_ids)
                 self.match_count[pop_id] += len(unique_sample_ids)
 
-            matched_ids = [
-                pop_id
-                for pop_id, count in self.match_count.items()
-                if count >= self.n_matches
-            ]
+            matched_ids = (
+                [
+                    pop_id
+                    for pop_id, count in self.match_count.items()
+                    if count >= self.n_matches
+                ]
+                if self.n_matches is not None
+                else []
+            )
             self.remaining_df_pop = self.remaining_df_pop[
                 ~self.remaining_df_pop[self.df_pop_id].isin(matched_ids)
             ]

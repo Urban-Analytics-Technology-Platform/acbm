@@ -34,6 +34,8 @@ class MatchingParams(BaseModel):
         "employment_status",
         "tenure_status",
     )
+    n_matches: int | None = None
+    chunk_size: int = 50_000
 
 
 @dataclass(frozen=True)
