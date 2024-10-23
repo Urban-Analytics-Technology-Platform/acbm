@@ -22,7 +22,7 @@ def main(config_file):
             acbm.root_path / f"data/external/osmox/{config.region}.osm.pbf",
             f"data/external/osmox/{config.region}",
             "-f",
-            "geopackage",
+            "geoparquet",
             "-crs",
             "epsg:27700",
             "-l",
