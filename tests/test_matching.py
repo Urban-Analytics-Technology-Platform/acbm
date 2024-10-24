@@ -4,7 +4,7 @@ import pytest
 from acbm.matching import MatcherExact, match_psm  # noqa: F401
 
 
-@pytest.fixture()
+@pytest.fixture
 def setup_data():
     df_pop = pd.DataFrame(
         {

@@ -18,11 +18,33 @@ class Parameters(BaseModel):
 
 
 @dataclass(frozen=True)
+class MatchingParams(BaseModel):
+    load_hh: bool | None = False
+    load_ind: bool | None = False
+    # Define required columns for matching
+    required_columns: list[str] | tuple[str] = (
+        "number_adults",
+        "number_children",
+    )
+    # Define optional columns in order of importance (most to least important)
+    optional_columns: list[str] | tuple[str] = (
+        "number_cars",
+        "num_pension_age",
+        "rural_urban_2_categories",
+        "employment_status",
+        "tenure_status",
+    )
+    n_matches: int | None = None
+    chunk_size: int = 50_000
+
+
+@dataclass(frozen=True)
 class WorkAssignmentParams(BaseModel):
     use_percentages: bool
     weight_max_dev: float
     weight_total_dev: float
     max_zones: int
+    commute_level: str | None
 
 
 class Config(BaseModel):
@@ -30,6 +52,7 @@ class Config(BaseModel):
     work_assignment: WorkAssignmentParams = Field(
         description="Config: parameters for work assignment."
     )
+    matching: MatchingParams = Field(description="Config: parameters for matching.")
 
     @property
     def seed(self) -> int:
@@ -62,7 +85,7 @@ class Config(BaseModel):
             random.seed(self.seed)
         except Exception as err:
             msg = f"config does not provide a rng seed with err: {err}"
-            ValueError(msg)
+            raise ValueError(msg) from err
 
 
 def load_config(filepath: str | Path) -> Config:

@@ -1,6 +1,7 @@
 """
 acbm: A package to create activity-based models (for transport demand modelling)
 """
+
 from __future__ import annotations
 
 import os

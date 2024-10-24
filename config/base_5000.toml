@@ -3,8 +3,13 @@ seed = 0
 region = "leeds"
 number_of_households = 5000
 zone_id = "OA21CD"
-travel_times = true # Only set to true if you have travel time matrix at the level specified in boundary_geography
+travel_times = true         # Only set to true if you have travel time matrix at the level specified in boundary_geography
 boundary_geography = "OA"
+
+[matching]
+load_hh = false
+load_ind = false
+n_matches = 10
 
 [work_assignment]
 use_percentages = true
