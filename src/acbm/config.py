@@ -44,6 +44,7 @@ class WorkAssignmentParams(BaseModel):
     weight_max_dev: float
     weight_total_dev: float
     max_zones: int
+    commute_level: str | None
 
 
 class Config(BaseModel):

@@ -62,8 +62,12 @@ def main(config_file):
 
     # Commuting matrices (from 2021 census)
 
-    # TODO: consider making this configurable
-    commute_level = config.boundary_geography  # "OA" or "MSOA" data
+    # "OA" or "MSOA" data: set as config.boundary_geography if not passed
+    commute_level = (
+        config.boundary_geography
+        if config.work_assignment.commute_level is None
+        else config.work_assignment.commute_level
+    )
 
     logger.info(f"Loading commuting matrices at {commute_level} level")
 

@@ -2,7 +2,7 @@
 seed = 0
 region = "greater-london"
 zone_id = "OA21CD"
-travel_times = true       # Only set to true if you have travel time matrix at the level specified in boundary_geography
+travel_times = false      # Only set to true if you have travel time matrix at the level specified in boundary_geography
 boundary_geography = "OA"
 
 [matching]
