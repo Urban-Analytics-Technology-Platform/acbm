@@ -260,20 +260,20 @@ def main(config_file):
     workzone_assignment_opt["pct_of_o_total_actual"] = workzone_assignment_opt.groupby(
         "origin_zone"
     )["demand_actual"].transform(lambda x: (x / x.sum()) * 100)
-    workzone_assignment_opt[
-        "pct_of_o_total_assigned"
-    ] = workzone_assignment_opt.groupby("origin_zone")["demand_assigned"].transform(
-        lambda x: (x / x.sum()) * 100
+    workzone_assignment_opt["pct_of_o_total_assigned"] = (
+        workzone_assignment_opt.groupby(
+            "origin_zone"
+        )["demand_assigned"].transform(lambda x: (x / x.sum()) * 100)
     )
 
     # (3) For each OD pair, demand as % of total demand to each destination
     workzone_assignment_opt["pct_of_d_total_actual"] = workzone_assignment_opt.groupby(
         "assigned_zone"
     )["demand_actual"].transform(lambda x: (x / x.sum()) * 100)
-    workzone_assignment_opt[
-        "pct_of_d_total_assigned"
-    ] = workzone_assignment_opt.groupby("assigned_zone")["demand_assigned"].transform(
-        lambda x: (x / x.sum()) * 100
+    workzone_assignment_opt["pct_of_d_total_assigned"] = (
+        workzone_assignment_opt.groupby(
+            "assigned_zone"
+        )["demand_assigned"].transform(lambda x: (x / x.sum()) * 100)
     )
 
     # Define the output file path

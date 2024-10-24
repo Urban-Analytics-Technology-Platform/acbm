@@ -85,7 +85,7 @@ class Config(BaseModel):
             random.seed(self.seed)
         except Exception as err:
             msg = f"config does not provide a rng seed with err: {err}"
-            ValueError(msg)
+            raise ValueError(msg) from err
 
 
 def load_config(filepath: str | Path) -> Config:
