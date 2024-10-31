@@ -1,37 +1,22 @@
-# Preparing synthetic population scripts
+# Scripts
 
-## Datasets
-- [Synthetic Population Catalyst](https://github.com/alan-turing-institute/uatk-spc/blob/55-output-formats-python/python/README.md)
-- [National Travel Survey](https://beta.ukdataservice.ac.uk/datacatalogue/studies/study?id=5340)
-- [Rural Urban Classification 2011 classification](https://geoportal.statistics.gov.uk/datasets/53360acabd1e4567bc4b8d35081b36ff/about)
-- [OA centroids](): TODO
+## Synthetic Population Generation
 
-## Loading in the SPC synthetic population
+- 1_prep_synthpop.py: Create a synthetic population using the SPC
 
-Use the code in the `Quickstart` [here](https://github.com/alan-turing-institute/uatk-spc/blob/55-output-formats-python/python/README.md)
-to get a parquet file and convert it to JSON.
+## Adding Activity Patterns to Population
 
-You have two options:
-1. Slow and memory-hungry: download the `.pb` file directly from [here](https://alan-turing-institute.github.io/uatk-spc/using_england_outputs.html)
-    and load in the pbf file with the python package
-2. Faster: Run SPC to generate parquet outputs, and then load using the SPC toolkit python package. To generate parquet, you need to:
-    1. Clone [uatk-spc](https://github.com/alan-turing-institute/uatk-spc/tree/main/docs)
-    2. Run:
-        ```shell
-        cargo run --release -- \
-            --rng-seed 0 \
-            --flat-output \
-            --year 2020 \
-            config/England/west-yorkshire.txt
-        ```
-        and replace `west-yorkshire` and `2020` with your preferred option.
+- 2_match_households_and_individuals.py: Match individuals in the synthetic population to travel diaries in the NTS. This is based on statistical matching approach described in ...
 
+## Location Assignment
 
-## Matching
-### Adding activity chains to synthetic populations
-The purpose of this script is to match each individual in the synthetic population to a respondant from the [National Travel Survey (NTS)](https://beta.ukdataservice.ac.uk/datacatalogue/studies/study?id=5340).
+- 3.1_assign_primary_feasible_zones.py</ins>: This script is used to obtain, for each activity, the feasible destination zones that the activity could take place in. This is done by using a travel time matrix between zones to identify the zones that can be reached given the NTS reported travel time and travel mode in the NTS. A travel time matrix should be provided before running the pipeline (in the correct format). If a travel time matrix does not exist, the code can create travel time estimates based on mode average speeds and crow fly distance. For tips on creating a travel time matrix, see the comment here https://github.com/Urban-Analytics-Technology-Platform/acbm/issues/20#issuecomment-2317037441
+-  [3.2.1_assign_primary_zone_edu.py](https://github.com/Urban-Analytics-Technology-Platform/acbm/blob/main/scripts/3.2.1_assign_primary_zone_edu.py):
+-  [3.2.2_assign_primary_zone_work.py](https://github.com/Urban-Analytics-Technology-Platform/acbm/blob/main/scripts/3.2.2_assign_primary_zone_work.py)
+-  [3.2.3_assign_secondary_zone.py](https://github.com/Urban-Analytics-Technology-Platform/acbm/blob/main/scripts/3.2.3_assign_secondary_zone.py)
+-  [3.3_assign_facility_all.py](https://github.com/Urban-Analytics-Technology-Platform/acbm/blob/main/scripts/3.3_assign_facility_all.py)
 
-### Methods
-We will try two methods:
-   1. categorical matching: joining on relevant socio-demographic variables
-   2.  statistical matching, as described in [An unconstrained statistical matching algorithm for combining individual and household level geo-specific census and survey data](https://doi.org/10.1016/j.compenvurbsys.2016.11.003).
+## Validation
+- 4_validate.py: Validate the synthetic population by comparing the distribution of activity chains in the NTS to our model outputs.
+
+## Output
