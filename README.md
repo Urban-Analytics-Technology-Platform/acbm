@@ -41,8 +41,7 @@ poetry install
 
 The pipeline is a series of scripts that are run in sequence to generate the activity-based model. There are a few external datasets that are required. The data and config directories are structured as follows:
 
-.
-
+```md
 ├── config
 │   ├── <your_config_1>.toml
 │   ├── <your_config_2>.toml
@@ -107,6 +106,7 @@ The pipeline is a series of scripts that are run in sequence to generate the act
 │       ├── plots
 │       │   ├── assigning
 │       │   └── validation
+```
 
 ### Step 1: Prepare Data Inputs
 
