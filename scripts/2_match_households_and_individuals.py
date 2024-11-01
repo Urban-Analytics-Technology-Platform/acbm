@@ -686,7 +686,9 @@ def main(config_file):
     )  # fill the NaNs with the original values
 
     # ## Step 3: Matching at Household Level
-    if not config.matching.load_hh:
+    # TODO: remove once refactored into two scripts
+    load_households = False
+    if not load_households:
         logger.info("Categorical matching: MATCHING HOUSEHOLDS")
 
         #
@@ -936,7 +938,9 @@ def main(config_file):
         columns={"Age_B04ID": "age_group", "Sex_B01ID": "sex"}, inplace=True
     )
 
-    if not config.matching.load_ind:
+    # TODO: remove once refactored into two scripts
+    load_individuals = False
+    if not load_individuals:
         logger.info("Statistical matching: MATCHING INDIVIDUALS")
 
         # PSM matching using internal match_individuals function

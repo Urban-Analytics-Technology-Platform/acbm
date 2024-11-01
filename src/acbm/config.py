@@ -19,21 +19,8 @@ class Parameters(BaseModel):
 
 @dataclass(frozen=True)
 class MatchingParams(BaseModel):
-    load_hh: bool | None = False
-    load_ind: bool | None = False
-    # Define required columns for matching
-    required_columns: list[str] | tuple[str] = (
-        "number_adults",
-        "number_children",
-    )
-    # Define optional columns in order of importance (most to least important)
-    optional_columns: list[str] | tuple[str] = (
-        "number_cars",
-        "num_pension_age",
-        "rural_urban_2_categories",
-        "employment_status",
-        "tenure_status",
-    )
+    required_columns: list[str]
+    optional_columns: list[str]
     n_matches: int | None = None
     chunk_size: int = 50_000
 
