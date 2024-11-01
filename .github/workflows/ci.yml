@@ -53,6 +53,14 @@ jobs:
           miniforge-version: latest
           use-mamba: true
 
+      # https://pypi.org/project/osmium/
+      - name: Install osmium deps
+        shell: bash -el {0}
+        run: |
+          sudo apt-get update
+          sudo apt-get install build-essential cmake libboost-dev \
+                   libexpat1-dev zlib1g-dev libbz2-dev
+
       - name: Create conda environment
         shell: bash -el {0}
         run: |
