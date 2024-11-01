@@ -1,11 +1,21 @@
 [parameters]
 seed = 0
 region = "leeds"
-number_of_households = 10000
+number_of_households = 5000
 zone_id = "OA21CD"
-travel_times = true # Only set to true if you have travel time matrix at the level specified in boundary_geography
+travel_times = true         # Only set to true if you have travel time matrix at the level specified in boundary_geography
 boundary_geography = "OA"
 
+[matching]
+required_columns = ["number_adults", "number_children"]
+optional_columns = [
+    "number_cars",
+    "num_pension_age",
+    "rural_urban_2_categories",
+    "employment_status",
+    "tenure_status",
+]
+n_matches = 10
 
 [work_assignment]
 use_percentages = true
