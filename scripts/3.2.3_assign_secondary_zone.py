@@ -224,7 +224,6 @@ def main(config_file):
             "id",
             "household",
             "nts_ind_id",
-            # TODO: check if this column is required
             "nts_hh_id",
             "age_years",
             "oact",

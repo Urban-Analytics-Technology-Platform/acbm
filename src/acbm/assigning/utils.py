@@ -14,7 +14,6 @@ def cols_for_assignment_all() -> list[str]:
         "household",
         "oact",
         "nts_ind_id",
-        # TODO: check if this column is required
         "nts_hh_id",
         "age_years",
         "TripDisIncSW",
