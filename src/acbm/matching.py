@@ -18,7 +18,7 @@ class MatcherExact:
     matching_dict: Dict[str, List[str]]
     fixed_cols: List[str]
     optional_cols: List[str]
-    n_matches: int = 5
+    n_matches: int | None = 10
     chunk_size: int = 50000
     show_progress: bool = True
     matched_dict: Dict[str, List[str]] = field(
@@ -147,11 +147,15 @@ class MatcherExact:
                 self.matched_dict[pop_id].extend(unique_sample_ids)
                 self.match_count[pop_id] += len(unique_sample_ids)
 
-            matched_ids = [
-                pop_id
-                for pop_id, count in self.match_count.items()
-                if count >= self.n_matches
-            ]
+            matched_ids = (
+                [
+                    pop_id
+                    for pop_id, count in self.match_count.items()
+                    if count >= self.n_matches
+                ]
+                if self.n_matches is not None
+                else []
+            )
             self.remaining_df_pop = self.remaining_df_pop[
                 ~self.remaining_df_pop[self.df_pop_id].isin(matched_ids)
             ]
@@ -264,13 +268,19 @@ def match_individuals(
     # Remove all unmateched households
     matches_hh = {key: value for key, value in matches_hh.items() if not pd.isna(value)}
 
-    # loop over all rows in the matches_hh dictionary
-    for i, (key, value) in enumerate(matches_hh.items(), 1):
-        # Get the rows in df1 and df2 that correspond to the matched hids
-        rows_df1 = df1[df1[df1_id] == key]
+    # loop over all groups of df1_id
+    # note: for large populations looping through the groups (keys) of the
+    # large dataframe (assumed to be df1) is more efficient than looping
+    # over keys and subsetting on a key in each iteration.
+    for i, (key, rows_df1) in enumerate(df1.groupby(df1_id), 1):
+        try:
+            value = matches_hh[key]
+        except Exception:
+            # Continue if key not in matches_hh
+            continue
         rows_df2 = df2[df2[df2_id] == int(value)]
 
-        if show_progress:
+        if show_progress and i % 100 == 0:
             # Print the iteration number and the number of keys in the dict
             print(f"Matching for household {i} out of: {len(matches_hh)}")
 

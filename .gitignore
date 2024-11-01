@@ -167,3 +167,9 @@ logs/
 
 # pyright config
 pyrightconfig.json
+
+# scratch
+notebooks/scratch*
+
+# AcBM config
+config/
