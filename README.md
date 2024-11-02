@@ -1,4 +1,4 @@
-# 1. acbm
+# acbm
 
 [![Actions Status][actions-badge]][actions-link]
 [![PyPI version][pypi-version]][pypi-link]
@@ -6,29 +6,29 @@
 
 A package to create activity-based models (for transport demand modelling)
 
-- [1. acbm](#1-acbm)
-- [2. Motivation and Contribution](#2-motivation-and-contribution)
-- [3. Installation](#3-installation)
-- [4. How to Run the Pipeline](#4-how-to-run-the-pipeline)
-  - [4.1. Step 1: Prepare Data Inputs](#41-step-1-prepare-data-inputs)
-  - [4.2. Step 2: Setup your config.toml file](#42-step-2-setup-your-configtoml-file)
-  - [4.3. Step 3: Run the pipeline](#43-step-3-run-the-pipeline)
-  - [4.4. Future Work](#44-future-work)
-    - [4.4.1. Generative Aproaches to activity scheduling](#441-generative-aproaches-to-activity-scheduling)
-    - [4.4.2. Location Choice](#442-location-choice)
-  - [4.5. Related Work](#45-related-work)
-    - [4.5.1. Synthetic Population Generation](#451-synthetic-population-generation)
-    - [4.5.2. Activity Generation](#452-activity-generation)
-      - [4.5.2.1. Deep Learning](#4521-deep-learning)
-    - [4.5.3. Location Choice](#453-location-choice)
-      - [4.5.3.1. Primary Locations](#4531-primary-locations)
-      - [4.5.3.2. Secondary Locations](#4532-secondary-locations)
-    - [4.5.4. Entire Pipeline](#454-entire-pipeline)
-- [5. Contributing](#5-contributing)
-- [6. License](#6-license)
+- [acbm](#acbm)
+- [Motivation and Contribution](#motivation-and-contribution)
+- [Installation](#installation)
+- [How to Run the Pipeline](#how-to-run-the-pipeline)
+  - [Step 1: Prepare Data Inputs](#step-1-prepare-data-inputs)
+  - [Step 2: Setup your config.toml file](#step-2-setup-your-configtoml-file)
+  - [Step 3: Run the pipeline](#step-3-run-the-pipeline)
+  - [Future Work](#future-work)
+    - [Generative Aproaches to activity scheduling](#generative-aproaches-to-activity-scheduling)
+    - [Location Choice](#location-choice)
+  - [Related Work](#related-work)
+    - [Synthetic Population Generation](#synthetic-population-generation)
+    - [Activity Generation](#activity-generation)
+      - [Deep Learning](#deep-learning)
+    - [Location Choice](#location-choice-1)
+      - [Primary Locations](#primary-locations)
+      - [Secondary Locations](#secondary-locations)
+    - [Entire Pipeline](#entire-pipeline)
+- [Contributing](#contributing)
+- [License](#license)
 
 
-# 2. Motivation and Contribution
+# Motivation and Contribution
 
 Activity-based models have emerged as an alternative to traditional 4-step transport demand models. They provide a more detailed framework by modeling travel as a sequence of activities, accounting for when, how, and with whom individuals participate. They can integrate household interactions, spatial-temporal constraints, are well suited to model on demand transport services (which are becoming increasingly common), and look at the equity implications across transport scenarios.
 
@@ -38,7 +38,7 @@ Another factor is tool availability. Activity-based modelling involves many step
 
 To our knowledge, no open-source activity-based modelling pipeline exists for the UK. This repository allows researchers to run the entire pipeline for any region in the UK, with the output being a synthetic population with daily activity diaries and locations for each person. The pipeline is meant to be extendible, and we aim to plug in different approaches developed by others in the future
 
-# 3. Installation
+# Installation
 
 ```bash
 python -m pip install acbm
@@ -51,7 +51,7 @@ cd acbm
 poetry install
 ```
 
-# 4. How to Run the Pipeline
+# How to Run the Pipeline
 
 The pipeline is a series of scripts that are run in sequence to generate the activity-based model. There are a few external datasets that are required. The data and config directories are structured as follows:
 
@@ -122,15 +122,15 @@ The pipeline is a series of scripts that are run in sequence to generate the act
 │       │   └── validation
 ```
 
-## 4.1. Step 1: Prepare Data Inputs
+## Step 1: Prepare Data Inputs
 
 You need to populate the data/external diectory with the required datasets. A guide on where to find / generate each dataset can be found in the [data/external/README.md]
 
-## 4.2. Step 2: Setup your config.toml file
+## Step 2: Setup your config.toml file
 
 You need to create a config file in the config directory. The config file is a toml file that contains the parameters for the pipeline. A guide on how to set up the config file can be found in the [config/README.md]
 
-## 4.3. Step 3: Run the pipeline
+## Step 3: Run the pipeline
 
 The scripts are listed in order of execution in the [scripts/run_pipeline.sh](https://github.com/Urban-Analytics-Technology-Platform/acbm/blob/main/scripts/run_pipeline.sh) bash file
 
@@ -142,49 +142,49 @@ bash ./scripts/run_pipeline.sh config/<your_config_file>.toml
 
 where your config file is the file you created in Step 2.
 
-## 4.4. Future Work
+## Future Work
 
 We aim to include different options for each step of the pipeline. Some hopes for the future include:
 
-### 4.4.1. Generative Aproaches to activity scheduling
+### Generative Aproaches to activity scheduling
 - [ ] Bayesian Network approach to generate activities
 - [ ] Implement a Deep Learning approach to generate activities (see package below)
 
-### 4.4.2. Location Choice
+### Location Choice
 - [ ] Workzone assignment: Plug in Neural Spatial Interaction Approach
 
-## 4.5. Related Work
+## Related Work
 
 There are a number of open-source tools for different parts of the activity-based modelling pipeline. Some of these include:
 
-### 4.5.1. Synthetic Population Generation
+### Synthetic Population Generation
 
-### 4.5.2. Activity Generation
+### Activity Generation
 
-#### 4.5.2.1. Deep Learning
+#### Deep Learning
 - [caveat](https://github.com/fredshone/caveat)
 
-### 4.5.3. Location Choice
+### Location Choice
 
-#### 4.5.3.1. Primary Locations
+#### Primary Locations
 
 - [GeNSIT](https://github.com/YannisZa/GeNSIT)
 
-#### 4.5.3.2. Secondary Locations
+#### Secondary Locations
 - [PAM](https://github.com/arup-group/pam/blob/main/examples/17_advanced_discretionary_locations.ipynb): PAM c
 
 
-### 4.5.4. Entire Pipeline
+### Entire Pipeline
 - [Eqasim](https://github.com/eqasim-org/eqasim-java)
 - [ActivitySim](https://activitysim.github.io/activitysim/v1.3.1/index.html)
 - [PAM](https://github.com/arup-group/pam): PAM has functionality for different parts of the pipeline, but itis not clear how to use it to create an activity-based model for an entire population. Specifically, it does not yet have functionality for activity generation (e.g. statistical matching or generative approaches), or constarined primary location assignment.
 
 
-# 5. Contributing
+# Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for instructions on how to contribute.
 
-# 6. License
+# License
 
 Distributed under the terms of the [Apache license](LICENSE).
 
