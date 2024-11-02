@@ -93,7 +93,12 @@ You have two options:
 
 `nts/`
 
-UKDA-5340-tab
+UKDA-5340-tab:
+- Download the UKDA-5340-tab from the UK Data Service [here](https://beta.ukdataservice.ac.uk/datacatalogue/studies/study?id=5340)
+- Step 1: Create an account
+- Step 2: Create a project and request access to the data
+    - We use the `National Travel Survey, 2002-2023` dataset (SN: 5340)
+- Step 3: Download TAB file format
 
 `travel_times/`
 
