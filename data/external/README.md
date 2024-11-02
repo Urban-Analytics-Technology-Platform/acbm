@@ -5,6 +5,7 @@ The folder contains all external datasets necessary to run the pipeline. Some ca
 
 The structure of the folder is as follows:
 
+```md
 .
 ├── data
 │   ├── external
@@ -15,7 +16,7 @@ The structure of the folder is as follows:
 │   │   ├── census_2011_rural_urban.csv
 │   │   ├── centroids
 │   │   │   ├── LSOA_Dec_2011_PWC_in_England_and_Wales_2022.csv
-│   │   │   └── Output_Areas_Dec_2011_PWC_2022.csv
+│   │   │   ├── Output_Areas_Dec_2011_PWC_2022.csv
 │   │   ├── MSOA_2011_MSOA_2021_Lookup_for_England_and_Wales.csv
 │   │   ├── nts
 │   │   │   ├── filtered
@@ -35,6 +36,11 @@ The structure of the folder is as follows:
 │   │   │           ├── psu_eul_2002-2022.tab
 │   │   │           ├── trip_eul_2002-2022.tab
 │   │   │           └── <other_nts_tables>.tab
+|   |   └── travel_times
+|   |   │   │       ├── oa
+|   |   │   │       |   ├── travel_time_matrix.parquet
+|   |   |   |       └── msoa
+|   |   │   │           └── travel_time_matrix.parquet
 │   │   ├── ODWP01EW_OA.zip
 │   │   ├── ODWP15EW_MSOA_v1.zip
 │   │   ├── spc_output
@@ -48,22 +54,13 @@ The structure of the folder is as follows:
 │   │   │   │   ├── <region>_time_use_diaries.parquet
 │   │   │   │   ├── <region>_venues.parquet
 │   │   │   │   ├── README.md
-│   │   └── travel_times
-│   │       ├── oa
-│   │       |   ├── travel_time_matrix.parquet
-|   |       └── msoa
-│   │           └── travel_time_matrix.parquet
 
+```
 
 ## Data Sources
 
-boundaries/MSOA_DEC_2021_EW_NC_v3.geojson
-boundaries/oa_england.geojson
-boundaries/study_area_zones.geojson
 
-
-
-spc_output/
+`spc_output/`
 
 Use the code in the `Quickstart` [here](https://github.com/alan-turing-institute/uatk-spc/blob/55-output-formats-python/python/README.md)
 to get a parquet file and convert it to JSON.
@@ -82,3 +79,30 @@ You have two options:
             config/England/west-yorkshire.txt
         ```
         and replace `west-yorkshire` and `2020` with your preferred option.
+
+`boundaries/`
+
+- MSOA_DEC_2021_EW_NC_v3.geojson
+- oa_england.geojson
+- study_area_zones.geojson
+
+`centroids/`
+
+- LSOA_Dec_2011_PWC_in_England_and_Wales_2022.csv
+- Output_Areas_Dec_2011_PWC_2022.csv
+
+`nts/`
+
+UKDA-5340-tab
+
+`travel_times/`
+
+- OPTIONAL Dataset - If it does not exist, it will be generated in the pipeline. They are added under oa/ or msoa/ subdirectories.
+- e.g. oa/`travel_time_matrix.parquet` or msoa/`travel_time_matrix.parquet`
+
+`ODWP01EW_OA.zip`
+`ODWP15EW_MSOA_v1.zip`
+`MSOA_2011_MSOA_2021_Lookup_for_England_and_Wales.csv`
+`census_2011_rural_urban.csv`
+
+```
