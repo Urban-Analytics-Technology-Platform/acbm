@@ -13,13 +13,13 @@ def main(config_file):
     config = load_config(config_file)
     config.init_rng()
     os.makedirs(acbm.root_path / "data/interim/osmox", exist_ok=True)
-    _fp = get_data(config.region, directory=acbm.root_path / "data/interim/osmox")
+    fp = get_data(config.region, directory=acbm.root_path / "data/interim/osmox")
     subprocess.run(
         [
             "osmox",
             "run",
             acbm.root_path / "osmox/config_osmox.json",
-            acbm.root_path / f"data/interim/osmox/{config.region}.osm.pbf",
+            fp,
             f"data/interim/osmox/{config.region}",
             "-f",
             "geoparquet",
