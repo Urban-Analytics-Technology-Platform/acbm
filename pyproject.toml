@@ -43,6 +43,8 @@ tomlkit = "^0.13.0"
 cml-pam = "0.3.2"
 gdal = "<=3.8.4"
 pandera = "^0.20.4"
+osmox = {git = "https://github.com/arup-group/osmox"}
+pyrosm = "^0.6.2"
 
 [tool.poetry.dev-dependencies]
 pytest = ">= 6"
