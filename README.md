@@ -88,6 +88,11 @@ The pipeline is a series of scripts that are run in sequence to generate the act
 │   │   │           ├── psu_eul_2002-2022.tab
 │   │   │           ├── trip_eul_2002-2022.tab
 │   │   │           └── <other_nts_tables>.tab
+│   │   ├── travel_times
+│   │   |    ├── oa
+│   │   |    |   ├── travel_time_matrix.parquet
+|   |   |    └── msoa
+│   │   |        └── travel_time_matrix.parquet
 │   │   ├── ODWP01EW_OA.zip
 │   │   ├── ODWP15EW_MSOA_v1.zip
 │   │   ├── spc_output
@@ -101,11 +106,6 @@ The pipeline is a series of scripts that are run in sequence to generate the act
 │   │   │   │   ├── <region>_time_use_diaries.parquet
 │   │   │   │   ├── <region>_venues.parquet
 │   │   │   │   ├── README.md
-│   │   └── travel_times
-│   │       ├── oa
-│   │       |   ├── travel_time_matrix.parquet
-|   |       └── msoa
-│   │           └── travel_time_matrix.parquet
 │   ├── interim
 │   │   ├── assigning (Generated in Script 3)
 │   │   └── matching (Generated in Script 2)
