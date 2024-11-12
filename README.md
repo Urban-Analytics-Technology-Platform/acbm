@@ -124,11 +124,11 @@ The pipeline is a series of scripts that are run in sequence to generate the act
 
 ## Step 1: Prepare Data Inputs
 
-You need to populate the data/external diectory with the required datasets. A guide on where to find / generate each dataset can be found in the [data/external/README.md]
+You need to populate the data/external diectory with the required datasets. A guide on where to find / generate each dataset can be found in the [data/external/README.md](https://github.com/Urban-Analytics-Technology-Platform/acbm/tree/main/data/external)
 
 ## Step 2: Setup your config.toml file
 
-You need to create a config file in the config directory. The config file is a toml file that contains the parameters for the pipeline. A guide on how to set up the config file can be found in the [config/README.md]
+You need to create a config file in the config directory. The config file is a toml file that contains the parameters for the pipeline. A guide on how to set up the config file can be found in the [config/README.md](https://github.com/Urban-Analytics-Technology-Platform/acbm/tree/main/config)
 
 ## Step 3: Run the pipeline
 
@@ -141,6 +141,8 @@ bash ./scripts/run_pipeline.sh config/<your_config_file>.toml
 ```
 
 where your config file is the file you created in Step 2.
+
+For details on what each script does, you can check the [scrips/README.md](https://github.com/Urban-Analytics-Technology-Platform/acbm/tree/main/scripts) and the [WIKI](https://github.com/Urban-Analytics-Technology-Platform/acbm/wiki)
 
 ## Future Work
 
