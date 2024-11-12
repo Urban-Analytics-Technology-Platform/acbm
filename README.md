@@ -171,7 +171,7 @@ There are a number of open-source tools for different parts of the activity-base
 - [GeNSIT](https://github.com/YannisZa/GeNSIT)
 
 #### Secondary Locations
-- [PAM](https://github.com/arup-group/pam/blob/main/examples/17_advanced_discretionary_locations.ipynb): 
+- [PAM](https://github.com/arup-group/pam/blob/main/examples/17_advanced_discretionary_locations.ipynb)
 
 
 ### Entire Pipeline
