@@ -56,7 +56,9 @@ def main(config_file):
     logger.info("Loading activity chains")
 
     activity_chains = activity_chains_for_assignment(columns=cols_for_assignment_edu())
-    activity_chains = activity_chains[activity_chains["TravDay"] == 3]  # Wednesday
+    activity_chains = activity_chains[
+        activity_chains["TravDay"] == config.parameters.nts_day_of_week
+    ]  # Wednesday
 
     logger.info("Filtering activity chains for trip purpose: education")
     activity_chains_edu = activity_chains[activity_chains["dact"] == "education"]

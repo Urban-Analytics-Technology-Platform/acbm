@@ -32,7 +32,9 @@ def main(config_file):
 
     # Filter to a specific day of the week
     logger.info("Filtering activity chains to a specific day of the week")
-    activity_chains = activity_chains[activity_chains["TravDay"] == 3]  # Wednesday
+    activity_chains = activity_chains[
+        activity_chains["TravDay"] == config.parameters.nts_day_of_week
+    ]  # Wednesday
 
     # --- Study area boundaries
 
