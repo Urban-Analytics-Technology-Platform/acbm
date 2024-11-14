@@ -1,7 +1,9 @@
 import random
 from dataclasses import dataclass
+from hashlib import sha256
 from pathlib import Path
 
+import jcs
 import numpy as np
 import tomlkit
 from pydantic import BaseModel, Field
@@ -43,6 +45,35 @@ class Config(BaseModel):
         description="Config: parameters for work assignment."
     )
     matching: MatchingParams = Field(description="Config: parameters for matching.")
+
+    @property
+    def id(self):
+        """Since config determines outputs, the SHA256 hash of the config can be used
+        as an identifier for outputs.
+
+        See [popgetter](https://github.com/Urban-Analytics-Technology-Platform/popgetter/blob/7da293f4eb2d36480dbd137a27be623aa09449bf/python/popgetter/metadata.py#L83).
+        """
+        # Since the out paths are not too long, take first 10 chars
+        ID_LENGTH = 10
+
+        def serializable_vars(obj: object) -> dict:
+            variables = {}
+            # Check if variables are serializable
+            for key, val in vars(obj).items():
+                try:
+                    # Try to serialize
+                    jcs.canonicalize(val)
+                    # Store in dict if serializable
+                    variables[key] = val
+                except Exception:
+                    # If cannot serialize, continue
+                    continue
+
+        return sha256(jcs.canonicalize(serializable_vars(self))).hexdigest()[:ID_LENGTH]
+
+    def processed_path(self) -> str:
+        """Returns full processed path."""
+        return Path("data") / "processed" / self.id
 
     @property
     def seed(self) -> int:
