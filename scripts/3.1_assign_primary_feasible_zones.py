@@ -82,12 +82,11 @@ def main(config_file):
     # (`tst`/`TripStart` and `tet`/`TripEnd`)
 
     # TODO: move to config
-    travel_time_matrix_path = (
-        acbm.root_path / "data/external/travel_times/oa/travel_time_matrix.parquet"
-    )
-
     if config.parameters.travel_times:
         logger.info("Loading travel time matrix")
+        travel_time_matrix_path = (
+            acbm.root_path / "data/external/travel_times/oa/travel_time_matrix.parquet"
+        )
         try:
             travel_times = pd.read_parquet(travel_time_matrix_path)
             print("Travel time matrix loaded successfully.")

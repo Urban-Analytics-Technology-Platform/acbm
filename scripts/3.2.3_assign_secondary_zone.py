@@ -29,6 +29,7 @@ from acbm.cli import acbm_cli
 from acbm.config import load_config
 from acbm.logger_config import assigning_secondary_zones_logger as logger
 from acbm.preprocessing import add_location
+from acbm.utils import get_travel_times
 
 
 @acbm_cli
@@ -311,15 +312,7 @@ def main(config_file):
     logger.info("Analysis (matrices): Step 1 - Loading travel time data")
 
     # load in the travel times (path differs for estimated ones)
-    # TODO: improve / save in same directory / add paths to config
-    if config.parameters.travel_times:
-        travel_times = pd.read_parquet(
-            acbm.root_path / "data/external/travel_times/oa/travel_time_matrix.parquet"
-        )
-    else:
-        travel_times = pd.read_parquet(
-            get_interim_path("travel_time_estimates.parquet")
-        )
+    travel_times = get_travel_times(config)
 
     # Edit modes
     logger.info("Analysis (matrices): Step 2 - Editing modes")

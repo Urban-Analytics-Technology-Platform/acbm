@@ -1,7 +1,11 @@
 from datetime import datetime
 
 import numpy as np
+import pandas as pd
 from sklearn.metrics import mean_squared_error
+
+import acbm
+from acbm.config import Config
 
 
 def prepend_datetime(s: str, delimiter: str = "_") -> str:
@@ -37,3 +41,13 @@ def calculate_rmse(predictions, targets):
 
     # Calculate and return RMSE
     return np.sqrt(mse)
+
+
+def get_travel_times(config: Config) -> pd.DataFrame:
+    if config.parameters.travel_times:
+        return pd.read_parquet(
+            acbm.root_path / "data/external/travel_times/oa/travel_time_matrix.parquet"
+        )
+    return pd.read_parquet(
+        acbm.root_path / config.interim_path / "travel_time_estimates.parquet"
+    )

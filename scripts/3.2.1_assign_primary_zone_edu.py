@@ -16,6 +16,7 @@ from acbm.cli import acbm_cli
 from acbm.config import load_config
 from acbm.logger_config import assigning_primary_zones_logger as logger
 from acbm.preprocessing import add_location
+from acbm.utils import get_travel_times
 
 
 @acbm_cli
@@ -106,10 +107,7 @@ def main(config_file):
 
     # --- travel time estimates
     logger.info("Loading travel time estimates")
-
-    travel_time_estimates = pd.read_parquet(
-        get_interim_path("travel_time_estimates.parquet")
-    )
+    travel_time_estimates = get_travel_times(config)
 
     #### ASSIGN TO ZONE FROM FEASIBLE ZONES ####
 
