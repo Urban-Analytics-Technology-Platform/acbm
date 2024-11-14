@@ -114,6 +114,10 @@ class Config(BaseModel):
             msg = f"config does not provide a rng seed with err: {err}"
             raise ValueError(msg) from err
 
+    def write(self, filepath: str | Path):
+        with open(filepath, "w") as f:
+            f.write(tomlkit.dumps(self.model_dump(exclude_none=True)))
+
 
 def load_config(filepath: str | Path) -> Config:
     with open(filepath, "rb") as f:

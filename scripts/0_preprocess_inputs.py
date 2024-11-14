@@ -1,3 +1,5 @@
+import os
+
 import geopandas as gpd
 import pandas as pd
 from uatk_spc import Reader
@@ -12,6 +14,11 @@ from acbm.preprocessing import edit_boundary_resolution
 @acbm_cli
 def main(config_file):
     config = load_config(config_file)
+
+    # Write config to file
+    os.makedirs(config.output_path, exist_ok=True)
+    config.write(config.output_path / "config.toml")
+
     config.init_rng()
     region = config.region
     # Pick a region with SPC output saved
