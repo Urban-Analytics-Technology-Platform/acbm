@@ -1,3 +1,5 @@
+import os
+
 from uatk_spc.builder import Builder
 
 import acbm
@@ -23,8 +25,9 @@ def main(config_file):
         )
         .build()
     )
+    os.makedirs(acbm.root_path / config.interim_path, exist_ok=True)
     spc_people_hh.to_parquet(
-        acbm.root_path / f"data/external/spc_output/{region}_people_hh.parquet"
+        acbm.root_path / config.interim_path / f"{region}_people_hh.parquet"
     )
 
 

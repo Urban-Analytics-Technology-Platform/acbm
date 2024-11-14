@@ -71,9 +71,15 @@ class Config(BaseModel):
 
         return sha256(jcs.canonicalize(serializable_vars(self))).hexdigest()[:ID_LENGTH]
 
-    def processed_path(self) -> str:
+    @property
+    def output_path(self) -> str:
         """Returns full processed path."""
-        return Path("data") / "processed" / self.id
+        return Path("data") / "outputs" / self.id
+
+    @property
+    def interim_path(self) -> str:
+        """Returns full processed path."""
+        return Path("data") / "outputs" / self.id / "interim"
 
     @property
     def seed(self) -> int:

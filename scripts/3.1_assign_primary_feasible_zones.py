@@ -1,3 +1,4 @@
+import os
 import pickle as pkl
 
 import geopandas as gpd
@@ -22,6 +23,11 @@ from acbm.preprocessing import add_locations_to_activity_chains
 def main(config_file):
     config = load_config(config_file)
     config.init_rng()
+
+    def get_interim_path(file_name: str) -> str:
+        path = acbm.root_path / config.interim_path / "assigning"
+        os.makedirs(path, exist_ok=True)
+        return f"{path}/{file_name}"
 
     #### LOAD DATA ####
 
@@ -103,7 +109,7 @@ def main(config_file):
         # save travel_times as parquet
 
         travel_times.to_parquet(
-            acbm.root_path / "data/interim/assigning/travel_time_estimates.parquet"
+            acbm.root_path / config.interim_path / "travel_time_estimates.parquet"
         )
 
     # --- Intrazonal trip times
@@ -122,7 +128,7 @@ def main(config_file):
     intrazone_times = intrazone_time(zones=boundaries, key_column=config.zone_id)
 
     # save intrazone_times to pickle
-    with open(acbm.root_path / "data/interim/assigning/intrazone_times.pkl", "wb") as f:
+    with open(get_interim_path("intrazone_times.pkl"), "wb") as f:
         pkl.dump(intrazone_times, f)
 
     logger.info("Intrazonal travel time estimates created")
@@ -175,9 +181,7 @@ def main(config_file):
         predicate="within",
     )
     # save as pickle
-    osm_data_gdf.to_pickle(
-        acbm.root_path / "data/interim/assigning/osm_poi_with_zones.pkl"
-    )
+    osm_data_gdf.to_pickle(get_interim_path("osm_poi_with_zones.pkl"))
 
     activities_per_zone = get_activities_per_zone(
         zones=boundaries,
@@ -186,9 +190,7 @@ def main(config_file):
         return_df=True,
     )
 
-    activities_per_zone.to_parquet(
-        acbm.root_path / "data/interim/assigning/activities_per_zone.parquet"
-    )
+    activities_per_zone.to_parquet(get_interim_path("activities_per_zone.parquet"))
 
     #### Get possible zones for each primary activity
 
@@ -220,9 +222,7 @@ def main(config_file):
 
     logger.info("Saving feasible zones for education activities")
     # save possible_zones_school to dictionary
-    with open(
-        acbm.root_path / "data/interim/assigning/possible_zones_education.pkl", "wb"
-    ) as f:
+    with open(get_interim_path("possible_zones_education.pkl"), "wb") as f:
         pkl.dump(possible_zones_school, f)
 
     del possible_zones_school
@@ -248,9 +248,7 @@ def main(config_file):
     logger.info("Saving feasible zones for work activities")
 
     # save possible_zones_work to dictionary
-    with open(
-        acbm.root_path / "data/interim/assigning/possible_zones_work.pkl", "wb"
-    ) as f:
+    with open(get_interim_path("possible_zones_work.pkl"), "wb") as f:
         pkl.dump(possible_zones_work, f)
 
     del possible_zones_work

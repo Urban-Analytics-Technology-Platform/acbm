@@ -31,7 +31,8 @@ def main(config_file):
     pd.set_option("display.max_columns", None)
 
     def get_interim_path(
-        file_name: str, path: str | Path = acbm.root_path / "data/interim/matching/"
+        file_name: str,
+        path: str | Path = acbm.root_path / config.interim_path / "matching",
     ) -> str:
         os.makedirs(path, exist_ok=True)
         return f"{path}/{file_name}"
@@ -44,8 +45,7 @@ def main(config_file):
 
     # Read in the spc data (parquet format)
     spc = pd.read_parquet(
-        acbm.root_path / "data/external/spc_output/"
-        f"{config.region}_people_hh.parquet"
+        acbm.root_path / config.interim_path / f"{config.region}_people_hh.parquet"
     )
 
     logger.info("Filtering SPC data to specific columns")

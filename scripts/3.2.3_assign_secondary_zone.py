@@ -7,6 +7,8 @@ This script is used to assign discretionary activities to locations based on a s
 - For more info on the spacetime approach for secondary locaiton assignment, see https://www.tandfonline.com/doi/full/10.1080/23249935.2021.1982068
 """
 
+import os
+
 import geopandas as gpd
 import numpy as np
 import pandas as pd
@@ -34,6 +36,11 @@ def main(config_file):
     config = load_config(config_file)
     config.init_rng()
     zone_id = config.zone_id
+
+    def get_interim_path(file_name: str) -> str:
+        path = acbm.root_path / config.interim_path / "assigning"
+        os.makedirs(path, exist_ok=True)
+        return f"{path}/{file_name}"
 
     # --- Load in the data
     logger.info("Loading: activity chains")
@@ -101,15 +108,11 @@ def main(config_file):
         )
 
     activity_chains_edu = merge_columns_from_other(
-        pd.read_pickle(
-            acbm.root_path / "data/interim/assigning/activity_chains_education.pkl"
-        ),
+        pd.read_pickle(get_interim_path("activity_chains_education.pkl")),
         activity_chains,
     )
     activity_chains_work = merge_columns_from_other(
-        pd.read_pickle(
-            acbm.root_path / "data/interim/assigning/activity_chains_work.pkl"
-        ),
+        pd.read_pickle(get_interim_path("activity_chains_work.pkl")),
         activity_chains,
     )
 
@@ -315,7 +318,7 @@ def main(config_file):
         )
     else:
         travel_times = pd.read_parquet(
-            acbm.root_path / "data/interim/assigning/travel_time_estimates.parquet"
+            get_interim_path("travel_time_estimates.parquet")
         )
 
     # Edit modes
@@ -349,7 +352,7 @@ def main(config_file):
     logger.info("Analysis (matrices): Step 3 - Calculating OD probabilities")
 
     activities_per_zone = pd.read_parquet(
-        acbm.root_path / "data/interim/assigning/activities_per_zone.parquet"
+        get_interim_path("activities_per_zone.parquet")
     )
 
     # keep only rows that don't match primary activities
@@ -449,7 +452,7 @@ def main(config_file):
     # --- Save
     logger.info("Saving: Step 7 - Saving population")
 
-    write.to_csv(population, dir=(acbm.root_path / "data/processed/activities_pam"))
+    write.to_csv(population, dir=acbm.root_path / config.output_path)
 
 
 if __name__ == "__main__":

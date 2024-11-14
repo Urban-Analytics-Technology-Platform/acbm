@@ -1,3 +1,5 @@
+import os
+
 import geopandas as gpd
 import pandas as pd
 
@@ -19,6 +21,12 @@ from acbm.preprocessing import add_location
 @acbm_cli
 def main(config_file):
     config = load_config(config_file)
+
+    def get_interim_path(file_name: str) -> str:
+        path = acbm.root_path / config.interim_path / "assigning"
+        os.makedirs(path, exist_ok=True)
+        return f"{path}/{file_name}"
+
     # TODO: consider if RNG seed needs to be distinct for different assignments
     config.init_rng()
 
@@ -29,7 +37,7 @@ def main(config_file):
     # --- Possible zones for each activity (calculated in 3.1_assign_possible_zones.py)
     logger.info("Loading possible zones for each activity")
     possible_zones_school = pd.read_pickle(
-        acbm.root_path / "data/interim/assigning/possible_zones_education.pkl"
+        get_interim_path("possible_zones_education.pkl")
     )
 
     # --- boundaries
@@ -44,9 +52,7 @@ def main(config_file):
     # --- osm POI data
     logger.info("Loading OSM POI data")
 
-    osm_data_gdf = pd.read_pickle(
-        acbm.root_path / "data/interim/assigning/osm_poi_with_zones.pkl"
-    )
+    osm_data_gdf = pd.read_pickle(get_interim_path("osm_poi_with_zones.pkl"))
     # Convert the DataFrame into a GeoDataFrame, and assign a coordinate reference system (CRS)
     logger.info("Converting OSM POI data to GeoDataFrame")
 
@@ -95,14 +101,14 @@ def main(config_file):
     logger.info("Loading activities per zone")
 
     activities_per_zone = pd.read_parquet(
-        acbm.root_path / "data/interim/assigning/activities_per_zone.parquet"
+        get_interim_path("activities_per_zone.parquet")
     )
 
     # --- travel time estimates
     logger.info("Loading travel time estimates")
 
     travel_time_estimates = pd.read_parquet(
-        acbm.root_path / "data/interim/assigning/travel_time_estimates.parquet"
+        get_interim_path("travel_time_estimates.parquet")
     )
 
     #### ASSIGN TO ZONE FROM FEASIBLE ZONES ####
@@ -164,9 +170,7 @@ def main(config_file):
 
     logger.info("Saving activity chains with assigned zones")
 
-    activity_chains_edu.to_pickle(
-        acbm.root_path / "data/interim/assigning/activity_chains_education.pkl"
-    )
+    activity_chains_edu.to_pickle(get_interim_path("activity_chains_education.pkl"))
 
 
 if __name__ == "__main__":

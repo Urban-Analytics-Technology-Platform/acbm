@@ -26,12 +26,15 @@ def main(config_file):
     config = load_config(config_file)
     config.init_rng()
 
+    def get_interim_path(file_name: str) -> str:
+        path = acbm.root_path / config.interim_path / "assigning"
+        os.makedirs(path, exist_ok=True)
+        return f"{path}/{file_name}"
+
     #### LOAD DATA ####
 
     # --- Possible zones for each activity (calculated in 3.1_assign_possible_zones.py)
-    possible_zones_work = pd.read_pickle(
-        acbm.root_path / "data/interim/assigning/possible_zones_work.pkl"
-    )
+    possible_zones_work = pd.read_pickle(get_interim_path("possible_zones_work.pkl"))
 
     # --- boundaries
 
@@ -45,9 +48,7 @@ def main(config_file):
 
     # osm POI data
 
-    osm_data_gdf = pd.read_pickle(
-        acbm.root_path / "data/interim/assigning/osm_poi_with_zones.pkl"
-    )
+    osm_data_gdf = pd.read_pickle(get_interim_path("osm_poi_with_zones.pkl"))
     # Convert the DataFrame into a GeoDataFrame, and assign a coordinate reference system (CRS)
     osm_data_gdf = gpd.GeoDataFrame(osm_data_gdf, geometry="geometry", crs="EPSG:4326")
 
@@ -279,8 +280,8 @@ def main(config_file):
     )
 
     # Define the output file path
-    os.makedirs(acbm.root_path / "data/processed/", exist_ok=True)
-    output_file_path = acbm.root_path / "data/processed/workzone_rmse_results.txt"
+    os.makedirs(acbm.root_path / config.output_path, exist_ok=True)
+    output_file_path = acbm.root_path / config.output_path / "workzone_rmse_results.txt"
 
     # Open the file in write mode
     with open(output_file_path, "w") as file:
@@ -331,9 +332,7 @@ def main(config_file):
 
     # save the activity chains as a pickle
 
-    activity_chains_work.to_pickle(
-        acbm.root_path / "data/interim/assigning/activity_chains_work.pkl"
-    )
+    activity_chains_work.to_pickle(get_interim_path("activity_chains_work.pkl"))
 
 
 if __name__ == "__main__":
