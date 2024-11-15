@@ -2,6 +2,7 @@ import random
 from dataclasses import dataclass
 from hashlib import sha256
 from pathlib import Path
+from typing import Tuple
 
 import jcs
 import numpy as np
@@ -24,8 +25,8 @@ class Parameters(BaseModel):
 
 @dataclass(frozen=True)
 class MatchingParams(BaseModel):
-    required_columns: list[str]
-    optional_columns: list[str]
+    required_columns: Tuple[str, ...]
+    optional_columns: Tuple[str, ...]
     n_matches: int | None = None
     chunk_size: int = 50_000
 
@@ -55,21 +56,7 @@ class Config(BaseModel):
         """
         # Since the out paths are not too long, take first 10 chars
         ID_LENGTH = 10
-
-        def serializable_vars(obj: object) -> dict:
-            variables = {}
-            # Check if variables are serializable
-            for key, val in vars(obj).items():
-                try:
-                    # Try to serialize
-                    jcs.canonicalize(val)
-                    # Store in dict if serializable
-                    variables[key] = val
-                except Exception:
-                    # If cannot serialize, continue
-                    continue
-
-        return sha256(jcs.canonicalize(serializable_vars(self))).hexdigest()[:ID_LENGTH]
+        return sha256(jcs.canonicalize(self.model_dump())).hexdigest()[:ID_LENGTH]
 
     @property
     def output_path(self) -> str:
