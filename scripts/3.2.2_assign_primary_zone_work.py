@@ -54,7 +54,9 @@ def main(config_file):
     # --- Activity chains
     activity_chains = activity_chains_for_assignment(cols_for_assignment_work())
     activity_chains = add_locations_to_activity_chains(activity_chains)
-    activity_chains = activity_chains[activity_chains["TravDay"] == 3]  # Wednesday
+    activity_chains = activity_chains[
+        activity_chains["TravDay"] == config.parameters.nts_day_of_week
+    ]  # Wednesday
 
     activity_chains_work = activity_chains[activity_chains["dact"] == "work"]
 
