@@ -11,3 +11,5 @@ python scripts/3.2.1_assign_primary_zone_edu.py --config_file $1
 python scripts/3.2.2_assign_primary_zone_work.py --config_file $1
 python scripts/3.2.3_assign_secondary_zone.py --config_file $1
 python scripts/3.3_assign_facility_all.py --config_file $1
+python scripts/4_validation.py --config_file $1
+python scripts/5_acbm_to_matsim_xml.py --config_file $1
