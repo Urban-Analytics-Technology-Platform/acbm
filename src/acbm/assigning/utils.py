@@ -286,8 +286,8 @@ def _get_activities_per_zone_df(activities_per_zone: dict) -> pd.DataFrame:
 
 def zones_to_time_matrix(
     zones: gpd.GeoDataFrame,
+    time_units: str,
     id_col: Optional[str] = None,
-    time_units: str = "s",
 ) -> pd.DataFrame:
     """
     Calculates the distance matrix between the centroids of the given zones and returns it as a DataFrame. The matrix also adds
@@ -304,7 +304,7 @@ def zones_to_time_matrix(
     id_col: str, optional
         The name of the column in the zones GeoDataFrame to use as the ID. If None, the index values are used. Default is None.
     time_units: str, optional
-        The units to use for the travel time. Options are 's' for seconds and 'm' for minutes. Default is 's'.
+        The units to use for the travel time. Options are 's' for seconds and 'm' for minutes.
     Returns
     -------
     pd.DataFrame
