@@ -56,7 +56,7 @@ def main(config_file):
     activity_chains = add_locations_to_activity_chains(activity_chains)
     activity_chains = activity_chains[
         activity_chains["TravDay"] == config.parameters.nts_day_of_week
-    ]  # Wednesday
+    ]
 
     activity_chains_work = activity_chains[activity_chains["dact"] == "work"]
 
