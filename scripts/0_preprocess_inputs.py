@@ -74,9 +74,9 @@ def main(config_file):
     logger.info(
         f"4. Saving the boundaries to {acbm.root_path / 'data/external/boundaries/'} path"
     )
-
+    os.makedirs((acbm.root_path / config.boundaries_filepath).parents[0], exist_ok=True)
     boundaries_filtered.to_file(
-        acbm.root_path / "data/external/boundaries/study_area_zones.geojson",
+        acbm.root_path / config.boundaries_filepath,
         driver="GeoJSON",
     )
 

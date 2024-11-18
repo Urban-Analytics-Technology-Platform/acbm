@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 
 import acbm
+from acbm.config import Config
 
 
 def cols_for_assignment_all() -> list[str]:
@@ -41,13 +42,18 @@ def cols_for_assignment_work() -> list[str]:
     return cols_for_assignment_edu()
 
 
-def activity_chains_for_assignment(columns: list[str] | None = None) -> pd.DataFrame:
+def activity_chains_for_assignment(
+    config: Config, columns: list[str] | None = None
+) -> pd.DataFrame:
     """Gets activity chains with subset of columns required for assignment."""
     if columns is None:
         columns = cols_for_assignment_all()
 
     return pd.read_parquet(
-        acbm.root_path / "data/interim/matching/spc_with_nts_trips.parquet",
+        acbm.root_path
+        / config.interim_path
+        / "matching"
+        / "spc_with_nts_trips.parquet",
         columns=columns,
     )
 

@@ -46,7 +46,7 @@ def main(config_file):
     # --- Load in the data
     logger.info("Loading: activity chains")
 
-    activity_chains = activity_chains_for_assignment()
+    activity_chains = activity_chains_for_assignment(config)
     activity_chains = activity_chains[
         activity_chains["TravDay"] == config.parameters.nts_day_of_week
     ]
@@ -55,9 +55,7 @@ def main(config_file):
 
     logger.info("Preprocessing: Adding OA21CD to the data")
 
-    boundaries = gpd.read_file(
-        acbm.root_path / "data/external/boundaries/study_area_zones.geojson"
-    )
+    boundaries = gpd.read_file(acbm.root_path / config.boundaries_filepath)
 
     logger.info("Study area boundaries loaded")
 

@@ -59,6 +59,22 @@ class Config(BaseModel):
         return sha256(jcs.canonicalize(self.model_dump())).hexdigest()[:ID_LENGTH]
 
     @property
+    def boundaries_filepath(self) -> str:
+        """Returns full processed path."""
+        return (
+            Path("data")
+            / "outputs"
+            / self.id
+            / "boundaries"
+            / "study_area_zones.geojson"
+        )
+
+    @property
+    def osmox_path(self) -> str:
+        """Returns full processed path."""
+        return Path("data") / "outputs" / self.id / "osmox"
+
+    @property
     def output_path(self) -> str:
         """Returns full processed path."""
         return Path("data") / "outputs" / self.id

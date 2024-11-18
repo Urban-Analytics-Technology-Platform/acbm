@@ -44,9 +44,7 @@ def main(config_file):
     # --- boundaries
     logger.info("Loading study area boundaries")
 
-    boundaries = gpd.read_file(
-        acbm.root_path / "data/external/boundaries/study_area_zones.geojson"
-    )
+    boundaries = gpd.read_file(acbm.root_path / config.boundaries_filepath)
 
     logger.info("Study area boundaries loaded")
 
@@ -62,7 +60,9 @@ def main(config_file):
     # --- Activity chains
     logger.info("Loading activity chains")
 
-    activity_chains = activity_chains_for_assignment(columns=cols_for_assignment_edu())
+    activity_chains = activity_chains_for_assignment(
+        config, columns=cols_for_assignment_edu()
+    )
     activity_chains = activity_chains[
         activity_chains["TravDay"] == config.parameters.nts_day_of_week
     ]

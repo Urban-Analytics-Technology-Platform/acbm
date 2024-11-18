@@ -33,7 +33,7 @@ def main(config_file):
 
     # --- Activity chains
     logger.info("Loading activity chains")
-    activity_chains = activity_chains_for_assignment()
+    activity_chains = activity_chains_for_assignment(config)
     logger.info("Activity chains loaded")
 
     # Filter to a specific day of the week
@@ -46,9 +46,7 @@ def main(config_file):
 
     logger.info("Loading study area boundaries")
 
-    boundaries = gpd.read_file(
-        acbm.root_path / "data/external/boundaries/study_area_zones.geojson"
-    )
+    boundaries = gpd.read_file(acbm.root_path / config.boundaries_filepath)
 
     logger.info("Study area boundaries loaded")
 
@@ -152,7 +150,7 @@ def main(config_file):
 
     # osm data
     osm_data = gpd.read_parquet(
-        acbm.root_path / f"data/interim/osmox/{config.region}_epsg_4326.parquet"
+        acbm.root_path / config.osmox_path / (config.region + "_epsg_4326.parquet")
     )
 
     logger.info("Activity locations loaded")
