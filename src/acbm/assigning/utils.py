@@ -286,6 +286,7 @@ def _get_activities_per_zone_df(activities_per_zone: dict) -> pd.DataFrame:
 
 def zones_to_time_matrix(
     zones: gpd.GeoDataFrame,
+    time_units: str,
     id_col: Optional[str] = None,
 ) -> pd.DataFrame:
     """
@@ -302,7 +303,8 @@ def zones_to_time_matrix(
         A GeoDataFrame containing the zones.
     id_col: str, optional
         The name of the column in the zones GeoDataFrame to use as the ID. If None, the index values are used. Default is None.
-
+    time_units: str, optional
+        The units to use for the travel time. Options are 's' for seconds and 'm' for minutes.
     Returns
     -------
     pd.DataFrame
@@ -346,6 +348,10 @@ def zones_to_time_matrix(
         mode_data["mode"] = mode
         mode_data["time"] = mode_data["distance"] / speed
         long_format_data.append(mode_data)
+
+        # Convert time to the desired units
+        if time_units == "m":
+            mode_data["time"] = mode_data["time"] / 60  # Convert seconds to minutes
 
     # Concatenate the list into a single DataFrame
     return pd.concat(long_format_data, ignore_index=True)

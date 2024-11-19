@@ -488,16 +488,13 @@ class WorkZoneAssignment:
                 for person_id, origins in self.activities_to_assign.items()
                 if (person_id, from_zone, to_zone) in assignment_vars
             )
-            # Calculate the assigned percentage based on the total flows to each destination zone
-            if to_zone in self.total_flows:
-                total_people = self.total_flows[to_zone]
+            # Calculate the assigned percentage based on the total flows from each origin zone
+            if from_zone in self.total_flows:
+                total_people = self.total_flows[from_zone]
                 assigned_percentage = assigned_flow / total_people
-            # If the origin zone is not in the total flows, set the assigned percentage to 0
             else:
                 assigned_percentage = 0
-                logger.warning(
-                    f"Warning: Destination {to_zone} not found in total_flows."
-                )
+                logger.warning(f"Warning: Origin {from_zone} not found in total_flows.")
 
             if use_percentages:
                 # to satisfy both constraints, abs_dev will be a positive number (it is the larger of the two)
