@@ -15,6 +15,9 @@ class Parameters(BaseModel):
     zone_id: str
     travel_times: bool
     boundary_geography: str
+    nts_years: list[int]
+    nts_regions: list[str]
+    nts_day_of_week: int
 
 
 @dataclass(frozen=True)
@@ -31,7 +34,7 @@ class WorkAssignmentParams(BaseModel):
     weight_max_dev: float
     weight_total_dev: float
     max_zones: int
-    commute_level: str | None
+    commute_level: str | None = None
 
 
 class Config(BaseModel):

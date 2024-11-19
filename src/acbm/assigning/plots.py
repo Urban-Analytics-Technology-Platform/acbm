@@ -200,7 +200,7 @@ def plot_workzone_assignment_heatmap(
         )
 
         ax = sns.heatmap(
-            heatmap_data, cmap="RdBu", ax=axes[i], cbar=i == len(categories) - 1
+            heatmap_data, cmap="viridis", ax=axes[i], cbar=i == len(categories) - 1
         )
         axes[i].set_title(f"Demand Difference: % of {category} Total")
         axes[i].set_xlabel("Home Zone")

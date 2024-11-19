@@ -15,7 +15,7 @@ from acbm.logger_config import matching_logger as logger
 from acbm.matching import MatcherExact, match_individuals
 from acbm.preprocessing import (
     count_per_group,
-    # nts_filter_by_region,
+    nts_filter_by_region,
     nts_filter_by_year,
     num_adult_child_hh,
     transform_by_group,
@@ -244,7 +244,7 @@ def main(config_file):
 
     logger.info("Filtering NTS data by specified year(s)")
 
-    years = [2019, 2021, 2022]
+    years = config.parameters.nts_years
 
     nts_individuals = nts_filter_by_year(nts_individuals, psu, years)
     nts_households = nts_filter_by_year(nts_households, psu, years)
@@ -252,14 +252,12 @@ def main(config_file):
 
     # #### Filter by geography
     #
-    # I will not do this for categorical matching, as it reduces the sample significantly,
-    # and leads to more spc households not being matched
 
-    # regions = ['Yorkshire and the Humber', 'North West']
+    regions = config.parameters.nts_regions
 
-    # nts_individuals = nts_filter_by_region(nts_individuals, psu, regions)
-    # nts_households = nts_filter_by_region(nts_households, psu, regions)
-    # nts_trips = nts_filter_by_region(nts_trips, psu, regions)
+    nts_individuals = nts_filter_by_region(nts_individuals, psu, regions)
+    nts_households = nts_filter_by_region(nts_households, psu, regions)
+    nts_trips = nts_filter_by_region(nts_trips, psu, regions)
 
     # Create dictionaries of key value pairs
 

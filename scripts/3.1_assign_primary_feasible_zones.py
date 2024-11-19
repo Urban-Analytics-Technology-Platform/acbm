@@ -32,7 +32,9 @@ def main(config_file):
 
     # Filter to a specific day of the week
     logger.info("Filtering activity chains to a specific day of the week")
-    activity_chains = activity_chains[activity_chains["TravDay"] == 3]  # Wednesday
+    activity_chains = activity_chains[
+        activity_chains["TravDay"] == config.parameters.nts_day_of_week
+    ]
 
     # --- Study area boundaries
 
@@ -94,7 +96,9 @@ def main(config_file):
         # If travel_times is not true or loading failed, create a new travel time matrix
         logger.info("No travel time matrix found. Creating a new travel time matrix.")
         # Create a new travel time matrix based on distances between zones
-        travel_times = zones_to_time_matrix(zones=boundaries, id_col=config.zone_id)
+        travel_times = zones_to_time_matrix(
+            zones=boundaries, id_col=config.zone_id, time_units="m"
+        )
         logger.info("Travel time estimates created")
         # save travel_times as parquet
 
