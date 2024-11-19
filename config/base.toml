@@ -41,3 +41,7 @@ use_percentages = true  # if true, optimization problem will try to minimize per
 weight_max_dev = 0.2
 weight_total_dev = 0.8
 max_zones = 8   # maximum number of feasible zones to include in the optimization problem (less zones makes problem smaller - so faster, but at the cost of a better solution)
+
+[postprocessing]
+pam_jitter = 30
+pam_min_duration = 10
