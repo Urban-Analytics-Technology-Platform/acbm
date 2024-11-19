@@ -52,7 +52,7 @@ def main(config_file):
     logger.info("Loading study area boundaries")
 
     boundaries = gpd.read_file(
-        acbm.root_path / "data/external/boundaries/study_area_zones.geojson"
+        acbm.root_path / "data/external/osmox/study_area_zones.geojson"
     )
 
     logger.info("Study area boundaries loaded")

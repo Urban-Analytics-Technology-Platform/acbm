@@ -147,7 +147,7 @@ def main(config_file):
 
     # osm data
     osm_data = gpd.read_parquet(
-        acbm.root_path / f"data/interim/boundaries/{config.region}_epsg_4326.parquet"
+        acbm.root_path / f"data/interim/osmox/{config.region}_epsg_4326.parquet"
     )
 
     logger.info("Activity locations loaded")
