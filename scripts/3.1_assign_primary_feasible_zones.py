@@ -147,7 +147,7 @@ def main(config_file):
 
     # osm data
     osm_data = gpd.read_parquet(
-        acbm.root_path / "data/external/boundaries/west-yorkshire_epsg_4326.parquet"
+        acbm.root_path / f"data/interim/boundaries/{config.region}_epsg_4326.parquet"
     )
 
     logger.info("Activity locations loaded")
@@ -163,6 +163,10 @@ def main(config_file):
     # randomly assign a zone to each trip.
 
     logger.info("Getting the number of activities in each zone")
+
+    # ensure that osm_data_gdf and boundaries are in the same crs
+    osm_data = osm_data.to_crs(boundaries.crs)
+
     # spatial join to identify which zone each point in osm_data is in
     osm_data_gdf = gpd.sjoin(
         osm_data,

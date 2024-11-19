@@ -45,6 +45,7 @@ gdal = "<=3.8.4"
 pandera = "^0.20.4"
 osmox = {git = "https://github.com/arup-group/osmox"}
 pyrosm = "^0.6.2"
+jsonschema = "^4.23.0"
 
 [tool.poetry.dev-dependencies]
 pytest = ">= 6"

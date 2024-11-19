@@ -45,7 +45,7 @@ def main(config_file):
     logger.info("Loading facility data")
 
     osm_data_gdf = gpd.read_parquet(
-        acbm.root_path / "data/external/boundaries/west-yorkshire_epsg_4326.parquet"
+        acbm.root_path / f"data/interim/boundaries/{config.region}_epsg_4326.parquet"
     )
 
     # --- Load data: Boundaries
