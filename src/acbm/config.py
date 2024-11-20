@@ -54,7 +54,7 @@ class Config(BaseModel):
 
         See [popgetter](https://github.com/Urban-Analytics-Technology-Platform/popgetter/blob/7da293f4eb2d36480dbd137a27be623aa09449bf/python/popgetter/metadata.py#L83).
         """
-        # Since the out paths are not too long, take first 10 chars
+        # Take first 10 chars to enable paths to remain not too long
         ID_LENGTH = 10
         return sha256(jcs.canonicalize(self.model_dump())).hexdigest()[:ID_LENGTH]
 
