@@ -24,8 +24,7 @@ def main(config_file):
     # ----- Folder for validation plots
 
     logger.info("1. Creating folder for validation plots")
-
-    validation_plots_path = acbm.root_path / "data/processed/plots/validation"
+    validation_plots_path = config.validation_plots_path
     os.makedirs(validation_plots_path, exist_ok=True)
 
     # ----- Reading in the data
@@ -40,9 +39,9 @@ def main(config_file):
     legs_nts = legs_nts[legs_nts["TravDay"] == config.parameters.nts_day_of_week]
 
     # Model outputs
-    legs_acbm = pd.read_csv(acbm.root_path / "data/processed/activities_pam/legs.csv")
+    legs_acbm = pd.read_csv(acbm.root_path / config.output_path / "legs.csv")
     legs_acbm_geo = pd.read_parquet(
-        acbm.root_path / "data/processed/activities_pam/legs_with_locations.parquet"
+        acbm.root_path / config.output_path / "legs_with_locations.parquet"
     )
 
     # ----- Preproccessing the data
