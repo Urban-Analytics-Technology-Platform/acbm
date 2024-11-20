@@ -75,13 +75,24 @@ def main(config_file):
     # are compared to the travel times of the individual's actual trips from the nts
     # (`tst`/`TripStart` and `tet`/`TripEnd`)
 
-    # TODO: move to config
-    travel_time_matrix_path = (
-        acbm.root_path / "data/external/travel_times/oa/travel_time_matrix.parquet"
+    logger.info("Creating estimated travel times matrix")
+    # Create a new travel time matrix based on distances between zones
+    travel_time_estimates = zones_to_time_matrix(
+        zones=boundaries, id_col=config.zone_id, time_units="m"
+    )
+    logger.info("Travel time estimates created")
+
+    # save travel_time_etstimates as parquet
+    travel_time_estimates.to_parquet(
+        acbm.root_path / "data/interim/assigning/travel_time_estimates.parquet"
     )
 
     if config.parameters.travel_times:
         logger.info("Loading travel time matrix")
+        # TODO: move to config
+        travel_time_matrix_path = (
+            acbm.root_path / "data/external/travel_times/oa/travel_time_matrix.parquet"
+        )
         try:
             travel_times = pd.read_parquet(travel_time_matrix_path)
             print("Travel time matrix loaded successfully.")
@@ -93,18 +104,8 @@ def main(config_file):
             )
             raise e
     else:
-        # If travel_times is not true or loading failed, create a new travel time matrix
-        logger.info("No travel time matrix found. Creating a new travel time matrix.")
-        # Create a new travel time matrix based on distances between zones
-        travel_times = zones_to_time_matrix(
-            zones=boundaries, id_col=config.zone_id, time_units="m"
-        )
-        logger.info("Travel time estimates created")
-        # save travel_times as parquet
-
-        travel_times.to_parquet(
-            acbm.root_path / "data/interim/assigning/travel_time_estimates.parquet"
-        )
+        # If travel_times is not true, set travel_times as travel_times_estimates
+        travel_times = travel_time_estimates
 
     # --- Intrazonal trip times
     #
