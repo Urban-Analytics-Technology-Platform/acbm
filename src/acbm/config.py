@@ -61,18 +61,17 @@ class Config(BaseModel):
     @property
     def boundaries_filepath(self) -> str:
         """Returns full processed path."""
-        return (
-            Path("data")
-            / "outputs"
-            / self.id
-            / "boundaries"
-            / "study_area_zones.geojson"
-        )
+        return self.output_path / "boundaries" / "study_area_zones.geojson"
 
     @property
     def osmox_path(self) -> str:
         """Returns full processed path."""
-        return Path("data") / "outputs" / self.id / "osmox"
+        return self.output_path / "osmox"
+
+    @property
+    def validation_plots_path(self) -> str:
+        """Returns full processed path."""
+        return self.output_path / "plots" / "validation"
 
     @property
     def output_path(self) -> str:
@@ -82,7 +81,7 @@ class Config(BaseModel):
     @property
     def interim_path(self) -> str:
         """Returns full processed path."""
-        return Path("data") / "outputs" / self.id / "interim"
+        return self.output_path / "interim"
 
     @property
     def seed(self) -> int:
