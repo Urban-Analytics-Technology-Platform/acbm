@@ -36,7 +36,7 @@ optional_columns = [
 n_matches = 10 # What is the maximum number of NTS matches we want for each SPC household?
 
 [work_assignment]
-commute_level = "MSOA"
+commute_level = "OA"
 use_percentages = true # if true, optimization problem will try to minimize percentage difference at OD level (not absolute numbers). Recommended to set it to true
 # weights to add for each objective in the optimization problem
 weight_max_dev = 0.2
