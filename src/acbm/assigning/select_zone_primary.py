@@ -256,6 +256,15 @@ def _get_zones_using_time_estimate(
         for k, v in estimated_times.items()
         if k[0] == from_zone and k[1] in to_zones_set
     }
+
+    # Check if the filtered dictionary is empty
+    if not filtered_dict:
+        # Handle the case where there are no travel time estimates for the target zone
+        print(
+            f"No travel time estimates found for from_zone: {from_zone} to any of the to_zones: {to_zones}"
+        )
+        return None
+
     # get to_zone where time_average is closest to "time"
     if mode is not None:
         closest_to_zone = min(

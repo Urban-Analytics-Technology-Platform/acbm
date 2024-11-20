@@ -15,6 +15,17 @@ class Parameters(BaseModel):
     zone_id: str
     travel_times: bool
     boundary_geography: str
+    nts_years: list[int]
+    nts_regions: list[str]
+    nts_day_of_week: int
+
+
+@dataclass(frozen=True)
+class MatchingParams(BaseModel):
+    required_columns: list[str]
+    optional_columns: list[str]
+    n_matches: int | None = None
+    chunk_size: int = 50_000
 
 
 @dataclass(frozen=True)
@@ -23,6 +34,7 @@ class WorkAssignmentParams(BaseModel):
     weight_max_dev: float
     weight_total_dev: float
     max_zones: int
+    commute_level: str | None = None
 
 
 @dataclass(frozen=True)
@@ -36,6 +48,7 @@ class Config(BaseModel):
     work_assignment: WorkAssignmentParams = Field(
         description="Config: parameters for work assignment."
     )
+    matching: MatchingParams = Field(description="Config: parameters for matching.")
     postprocessing: Postprocessing = Field(
         description="Config: parameters for postprocessing."
     )
@@ -60,6 +73,10 @@ class Config(BaseModel):
     def destination_zone_id(cls, zone_id: str) -> str:
         return zone_id + "_to"
 
+    @property
+    def boundary_geography(self) -> str:
+        return self.parameters.boundary_geography
+
     # TODO: consider moving to method in config
     def init_rng(self):
         try:
@@ -67,7 +84,7 @@ class Config(BaseModel):
             random.seed(self.seed)
         except Exception as err:
             msg = f"config does not provide a rng seed with err: {err}"
-            ValueError(msg)
+            raise ValueError(msg) from err
 
 
 def load_config(filepath: str | Path) -> Config:

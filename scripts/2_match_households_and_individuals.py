@@ -8,13 +8,14 @@ import pandas as pd
 # from joblib import Parallel, delayed
 # from tqdm import trange
 import acbm
+from acbm.assigning.utils import cols_for_assignment_all
 from acbm.cli import acbm_cli
 from acbm.config import load_config
 from acbm.logger_config import matching_logger as logger
-from acbm.matching import match_categorical, match_individuals
+from acbm.matching import MatcherExact, match_individuals
 from acbm.preprocessing import (
     count_per_group,
-    # nts_filter_by_region,
+    nts_filter_by_region,
     nts_filter_by_year,
     num_adult_child_hh,
     transform_by_group,
@@ -39,14 +40,12 @@ def main(config_file):
 
     # ### SPC
 
-    # useful variables
-    region = "leeds"
-
     logger.info("Loading SPC data")
 
     # Read in the spc data (parquet format)
     spc = pd.read_parquet(
-        acbm.root_path / "data/external/spc_output/" f"{region}_people_hh.parquet"
+        acbm.root_path / "data/external/spc_output/"
+        f"{config.region}_people_hh.parquet"
     )
 
     logger.info("Filtering SPC data to specific columns")
@@ -245,7 +244,7 @@ def main(config_file):
 
     logger.info("Filtering NTS data by specified year(s)")
 
-    years = [2019, 2021, 2022]
+    years = config.parameters.nts_years
 
     nts_individuals = nts_filter_by_year(nts_individuals, psu, years)
     nts_households = nts_filter_by_year(nts_households, psu, years)
@@ -253,14 +252,12 @@ def main(config_file):
 
     # #### Filter by geography
     #
-    # I will not do this for categorical matching, as it reduces the sample significantly,
-    # and leads to more spc households not being matched
 
-    # regions = ['Yorkshire and the Humber', 'North West']
+    regions = config.parameters.nts_regions
 
-    # nts_individuals = nts_filter_by_region(nts_individuals, psu, regions)
-    # nts_households = nts_filter_by_region(nts_households, psu, regions)
-    # nts_trips = nts_filter_by_region(nts_trips, psu, regions)
+    nts_individuals = nts_filter_by_region(nts_individuals, psu, regions)
+    nts_households = nts_filter_by_region(nts_households, psu, regions)
+    nts_trips = nts_filter_by_region(nts_trips, psu, regions)
 
     # Create dictionaries of key value pairs
 
@@ -687,184 +684,201 @@ def main(config_file):
     )  # fill the NaNs with the original values
 
     # ## Step 3: Matching at Household Level
+    # TODO: remove once refactored into two scripts
+    load_households = False
+    if not load_households:
+        logger.info("Categorical matching: MATCHING HOUSEHOLDS")
 
-    logger.info("Categorical matching: MATCHING HOUSEHOLDS")
+        #
+        # Now that we've prepared all the columns, we can start matching.
 
-    #
-    # Now that we've prepared all the columns, we can start matching.
+        # ### 3.1 Categorical matching
+        #
+        # We will match on (a subset of) the following columns:
+        #
+        # | Matching variable | NTS column | SPC column |
+        # | ------------------| ---------- | ---------- |
+        # | Household income  | `HHIncome2002_BO2ID` | `salary_yearly_hh_cat` |
+        # | Number of adults  | `HHoldNumAdults` | `num_adults` |
+        # | Number of children | `HHoldNumChildren` | `num_children` |
+        # | Employment status | `HHoldEmploy_B01ID` | `pwkstat_NTS_match` |
+        # | Car ownership | `NumCar_SPC_match` | `num_cars` |
+        # | Type of tenancy | `tenure_nts_for_matching` | `tenure_spc_for_matching` |
+        # | Rural/Urban Classification | `Settlement2011EW_B03ID` | `Settlement2011EW_B03ID_spc_CD` |
 
-    # ### 3.1 Categorical matching
-    #
-    # We will match on (a subset of) the following columns:
-    #
-    # | Matching variable | NTS column | SPC column |
-    # | ------------------| ---------- | ---------- |
-    # | Household income  | `HHIncome2002_BO2ID` | `salary_yearly_hh_cat` |
-    # | Number of adults  | `HHoldNumAdults` | `num_adults` |
-    # | Number of children | `HHoldNumChildren` | `num_children` |
-    # | Employment status | `HHoldEmploy_B01ID` | `pwkstat_NTS_match` |
-    # | Car ownership | `NumCar_SPC_match` | `num_cars` |
-    # | Type of tenancy | `tenure_nts_for_matching` | `tenure_spc_for_matching` |
-    # | Rural/Urban Classification | `Settlement2011EW_B03ID` | `Settlement2011EW_B03ID_spc_CD` |
+        # Prepare SPC df for matching
 
-    # Prepare SPC df for matching
+        # Select multiple columns
+        spc_matching = spc_edited[
+            [
+                "hid",
+                "salary_yearly_hh_cat",
+                "num_adults",
+                "num_children",
+                "num_pension_age",
+                "pwkstat_NTS_match",
+                "num_cars",
+                "tenure_spc_for_matching",
+                "Settlement2011EW_B03ID_spc_CD",
+                "Settlement2011EW_B04ID_spc_CD",
+            ]
+        ]
 
-    # Select multiple columns
-    spc_matching = spc_edited[
-        [
-            "hid",
-            "salary_yearly_hh_cat",
-            "num_adults",
-            "num_children",
+        # edit the df so that we have one row per hid
+        spc_matching = spc_matching.drop_duplicates(subset="hid")
+
+        spc_matching.head(10)
+
+        # Prepare NTS df for matching
+
+        nts_matching = nts_households[
+            [
+                "HouseholdID",
+                "HHIncome2002_B02ID",
+                "HHoldNumAdults",
+                "HHoldNumChildren",
+                "num_pension_age_nts",
+                "HHoldEmploy_B01ID",
+                "NumCar_SPC_match",
+                "tenure_nts_for_matching",
+                "Settlement2011EW_B03ID",
+                "Settlement2011EW_B04ID",
+            ]
+        ]
+
+        # Dictionary of matching columns. We extract column names from this dictioary when matching on a subset of the columns
+
+        # column_names (keys) for the dictionary
+        matching_ids = [
+            "household_id",
+            "yearly_income",
+            "number_adults",
+            "number_children",
             "num_pension_age",
-            "pwkstat_NTS_match",
-            "num_cars",
-            "tenure_spc_for_matching",
-            "Settlement2011EW_B03ID_spc_CD",
-            "Settlement2011EW_B04ID_spc_CD",
+            "employment_status",
+            "number_cars",
+            "tenure_status",
+            "rural_urban_2_categories",
+            "rural_urban_4_categories",
         ]
-    ]
 
-    # edit the df so that we have one row per hid
-    spc_matching = spc_matching.drop_duplicates(subset="hid")
+        # Dict with value qual to a list with spc_matching and nts_matching column names
+        matching_dfs_dict = {
+            column_name: [spc_value, nts_value]
+            for column_name, spc_value, nts_value in zip(
+                matching_ids, spc_matching, nts_matching
+            )
+        }
 
-    spc_matching.head(10)
-
-    # Prepare NTS df for matching
-
-    nts_matching = nts_households[
-        [
-            "HouseholdID",
-            "HHIncome2002_B02ID",
-            "HHoldNumAdults",
-            "HHoldNumChildren",
-            "num_pension_age_nts",
-            "HHoldEmploy_B01ID",
-            "NumCar_SPC_match",
-            "tenure_nts_for_matching",
-            "Settlement2011EW_B03ID",
-            "Settlement2011EW_B04ID",
-        ]
-    ]
-
-    # Dictionary of matching columns. We extract column names from this dictioary when matching on a subset of the columns
-
-    # column_names (keys) for the dictionary
-    matching_ids = [
-        "household_id",
-        "yearly_income",
-        "number_adults",
-        "number_children",
-        "num_pension_age",
-        "employment_status",
-        "number_cars",
-        "tenure_status",
-        "rural_urban_2_categories",
-        "rural_urban_4_categories",
-    ]
-
-    # i want the value to be a list with spc_matching and nts_matching
-    matching_dfs_dict = {
-        column_name: [spc_value, nts_value]
-        for column_name, spc_value, nts_value in zip(
-            matching_ids, spc_matching, nts_matching
+        # We match iteratively on a subset of columns. We start with all columns, and then remove
+        # one of the optionals columns at a time (relaxing the condition). Once a household has over n
+        # matches, we stop matching it to more matches. We continue until all optional columns are removed
+        matcher_exact = MatcherExact(
+            df_pop=spc_matching,
+            df_pop_id="hid",
+            df_sample=nts_matching,
+            df_sample_id="HouseholdID",
+            matching_dict=matching_dfs_dict,
+            fixed_cols=list(config.matching.required_columns),
+            optional_cols=list(config.matching.optional_columns),
+            n_matches=config.matching.n_matches,
+            chunk_size=config.matching.chunk_size,
+            show_progress=True,
         )
-    }
 
-    # #### Match on a subset of columns (exclude salary, tenure, and employment status)
-    #
-    # To decide on the subset of columns to match on, we explore the results from different combinations. This is shown in a separate notebook: `2.1_sandbox-match_households.ipynb`.
+        # Match
 
-    # columns for matching
-    keys = [
-        "number_adults",
-        "number_children",
-        "num_pension_age",
-        "number_cars",
-        "rural_urban_2_categories",
-    ]
-    # extract equivalent column names from dictionary
-    spc_cols = [matching_dfs_dict[key][0] for key in keys]
-    nts_cols = [matching_dfs_dict[key][1] for key in keys]
+        matches_hh_level = matcher_exact.iterative_match_categorical()
 
-    # Match
+        # Number of unmatched households
 
-    matches_hh_level = match_categorical(
-        df_pop=spc_matching,
-        df_pop_cols=spc_cols,
-        df_pop_id="hid",
-        df_sample=nts_matching,
-        df_sample_cols=nts_cols,
-        df_sample_id="HouseholdID",
-        chunk_size=50000,
-        show_progress=True,
-    )
+        # no. of keys where value is na
+        na_count = sum([1 for v in matches_hh_level.values() if pd.isna(v).all()])
 
-    # Number of unmatched households
+        logger.info(
+            f"Categorical matching: {na_count} households in the SPC had no match"
+        )
+        logger.info(
+            f"{round((na_count / len(matches_hh_level)) * 100, 1)}% of households in the SPC had no match"
+        )
 
-    # no. of keys where value is na
-    na_count = sum([1 for v in matches_hh_level.values() if pd.isna(v).all()])
+        # ### Random Sampling from matched households
 
-    logger.info(f"Categorical matching: {na_count} households in the SPC had no match")
-    logger.info(
-        f"{round((na_count / len(matches_hh_level)) * 100, 1)}% of households in the SPC had no match"
-    )
+        logger.info("Categorical matching: Randomly choosing one match per household")
+        #
+        # In categorical matching, many households in the SPC are matched to more than 1 household in the NTS. Which household to choose? We do random sampling
 
-    ## add matches_hh_level as a column in spc_edited
-    spc_edited["nts_hh_id"] = spc_edited["hid"].map(matches_hh_level)
+        # for each key in the dictionary, sample 1 of the values associated with it and store it in a new dictionary
 
-    # ### Random Sampling from matched households
+        """
+        - iterate over each key-value pair in the matches_hh_result dictionary.
+        - For each key-value pair, use np.random.choice(value) to randomly select
+        one item from the list of values associated with the current key.
+        - create a new dictionary hid_to_HouseholdID_sample where each key from the
+        original dictionary is associated with one randomly selected value from the
+        original list of values.
 
-    logger.info("Categorical matching: Randomly choosing one match per household")
-    #
-    # In categorical matching, many households in the SPC are matched to more than 1 household in the NTS. Which household to choose? We do random sampling
+        """
+        # Randomly sample one match per household if it has one match or more
+        matches_hh_level_sample = {
+            key: np.random.choice(value)
+            for key, value in matches_hh_level.items()
+            if value
+            and not pd.isna(
+                np.random.choice(value)
+            )  # Ensure the value list is not empty and the selected match is not NaN
+        }
 
-    # for each key in the dictionary, sample 1 of the values associated with it and store it in a new dictionary
+        # Multiple matches in case we want to try stochastic runs
 
-    """
-    - iterate over each key-value pair in the matches_hh_result dictionary.
-    - For each key-value pair, use np.random.choice(value) to randomly select
-    one item from the list of values associated with the current key.
-    - create a new dictionary hid_to_HouseholdID_sample where each key from the
-    original dictionary is associated with one randomly selected value from the
-    original list of values.
+        # Same logic as above, but repeat it multiple times and store each result as a separate dictionary in a list
+        matches_hh_level_sample_list = [
+            {
+                key: np.random.choice(value)
+                for key, value in matches_hh_level.items()
+                if value and not pd.isna(np.random.choice(value))
+            }
+            for i in range(25)  # Repeat the process 25 times
+        ]
 
-    """
-    matches_hh_level_sample = {
-        key: np.random.choice(value) for key, value in matches_hh_level.items()
-    }
+        logger.info("Categorical matching: Random sampling complete")
 
-    # remove items in list where value is nan
-    matches_hh_level_sample = {
-        key: value
-        for key, value in matches_hh_level_sample.items()
-        if not pd.isna(value)
-    }
+        # Save results
+        logger.info("Categorical matching: Saving results")
 
-    # Multiple matches in case we want to try stochastic runs
+        # matching results
+        with open(get_interim_path("matches_hh_level_categorical.pkl"), "wb") as f:
+            pkl.dump(matches_hh_level, f)
 
-    # same logic as cell above, but repeat it multiple times and store each result as a separate dictionary in a list
-    matches_hh_level_sample_list = [
-        {key: np.random.choice(value) for key, value in matches_hh_level.items()}
-        for i in range(25)
-    ]
+        # random sample
+        with open(
+            get_interim_path("matches_hh_level_categorical_random_sample.pkl"), "wb"
+        ) as f:
+            pkl.dump(matches_hh_level_sample, f)
 
-    logger.info("Categorical matching: Random sampling complete")
+        # multiple random samples
+        with open(
+            get_interim_path("matches_hh_level_categorical_random_sample_multiple.pkl"),
+            "wb",
+        ) as f:
+            pkl.dump(matches_hh_level_sample_list, f)
+    else:
+        logger.info("Categorical matching: loading matched households")
+        # Load matching result
+        with open(
+            get_interim_path("matches_hh_level_categorical_random_sample.pkl"), "rb"
+        ) as f:
+            matches_hh_level_sample = pkl.load(f)
 
-    # Save results
-    logger.info("Categorical matching: Saving results")
-    # random sample
-    with open(
-        get_interim_path("matches_hh_level_categorical_random_sample.pkl"), "wb"
-    ) as f:
-        pkl.dump(matches_hh_level_sample, f)
+        # multiple random samples
+        with open(
+            get_interim_path("matches_hh_level_categorical_random_sample_multiple.pkl"),
+            "rb",
+        ) as f:
+            matches_hh_level_sample_list = pkl.load(f)
 
-    # multiple random samples
-    with open(
-        get_interim_path("matches_hh_level_categorical_random_sample_multiple.pkl"),
-        "wb",
-    ) as f:
-        pkl.dump(matches_hh_level_sample_list, f)
+    ## add matches_hh_level_sample as a column in spc_edited
+    spc_edited["nts_hh_id"] = spc_edited["hid"].map(matches_hh_level_sample)
 
     # Do the same at the df level. Add nts_hh_id_sample column to the spc df
 
@@ -883,8 +897,6 @@ def main(config_file):
     # 3) Nearest neighbor merge without replacement (edit while function below)
     #
     #
-
-    logger.info("Statistical matching: MATCHING INDIVIDUALS")
 
     # Create an 'age' column in the SPC that matches the NTS categories
 
@@ -920,17 +932,33 @@ def main(config_file):
         columns={"Age_B04ID": "age_group", "Sex_B01ID": "sex"}, inplace=True
     )
 
-    # PSM matching using internal match_individuals function
+    # TODO: remove once refactored into two scripts
+    load_individuals = False
+    if not load_individuals:
+        logger.info("Statistical matching: MATCHING INDIVIDUALS")
 
-    matches_ind = match_individuals(
-        df1=spc_edited,
-        df2=nts_individuals,
-        matching_columns=["age_group", "sex"],
-        df1_id="hid",
-        df2_id="HouseholdID",
-        matches_hh=matches_hh_level_sample,
-        show_progress=False,
-    )
+        # PSM matching using internal match_individuals function
+        matches_ind = match_individuals(
+            df1=spc_edited,
+            df2=nts_individuals,
+            matching_columns=["age_group", "sex"],
+            df1_id="hid",
+            df2_id="HouseholdID",
+            matches_hh=matches_hh_level_sample,
+            show_progress=True,
+        )
+
+        # save random sample
+        with open(
+            get_interim_path("matches_ind_level_categorical_random_sample.pkl"), "wb"
+        ) as f:
+            pkl.dump(matches_ind, f)
+    else:
+        logger.info("Statistical matching: loading matched individuals")
+        with open(
+            get_interim_path("matches_ind_level_categorical_random_sample.pkl"), "rb"
+        ) as f:
+            matches_ind = pkl.load(f)
 
     # Add matches_ind values to spc_edited using map
     spc_edited["nts_ind_id"] = spc_edited.index.map(matches_ind)
@@ -941,12 +969,6 @@ def main(config_file):
     )
 
     logger.info("Statistical matching: Matching complete")
-
-    # save random sample
-    with open(
-        get_interim_path("matches_ind_level_categorical_random_sample.pkl"), "wb"
-    ) as f:
-        pkl.dump(matches_ind, f)
 
     # ### Match on multiple samples
 
@@ -1091,13 +1113,35 @@ def main(config_file):
     # convert the nts_ind_id column to int for merging
     spc_edited_copy["nts_ind_id"] = spc_edited_copy["nts_ind_id"].astype(int)
 
+    # Add output columns required for assignment scripts
+    spc_output_cols = [
+        col for col in spc_edited_copy.columns if col in cols_for_assignment_all()
+    ]
+    nts_output_cols = [
+        col for col in nts_trips.columns if col in cols_for_assignment_all()
+    ] + ["IndividualID"]
+
     # merge the copy with nts_trips using IndividualID
-    spc_edited_copy = spc_edited_copy.merge(
-        nts_trips, left_on="nts_ind_id", right_on="IndividualID", how="left"
+    spc_edited_copy = spc_edited_copy[spc_output_cols].merge(
+        nts_trips[nts_output_cols],
+        left_on="nts_ind_id",
+        right_on="IndividualID",
+        how="left",
     )
 
     # save the file as a parquet file
     spc_edited_copy.to_parquet(get_interim_path("spc_with_nts_trips.parquet"))
+
+    # save the nts data for later use in validation
+    nts_individuals.to_parquet(
+        acbm.root_path / "data/external/nts/filtered/nts_individuals.parquet"
+    )
+    nts_households.to_parquet(
+        acbm.root_path / "data/external/nts/filtered/nts_households.parquet"
+    )
+    nts_trips.to_parquet(
+        acbm.root_path / "data/external/nts/filtered/nts_trips.parquet"
+    )
 
 
 if __name__ == "__main__":

@@ -39,7 +39,9 @@ def main(config_file):
     logger.info("Loading: activity chains")
 
     activity_chains = activity_chains_for_assignment()
-    activity_chains = activity_chains[activity_chains["TravDay"] == 3]  # Wednesday
+    activity_chains = activity_chains[
+        activity_chains["TravDay"] == config.parameters.nts_day_of_week
+    ]
 
     # --- Add OA21CD to the data
 
@@ -305,9 +307,16 @@ def main(config_file):
     # --- Load travel time estimates
     logger.info("Analysis (matrices): Step 1 - Loading travel time data")
 
-    travel_times = pd.read_parquet(
-        acbm.root_path / "data/external/travel_times/oa/travel_time_matrix.parquet"
-    )
+    # load in the travel times (path differs for estimated ones)
+    # TODO: improve / save in same directory / add paths to config
+    if config.parameters.travel_times:
+        travel_times = pd.read_parquet(
+            acbm.root_path / "data/external/travel_times/oa/travel_time_matrix.parquet"
+        )
+    else:
+        travel_times = pd.read_parquet(
+            acbm.root_path / "data/interim/assigning/travel_time_estimates.parquet"
+        )
 
     # Edit modes
     logger.info("Analysis (matrices): Step 2 - Editing modes")
@@ -357,7 +366,9 @@ def main(config_file):
 
     # Merge to get floor_area for origin
     merged_df = travel_times.merge(
-        activities_per_zone, left_on="OA21CD_to", right_on=config.zone_id
+        activities_per_zone,
+        left_on=config.destination_zone_id(zone_id),
+        right_on=config.zone_id,
     )
 
     # Calculate the visit_probability: it is a funciton of floor_area and travel time

@@ -50,7 +50,7 @@ boundaries_schema = DataFrameSchema(
 travel_times_schema = DataFrameSchema(
     {
         "mode": Column(str),
-        "weekday": Column(pa.Float, Check.isin([0, 1]), nullable=True),
+        # "weekday": Column(pa.Float, Check.isin([0, 1]), nullable=True), # Does not exist if we make our own estimate
         # "time_of_day": Column(str, nullable=True),
         "time": Column(float),
     },
@@ -134,7 +134,9 @@ def get_possible_zones(
 
     if travel_times is None:
         logger.info("Travel time matrix not provided: Creating travel times estimates")
-        travel_times = zones_to_time_matrix(zones=boundaries, id_col=zone_id)
+        travel_times = zones_to_time_matrix(
+            zones=boundaries, id_col=zone_id, time_units="m"
+        )
 
     list_of_modes = activity_chains["mode"].unique()
     print(f"Unique modes found in the dataset are: {list_of_modes}")
@@ -161,9 +163,16 @@ def get_possible_zones(
 
         # if the mode is public transport, we need to filter the travel_times data based on time_of_day and weekday/weekend
         # this only applies if we have the time_of_day column in the travel_times dataframe (not the case if we've estimated
-        # travel times)
+        # travel times).
 
-        if mode == "pt" and "time_of_day" in travel_times.columns:
+        # if "weekday" does not exist, we skip. Our travel_time_estimates (from zones_to_time_matrix())
+        # don't have weekday information
+
+        if (
+            mode == "pt"
+            and "time_of_day" in travel_times.columns
+            and "weekday" in travel_times.columns
+        ):
             for time_of_day in list_of_times_of_day:
                 print(f"Processing time of day: {time_of_day} | mode: {mode}")
                 for day_type in day_types:

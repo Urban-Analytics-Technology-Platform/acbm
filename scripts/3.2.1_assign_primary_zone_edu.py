@@ -33,16 +33,13 @@ def main(config_file):
     )
 
     # --- boundaries
-    logger.info("Loading boundaries")
-
-    where_clause = "MSOA21NM LIKE '%Leeds%'"
+    logger.info("Loading study area boundaries")
 
     boundaries = gpd.read_file(
-        acbm.root_path / "data/external/boundaries/oa_england.geojson",
-        where=where_clause,
+        acbm.root_path / "data/external/boundaries/study_area_zones.geojson"
     )
 
-    boundaries = boundaries.to_crs(epsg=4326)
+    logger.info("Study area boundaries loaded")
 
     # --- osm POI data
     logger.info("Loading OSM POI data")
@@ -59,7 +56,9 @@ def main(config_file):
     logger.info("Loading activity chains")
 
     activity_chains = activity_chains_for_assignment(columns=cols_for_assignment_edu())
-    activity_chains = activity_chains[activity_chains["TravDay"] == 3]  # Wednesday
+    activity_chains = activity_chains[
+        activity_chains["TravDay"] == config.parameters.nts_day_of_week
+    ]
 
     logger.info("Filtering activity chains for trip purpose: education")
     activity_chains_edu = activity_chains[activity_chains["dact"] == "education"]
@@ -102,8 +101,8 @@ def main(config_file):
     # --- travel time estimates
     logger.info("Loading travel time estimates")
 
-    travel_time_estimates = pd.read_pickle(
-        acbm.root_path / "data/interim/assigning/travel_time_estimates.pkl"
+    travel_time_estimates = pd.read_parquet(
+        acbm.root_path / "data/interim/assigning/travel_time_estimates.parquet"
     )
 
     #### ASSIGN TO ZONE FROM FEASIBLE ZONES ####

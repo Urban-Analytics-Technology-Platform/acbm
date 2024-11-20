@@ -45,14 +45,14 @@ def main(config_file):
     logger.info("Loading facility data")
 
     osm_data_gdf = gpd.read_parquet(
-        acbm.root_path / "data/external/boundaries/west-yorkshire_epsg_4326.parquet"
+        acbm.root_path / f"data/interim/boundaries/{config.region}_epsg_4326.parquet"
     )
 
     # --- Load data: Boundaries
     logger.info("Loading study area boundaries")
 
     boundaries = gpd.read_file(
-        acbm.root_path / "data/external/boundaries/study_area_zones.geojson"
+        acbm.root_path / "data/external/osmox/study_area_zones.geojson"
     )
 
     logger.info("Study area boundaries loaded")
