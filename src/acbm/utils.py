@@ -43,8 +43,8 @@ def calculate_rmse(predictions, targets):
     return np.sqrt(mse)
 
 
-def get_travel_times(config: Config) -> pd.DataFrame:
-    if config.parameters.travel_times:
+def get_travel_times(config: Config, use_estimates: bool = False) -> pd.DataFrame:
+    if config.parameters.travel_times and not use_estimates:
         return pd.read_parquet(
             acbm.root_path / "data/external/travel_times/oa/travel_time_matrix.parquet"
         )

@@ -107,6 +107,7 @@ def main(config_file):
 
     # --- travel time estimates
     logger.info("Loading travel time estimates")
+    # TODO: check whether should use_estimates=True
     travel_time_estimates = get_travel_times(config)
 
     #### ASSIGN TO ZONE FROM FEASIBLE ZONES ####
