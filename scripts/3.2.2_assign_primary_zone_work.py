@@ -40,8 +40,11 @@ def main(config_file):
     boundaries = gpd.read_file(
         acbm.root_path / "data/external/boundaries/study_area_zones.geojson"
     )
-
     logger.info("Study area boundaries loaded")
+
+    # Reproject boundaries to the output CRS specified in the config
+    boundaries = boundaries.to_crs(f"epsg:{config.output_crs}")
+    logger.info(f"Boundaries reprojected to {config.output_crs}")
 
     # osm POI data
 
@@ -49,16 +52,26 @@ def main(config_file):
         acbm.root_path / "data/interim/assigning/osm_poi_with_zones.pkl"
     )
     # Convert the DataFrame into a GeoDataFrame, and assign a coordinate reference system (CRS)
-    osm_data_gdf = gpd.GeoDataFrame(osm_data_gdf, geometry="geometry", crs="EPSG:4326")
+    osm_data_gdf = gpd.GeoDataFrame(
+        osm_data_gdf, geometry="geometry", crs=f"EPSG:{config.output_crs}"
+    )
 
     # --- Activity chains
+    logger.info("Loading activity chains")
+
     activity_chains = activity_chains_for_assignment(cols_for_assignment_work())
-    activity_chains = add_locations_to_activity_chains(activity_chains)
     activity_chains = activity_chains[
         activity_chains["TravDay"] == config.parameters.nts_day_of_week
     ]
 
+    logger.info("Filtering activity chains for trip purpose: work")
     activity_chains_work = activity_chains[activity_chains["dact"] == "work"]
+
+    logger.info("Assigning activity home locations to boundaries zoning system")
+    # add home location (based on OA11CD from SPC)
+    activity_chains_work = add_locations_to_activity_chains(
+        activity_chains=activity_chains_work, target_crs=f"EPSG:{config.output_crs}"
+    )
 
     # --- WORK: existing travel demand data
 

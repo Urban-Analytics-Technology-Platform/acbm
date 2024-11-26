@@ -46,14 +46,18 @@ def main(config_file):
 
     logger.info("Study area boundaries loaded")
 
+    # Reproject boundaries to the output CRS specified in the config
+    boundaries = boundaries.to_crs(f"epsg:{config.output_crs}")
+    logger.info(f"Boundaries reprojected to {config.output_crs}")
+
     # --- Assign activity home locations to boundaries zoning system
 
     logger.info("Assigning activity home locations to boundaries zoning system")
-    activity_chains = add_locations_to_activity_chains(activity_chains)
 
-    # Convert the DataFrame into a GeoDataFrame, and assign a coordinate reference system (CRS)
-    activity_chains = gpd.GeoDataFrame(activity_chains, geometry="location")
-    activity_chains.crs = "EPSG:4326"  # I assume this is the crs
+    # add home location (based on OA11CD from SPC)
+    activity_chains = add_locations_to_activity_chains(
+        activity_chains=activity_chains, target_crs=f"EPSG:{config.output_crs}"
+    )
 
     # remove index_right column from activity_chains if it exists
     if "index_right" in activity_chains.columns:
@@ -148,7 +152,8 @@ def main(config_file):
 
     # osm data
     osm_data = gpd.read_parquet(
-        acbm.root_path / f"data/interim/osmox/{config.region}_epsg_4326.parquet"
+        acbm.root_path
+        / f"data/interim/osmox/{config.region}_epsg_{config.output_crs}.parquet"
     )
 
     logger.info("Activity locations loaded")
