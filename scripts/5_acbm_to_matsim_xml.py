@@ -156,6 +156,7 @@ def main(config_file):
     write.write_matsim_population_v6(
         population=population,
         path=acbm.root_path / "data/processed/activities_pam/plans.xml",
+        coordinate_reference_system=f"EPSG:{config.output_crs}",
     )
 
 
