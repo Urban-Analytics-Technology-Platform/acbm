@@ -60,22 +60,22 @@ class Config(BaseModel):
 
     @property
     def boundaries_filepath(self) -> str:
-        """Returns full processed path."""
+        """Returns boundaries path."""
         return self.output_path / "boundaries" / "study_area_zones.geojson"
 
     @property
     def osmox_path(self) -> str:
-        """Returns full processed path."""
+        """Returns osmox path."""
         return self.output_path / "osmox"
 
     @property
     def validation_plots_path(self) -> str:
-        """Returns full processed path."""
+        """Returns validation plots path."""
         return self.output_path / "plots" / "validation"
 
     @property
     def output_path(self) -> str:
-        """Returns full processed path."""
+        """Returns output path."""
         return Path("data") / "outputs" / self.id
 
     @property
