@@ -95,7 +95,8 @@ def main(config_file):
         logger.info("Loading travel time matrix")
         # TODO: move to config
         travel_time_matrix_path = (
-            acbm.root_path / "data/external/travel_times/oa/travel_time_matrix.parquet"
+            acbm.root_path
+            / f"data/external/travel_times/{config.boundary_geography}/travel_time_matrix.parquet"
         )
         try:
             travel_times = pd.read_parquet(travel_time_matrix_path)

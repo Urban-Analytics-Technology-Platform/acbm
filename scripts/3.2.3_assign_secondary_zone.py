@@ -307,7 +307,8 @@ def main(config_file):
     # TODO: improve / save in same directory / add paths to config
     if config.parameters.travel_times:
         travel_times = pd.read_parquet(
-            acbm.root_path / "data/external/travel_times/oa/travel_time_matrix.parquet"
+            acbm.root_path
+            / f"data/external/travel_times/{config.boundary_geography}/travel_time_matrix.parquet"
         )
     else:
         travel_times = pd.read_parquet(
