@@ -45,17 +45,22 @@ def main(config_file):
     logger.info("Loading facility data")
 
     osm_data_gdf = gpd.read_parquet(
-        acbm.root_path / f"data/interim/boundaries/{config.region}_epsg_4326.parquet"
+        acbm.root_path
+        / f"data/interim/osmox/{config.region}_epsg_{config.output_crs}.parquet"
     )
 
     # --- Load data: Boundaries
     logger.info("Loading study area boundaries")
 
     boundaries = gpd.read_file(
-        acbm.root_path / "data/external/osmox/study_area_zones.geojson"
+        acbm.root_path / "data/external/boundaries/study_area_zones.geojson"
     )
 
     logger.info("Study area boundaries loaded")
+
+    # Reproject boundaries to the output CRS specified in the config
+    boundaries = boundaries.to_crs(f"epsg:{config.output_crs}")
+    logger.info(f"Boundaries reprojected to {config.output_crs}")
 
     # --- Prepprocess: add zone column to POI data
     logger.info("Adding zone column to POI data")
@@ -317,6 +322,7 @@ def main(config_file):
             y_col="length",
             x_label="Reported Travel Distance (km)",
             y_label="Actual Distance - Euclidian (km)",
+            crs=f"EPSG:{config.output_crs}",
             title_prefix=f"Scatter plot of TripDisIncSW vs. Length for {activity_type}",
             save_dir=acbm.root_path / "data/processed/plots/assigning/",
         )
@@ -340,6 +346,7 @@ def main(config_file):
             y_col="length",
             x_label="Reported Travel TIme (min)",
             y_label="Actual Distance - Euclidian (km)",
+            crs=f"EPSG:{config.output_crs}",
             title_prefix="Scatter plot of TripTotalTime vs. Length",
             save_dir=acbm.root_path / "data/processed/plots/assigning/",
         )
@@ -357,6 +364,7 @@ def main(config_file):
             bin_size=5000,
             boundaries=boundaries,
             sample_size=1000,
+            crs=f"EPSG:{config.output_crs}",
             save_dir=acbm.root_path / "data/processed/plots/assigning/",
         )
 
