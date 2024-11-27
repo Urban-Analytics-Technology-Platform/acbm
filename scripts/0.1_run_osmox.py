@@ -1,9 +1,7 @@
-import os
 import subprocess
 
 from pyrosm import get_data
 
-import acbm
 from acbm.cli import acbm_cli
 from acbm.config import load_config
 
@@ -12,13 +10,13 @@ from acbm.config import load_config
 def main(config_file):
     config = load_config(config_file)
     config.init_rng()
-    os.makedirs(acbm.root_path / config.osmox_path, exist_ok=True)
-    fp = get_data(config.region, directory=acbm.root_path / config.osmox_path)
+    fp = get_data(config.region, directory=config.osmox_path)
     subprocess.run(
         [
             "osmox",
             "run",
-            acbm.root_path / "osmox/config_osmox.json",
+            # TODO: add to lib as string
+            config.root_path / "osmox/config_osmox.json",
             fp,
             config.osmox_path / config.region,
             "-f",

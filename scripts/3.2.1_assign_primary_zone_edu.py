@@ -1,9 +1,6 @@
-import os
-
 import geopandas as gpd
 import pandas as pd
 
-import acbm
 from acbm.assigning.select_zone_primary import (
     fill_missing_zones,
     select_zone,
@@ -23,11 +20,6 @@ from acbm.utils import get_travel_times
 def main(config_file):
     config = load_config(config_file)
 
-    def get_interim_path(file_name: str) -> str:
-        path = acbm.root_path / config.interim_path / "assigning"
-        os.makedirs(path, exist_ok=True)
-        return f"{path}/{file_name}"
-
     # TODO: consider if RNG seed needs to be distinct for different assignments
     config.init_rng()
 
@@ -37,21 +29,19 @@ def main(config_file):
 
     # --- Possible zones for each activity (calculated in 3.1_assign_possible_zones.py)
     logger.info("Loading possible zones for each activity")
-    possible_zones_school = pd.read_pickle(
-        get_interim_path("possible_zones_education.pkl")
-    )
+    possible_zones_school = pd.read_pickle(config.possible_zones_education)
 
     # --- boundaries
     logger.info("Loading study area boundaries")
 
-    boundaries = gpd.read_file(acbm.root_path / config.boundaries_filepath)
+    boundaries = gpd.read_file(config.study_areas_filepath)
 
     logger.info("Study area boundaries loaded")
 
     # --- osm POI data
     logger.info("Loading OSM POI data")
 
-    osm_data_gdf = pd.read_pickle(get_interim_path("osm_poi_with_zones.pkl"))
+    osm_data_gdf = pd.read_pickle(config.osm_poi_with_zones)
     # Convert the DataFrame into a GeoDataFrame, and assign a coordinate reference system (CRS)
     logger.info("Converting OSM POI data to GeoDataFrame")
 
@@ -73,9 +63,7 @@ def main(config_file):
     logger.info("Assigning activity home locations to boundaries zoning system")
 
     # Convert location column in activity_chains to spatial column
-    centroid_layer = pd.read_csv(
-        acbm.root_path / "data/external/centroids/Output_Areas_Dec_2011_PWC_2022.csv"
-    )
+    centroid_layer = pd.read_csv(config.centroid_layer_filepath)
     activity_chains_edu = add_location(
         activity_chains_edu,
         "EPSG:27700",
@@ -101,9 +89,7 @@ def main(config_file):
     # --- activities per zone
     logger.info("Loading activities per zone")
 
-    activities_per_zone = pd.read_parquet(
-        get_interim_path("activities_per_zone.parquet")
-    )
+    activities_per_zone = pd.read_parquet(config.activities_per_zone)
 
     # --- travel time estimates
     logger.info("Loading travel time estimates")
@@ -169,7 +155,7 @@ def main(config_file):
 
     logger.info("Saving activity chains with assigned zones")
 
-    activity_chains_edu.to_pickle(get_interim_path("activity_chains_education.pkl"))
+    activity_chains_edu.to_pickle(config.activity_chains_education)
 
 
 if __name__ == "__main__":

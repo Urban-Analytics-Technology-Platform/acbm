@@ -4,7 +4,6 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 
-import acbm
 from acbm.config import Config
 
 
@@ -50,10 +49,7 @@ def activity_chains_for_assignment(
         columns = cols_for_assignment_all()
 
     return pd.read_parquet(
-        acbm.root_path
-        / config.interim_path
-        / "matching"
-        / "spc_with_nts_trips.parquet",
+        config.spc_with_nts_trips_filepath,
         columns=columns,
     )
 

@@ -1,10 +1,7 @@
-import os
-
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 
-import acbm
 from acbm.cli import acbm_cli
 from acbm.config import load_config
 from acbm.logger_config import validation_logger as logger
@@ -25,24 +22,19 @@ def main(config_file):
 
     logger.info("1. Creating folder for validation plots")
     validation_plots_path = config.validation_plots_path
-    os.makedirs(validation_plots_path, exist_ok=True)
 
     # ----- Reading in the data
 
     logger.info("2. Reading in the data")
 
     # NTS data
-    legs_nts = pd.read_parquet(
-        acbm.root_path / "data/external/nts/filtered/nts_trips.parquet"
-    )
+    legs_nts = pd.read_parquet(config.output_path / "nts_trips.parquet")
 
     legs_nts = legs_nts[legs_nts["TravDay"] == config.parameters.nts_day_of_week]
 
     # Model outputs
-    legs_acbm = pd.read_csv(acbm.root_path / config.output_path / "legs.csv")
-    legs_acbm_geo = pd.read_parquet(
-        acbm.root_path / config.output_path / "legs_with_locations.parquet"
-    )
+    legs_acbm = pd.read_csv(config.output_path / "legs.csv")
+    legs_acbm_geo = pd.read_parquet(config.output_path / "legs_with_locations.parquet")
 
     # ----- Preproccessing the data
 

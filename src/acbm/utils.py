@@ -4,7 +4,6 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import mean_squared_error
 
-import acbm
 from acbm.config import Config
 
 
@@ -45,9 +44,5 @@ def calculate_rmse(predictions, targets):
 
 def get_travel_times(config: Config, use_estimates: bool = False) -> pd.DataFrame:
     if config.parameters.travel_times and not use_estimates:
-        return pd.read_parquet(
-            acbm.root_path / "data/external/travel_times/oa/travel_time_matrix.parquet"
-        )
-    return pd.read_parquet(
-        acbm.root_path / config.interim_path / "travel_time_estimates.parquet"
-    )
+        return pd.read_parquet(config.travel_times_filepath)
+    return pd.read_parquet(config.travel_times_estimates_filepath)

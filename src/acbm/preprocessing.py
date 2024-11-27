@@ -6,8 +6,6 @@ import pandas as pd
 from pyproj import Transformer
 from shapely.geometry import MultiPolygon, Point
 
-import acbm
-
 # ----- PREPROCESSING BOUNDARIES
 
 
@@ -388,11 +386,9 @@ def add_location(
     return gpd.GeoDataFrame(merged_df, geometry="location", crs=target_crs)
 
 
-def add_locations_to_activity_chains(activity_chains: pd.DataFrame) -> pd.DataFrame:
-    # Add location column as spatial column from OA centroids
-    centroid_layer = pd.read_csv(
-        acbm.root_path / "data/external/centroids/Output_Areas_Dec_2011_PWC_2022.csv"
-    )
+def add_locations_to_activity_chains(
+    activity_chains: pd.DataFrame, centroid_layer: pd.DataFrame
+) -> pd.DataFrame:
     return add_location(
         activity_chains, "EPSG:27700", "EPSG:4326", centroid_layer, "OA11CD", "OA11CD"
     )

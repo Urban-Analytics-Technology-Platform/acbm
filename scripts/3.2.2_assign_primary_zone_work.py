@@ -1,9 +1,6 @@
-import os
-
 import geopandas as gpd
 import pandas as pd
 
-import acbm
 from acbm.assigning.plots import (
     plot_workzone_assignment_heatmap,
     plot_workzone_assignment_line,
@@ -26,33 +23,30 @@ def main(config_file):
     config = load_config(config_file)
     config.init_rng()
 
-    def get_interim_path(file_name: str) -> str:
-        path = acbm.root_path / config.interim_path / "assigning"
-        os.makedirs(path, exist_ok=True)
-        return f"{path}/{file_name}"
-
     #### LOAD DATA ####
 
     # --- Possible zones for each activity (calculated in 3.1_assign_possible_zones.py)
-    possible_zones_work = pd.read_pickle(get_interim_path("possible_zones_work.pkl"))
+    possible_zones_work = pd.read_pickle(config.possible_zones_work)
 
     # --- boundaries
 
     logger.info("Loading study area boundaries")
 
-    boundaries = gpd.read_file(acbm.root_path / config.boundaries_filepath)
+    boundaries = gpd.read_file(config.study_areas_filepath)
 
     logger.info("Study area boundaries loaded")
 
     # osm POI data
 
-    osm_data_gdf = pd.read_pickle(get_interim_path("osm_poi_with_zones.pkl"))
+    osm_data_gdf = pd.read_pickle(config.osm_poi_with_zones)
     # Convert the DataFrame into a GeoDataFrame, and assign a coordinate reference system (CRS)
     osm_data_gdf = gpd.GeoDataFrame(osm_data_gdf, geometry="geometry", crs="EPSG:4326")
 
     # --- Activity chains
     activity_chains = activity_chains_for_assignment(config, cols_for_assignment_work())
-    activity_chains = add_locations_to_activity_chains(activity_chains)
+    activity_chains = add_locations_to_activity_chains(
+        activity_chains, centroid_layer=pd.read_csv(config.centroid_layer_filepath)
+    )
     activity_chains = activity_chains[
         activity_chains["TravDay"] == config.parameters.nts_day_of_week
     ]
@@ -76,9 +70,7 @@ def main(config_file):
 
     if commute_level == "MSOA":
         print("Step 1: Reading in the zipped csv file")
-        travel_demand = pd.read_csv(
-            acbm.root_path / "data/external/ODWP15EW_MSOA_v1.zip"
-        )
+        travel_demand = pd.read_csv(config.travel_demand_filepath)
 
         print("Step 2: Creating commute_mode_dict")
         commute_mode_dict = {
@@ -139,7 +131,7 @@ def main(config_file):
 
     elif commute_level == "OA":
         print("Step 1: Reading in the zipped csv file")
-        travel_demand = pd.read_csv(acbm.root_path / "data/external/ODWP01EW_OA.zip")
+        travel_demand = pd.read_csv(config.travel_demand_filepath)
 
         print("Step 2: Filtering rows and dropping unnecessary columns")
         travel_demand_clipped = travel_demand[
@@ -277,12 +269,8 @@ def main(config_file):
         )["demand_assigned"].transform(lambda x: (x / x.sum()) * 100)
     )
 
-    # Define the output file path
-    os.makedirs(acbm.root_path / config.output_path, exist_ok=True)
-    output_file_path = acbm.root_path / config.output_path / "workzone_rmse_results.txt"
-
     # Open the file in write mode
-    with open(output_file_path, "w") as file:
+    with open(config.workzone_rmse_results_path, "w") as file:
         # (1) RMSE for % of Total Demand
         predictions = workzone_assignment_opt["pct_of_total_demand_assigned"]
         targets = workzone_assignment_opt["pct_of_total_demand_actual"]
@@ -316,7 +304,7 @@ def main(config_file):
         n=10,
         selection_type="top",
         sort_by="actual",
-        save_dir=acbm.root_path / "data/processed/plots/assigning/",
+        save_dir=config.assigning_plots_path,
     )
 
     # Plot the demand_actual and demand_assigned values as a heatmap for n origin_zones.
@@ -325,12 +313,11 @@ def main(config_file):
         n=20,
         selection_type="top",
         sort_by="assigned",
-        save_dir=acbm.root_path / "data/processed/plots/assigning/",
+        save_dir=config.assigning_plots_path,
     )
 
     # save the activity chains as a pickle
-
-    activity_chains_work.to_pickle(get_interim_path("activity_chains_work.pkl"))
+    activity_chains_work.to_pickle(config.activity_chains_work)
 
 
 if __name__ == "__main__":

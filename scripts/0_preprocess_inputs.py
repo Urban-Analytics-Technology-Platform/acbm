@@ -1,10 +1,7 @@
-import os
-
 import geopandas as gpd
 import pandas as pd
 from uatk_spc import Reader
 
-import acbm
 from acbm.cli import acbm_cli
 from acbm.config import load_config
 from acbm.logger_config import preprocessing_logger as logger
@@ -14,15 +11,11 @@ from acbm.preprocessing import edit_boundary_resolution
 @acbm_cli
 def main(config_file):
     config = load_config(config_file)
-
+    config.make_dirs()
     # Write config to file
-    os.makedirs(config.output_path, exist_ok=True)
     config.write(config.output_path / "config.toml")
 
     config.init_rng()
-    region = config.region
-    # Pick a region with SPC output saved
-    spc_path = acbm.root_path / "data/external/spc_output/raw/"
 
     # ----- BOUNDARIES
     logger.info("Preprocessing Boundary Layer")
@@ -31,9 +24,7 @@ def main(config_file):
 
     logger.info("1. Reading in the boundary layer for the whole of England")
 
-    boundaries = gpd.read_file(
-        acbm.root_path / "data/external/boundaries/oa_england.geojson"
-    )
+    boundaries = gpd.read_file(config.boundaries_filepath)
 
     boundaries = boundaries.to_crs(epsg=4326)
 
@@ -52,16 +43,13 @@ def main(config_file):
     logger.info("3. Filtering boundaries to specified study area")
 
     # Step 1: Get zones from SPC (these will be 2011 MSOAs)
-    spc = Reader(spc_path, region, backend="pandas")
+    spc = Reader(config.spc_raw_path, config.region, backend="pandas")
     zones_in_region = list(spc.info_per_msoa.keys())
 
     # Step 2: Filter boundaries to identified zones
 
     # a) get MSOA11CD to MSOA21CD lookup
-    msoa_lookup = pd.read_csv(
-        acbm.root_path
-        / "data/external/MSOA_2011_MSOA_2021_Lookup_for_England_and_Wales.csv"
-    )
+    msoa_lookup = pd.read_csv(config.lookup_filepath)
     # Filter msoa_lookup to include only rows where MSOA11CD is in zones_in_region
     msoa_lookup_filtered = msoa_lookup[msoa_lookup["MSOA11CD"].isin(zones_in_region)]
     # Extract the corresponding MSOA21CD values
@@ -71,12 +59,9 @@ def main(config_file):
     boundaries_filtered = boundaries[boundaries["MSOA21CD"].isin(msoa21cd_values)]
 
     ## Save the output as parquet
-    logger.info(
-        f"4. Saving the boundaries to {acbm.root_path / 'data/external/boundaries/'} path"
-    )
-    os.makedirs((acbm.root_path / config.boundaries_filepath).parents[0], exist_ok=True)
+    logger.info(f"4. Saving the boundaries to {config.study_areas_filepath} path")
     boundaries_filtered.to_file(
-        acbm.root_path / config.boundaries_filepath,
+        config.study_areas_filepath,
         driver="GeoJSON",
     )
 

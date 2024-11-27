@@ -7,8 +7,6 @@ This script is used to assign discretionary activities to locations based on a s
 - For more info on the spacetime approach for secondary locaiton assignment, see https://www.tandfonline.com/doi/full/10.1080/23249935.2021.1982068
 """
 
-import os
-
 import geopandas as gpd
 import numpy as np
 import pandas as pd
@@ -16,7 +14,6 @@ from pam import write
 from pam.planner.od import ODFactory, ODMatrix
 from pam.read import load_travel_diary
 
-import acbm
 from acbm.assigning.select_zone_secondary import (
     create_od_matrices,
     shift_and_fill_column,
@@ -38,11 +35,6 @@ def main(config_file):
     config.init_rng()
     zone_id = config.zone_id
 
-    def get_interim_path(file_name: str) -> str:
-        path = acbm.root_path / config.interim_path / "assigning"
-        os.makedirs(path, exist_ok=True)
-        return f"{path}/{file_name}"
-
     # --- Load in the data
     logger.info("Loading: activity chains")
 
@@ -55,16 +47,14 @@ def main(config_file):
 
     logger.info("Preprocessing: Adding OA21CD to the data")
 
-    boundaries = gpd.read_file(acbm.root_path / config.boundaries_filepath)
+    boundaries = gpd.read_file(config.study_areas_filepath)
 
     logger.info("Study area boundaries loaded")
 
     # --- Assign activity home locations to boundaries zoning system
 
     # Convert location column in activity_chains to spatial column
-    centroid_layer = pd.read_csv(
-        acbm.root_path / "data/external/centroids/Output_Areas_Dec_2011_PWC_2022.csv"
-    )
+    centroid_layer = pd.read_csv(config.centroid_layer_filepath)
     activity_chains = add_location(
         activity_chains, "EPSG:27700", "EPSG:4326", centroid_layer, "OA11CD", "OA11CD"
     )
@@ -107,11 +97,12 @@ def main(config_file):
         )
 
     activity_chains_edu = merge_columns_from_other(
-        pd.read_pickle(get_interim_path("activity_chains_education.pkl")),
+        pd.read_pickle(config.activity_chains_education),
         activity_chains,
     )
     activity_chains_work = merge_columns_from_other(
-        pd.read_pickle(get_interim_path("activity_chains_work.pkl")),
+        # TODO: update with config path
+        pd.read_pickle(config.activity_chains_work),
         activity_chains,
     )
 
@@ -342,9 +333,7 @@ def main(config_file):
     # --- Calculate OD probabilities (probabilities of choosing a destination zone for an activity, given the origin zone)
     logger.info("Analysis (matrices): Step 3 - Calculating OD probabilities")
 
-    activities_per_zone = pd.read_parquet(
-        get_interim_path("activities_per_zone.parquet")
-    )
+    activities_per_zone = pd.read_parquet(config.activities_per_zone)
 
     # keep only rows that don't match primary activities
     activities_per_zone = activities_per_zone[
@@ -443,7 +432,7 @@ def main(config_file):
     # --- Save
     logger.info("Saving: Step 7 - Saving population")
 
-    write.to_csv(population, dir=acbm.root_path / config.output_path)
+    write.to_csv(population, dir=config.output_path)
 
 
 if __name__ == "__main__":

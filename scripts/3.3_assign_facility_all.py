@@ -2,7 +2,6 @@ import geopandas as gpd
 import pandas as pd
 from libpysal.weights import Queen
 
-import acbm
 from acbm.assigning.plots import plot_desire_lines, plot_scatter_actual_reported
 from acbm.assigning.select_facility import map_activity_locations, select_facility
 from acbm.cli import acbm_cli
@@ -42,14 +41,12 @@ def main(config_file):
     # --- Load data: POI locations
     logger.info("Loading facility data")
 
-    osm_data_gdf = gpd.read_parquet(
-        acbm.root_path / config.osmox_path / (config.region + "_epsg_4326.parquet")
-    )
+    osm_data_gdf = gpd.read_parquet(config.osm_path)
 
     # --- Load data: Boundaries
     logger.info("Loading study area boundaries")
 
-    boundaries = gpd.read_file(acbm.root_path / config.boundaries_filepath)
+    boundaries = gpd.read_file(config.study_areas_filepath)
 
     logger.info("Study area boundaries loaded")
 
@@ -135,7 +132,7 @@ def main(config_file):
     logger.info("a. Adding eduction type as fallback")
     # load in activity chains
     spc_with_nts = pd.read_parquet(
-        acbm.root_path / config.interim_path / "matching/spc_with_nts_trips.parquet",
+        config.spc_with_nts_trips_filepath,
         columns=["id", "education_type", "seq", "TripTotalTime", "TripDisIncSW"],
     )
     # we get one row per id
@@ -282,7 +279,7 @@ def main(config_file):
             lambda point: point if pd.isna(point) else point.wkt
         )
     activity_chains_all.drop(columns=geom_cols).to_parquet(
-        acbm.root_path / config.output_path / "legs_with_locations.parquet"
+        config.output_path / "legs_with_locations.parquet"
     )
 
     # --- Plots
@@ -314,7 +311,7 @@ def main(config_file):
             x_label="Reported Travel Distance (km)",
             y_label="Actual Distance - Euclidian (km)",
             title_prefix=f"Scatter plot of TripDisIncSW vs. Length for {activity_type}",
-            save_dir=acbm.root_path / config.output_path / "plots/assigning/",
+            save_dir=config.output_path / "plots/assigning/",
         )
 
     # Plot 2: Euclidian travel distance vs reported (NTS) travel TIME
@@ -337,7 +334,7 @@ def main(config_file):
             x_label="Reported Travel TIme (min)",
             y_label="Actual Distance - Euclidian (km)",
             title_prefix="Scatter plot of TripTotalTime vs. Length",
-            save_dir=acbm.root_path / config.output_path / "plots/assigning/",
+            save_dir=config.output_path / "plots/assigning/",
         )
 
     # ....
@@ -353,7 +350,7 @@ def main(config_file):
             bin_size=5000,
             boundaries=boundaries,
             sample_size=1000,
-            save_dir=acbm.root_path / config.output_path / "plots/assigning/",
+            save_dir=config.output_path / "plots/assigning/",
         )
 
 
