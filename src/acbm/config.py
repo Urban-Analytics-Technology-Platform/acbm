@@ -88,7 +88,11 @@ class Config(BaseModel):
 
     @property
     def root_path(self) -> Path:
-        return acbm.root_path if self.paths.root_path is None else self.paths.root_path
+        return (
+            acbm.root_path
+            if self.paths is None or self.paths.root_path is None
+            else self.paths.root_path
+        )
 
     @property
     def id(self):
@@ -132,7 +136,7 @@ class Config(BaseModel):
         """Returns boundaries path."""
         return (
             self.output_path / "boundaries" / "study_area_zones.geojson"
-            if self.paths.study_areas_filepath is None
+            if self.paths is None or self.paths.study_areas_filepath is None
             else self.paths.study_areas_filepath
         )
 
@@ -150,7 +154,7 @@ class Config(BaseModel):
         """Returns osm path."""
         return (
             self.root_path / self.osmox_path / (self.region + "_epsg_4326.parquet")
-            if self.paths.osm_path is None
+            if self.paths is None or self.paths.osm_path is None
             else self.paths.osm_path
         )
 
@@ -203,7 +207,7 @@ class Config(BaseModel):
         """Returns output path."""
         return (
             self.root_path / "data" / "outputs" / self.id
-            if self.paths.output_path is None
+            if self.paths is None or self.paths.output_path is None
             else self.paths.output_path
         )
 
@@ -328,7 +332,13 @@ class Config(BaseModel):
             f.write(tomlkit.dumps(self.model_dump(exclude_none=True)))
 
     def get_logger(self, name: str, filename: str) -> Logger:
-        return create_logger(name, os.path.basename(filename), self.logs_path)
+        stem = ".".join(Path(os.path.basename(filename)).name.split(".")[:-1])
+        stem_with_log_suffix = stem + ".log"
+        return create_logger(
+            name,
+            stem_with_log_suffix,
+            self.logs_path,
+        )
 
 
 def load_config(filepath: str | Path) -> Config:

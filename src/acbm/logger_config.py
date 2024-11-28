@@ -29,7 +29,7 @@ def create_logger(name, log_file, logs_path):
         logging.DEBUG
     )  # Ensure the logger captures all messages at DEBUG level and above
     if not logger.hasHandlers():  # Check if the logger already has handlers
-        file_handler = logging.FileHandler(logs_path / prepend_datetime(log_file))
+        file_handler = logging.FileHandler(logs_path / log_file)
         file_handler.setLevel(logging.DEBUG)  # Set to DEBUG for file output
         file_handler.setFormatter(
             logging.Formatter(
