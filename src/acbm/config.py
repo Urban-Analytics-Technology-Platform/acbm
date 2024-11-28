@@ -9,7 +9,7 @@ from typing import Tuple
 import jcs
 import numpy as np
 import tomlkit
-from pydantic import BaseModel, Field, field_serializer
+from pydantic import BaseModel, Field, field_serializer, field_validator
 
 import acbm
 from acbm.logger_config import create_logger
@@ -42,7 +42,11 @@ class WorkAssignmentParams(BaseModel):
     weight_max_dev: float
     weight_total_dev: float
     max_zones: int
-    commute_level: str | None = None
+    commute_level: str
+
+    @field_validator("commute_level")
+    def validate_commute_level(commute_level: str) -> str:
+        return commute_level.upper()
 
 
 @dataclass(frozen=True)
@@ -271,20 +275,20 @@ class Config(BaseModel):
 
     @property
     def travel_demand_filepath(self) -> Path:
-        if self.work_assignment.commute_level == "msoa":
+        if self.work_assignment.commute_level == "MSOA":
             return self.external_path / "ODWP15EW_MSOA_v1.zip"
         return self.external_path / "ODWP01EW_OA.zip"
 
     @property
     def travel_times_filepath(self) -> Path:
-        if self.work_assignment.commute_level == "msoa":
+        if self.work_assignment.commute_level == "MSOA":
             return (
                 self.external_path
                 / "travel_times"
-                / "msoa"
+                / "MSOA"
                 / "travel_time_matrix.parquet"
             )
-        return self.external_path / "travel_times" / "oa" / "travel_time_matrix.parquet"
+        return self.external_path / "travel_times" / "OA" / "travel_time_matrix.parquet"
 
     @property
     def travel_times_estimates_filepath(self) -> Path:
