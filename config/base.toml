@@ -46,5 +46,3 @@ max_zones = 8          # maximum number of feasible zones to include in the opti
 [postprocessing]
 pam_jitter = 30
 pam_min_duration = 10
-
-[paths]

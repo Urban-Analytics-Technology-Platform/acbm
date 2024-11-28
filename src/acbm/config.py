@@ -69,7 +69,7 @@ class Config(BaseModel):
         description="Config: parameters for work assignment."
     )
     matching: MatchingParams = Field(description="Config: parameters for matching.")
-    paths: PathParams = Field(description="Path overrides.")
+    paths: PathParams | None = Field(description="Path overrides.", default=None)
 
     def make_dirs(self):
         """Makes all directories requried from config"""
@@ -99,7 +99,9 @@ class Config(BaseModel):
         """
         # Take first 10 chars to enable paths to remain not too long
         ID_LENGTH = 10
-        return sha256(jcs.canonicalize(self.model_dump())).hexdigest()[:ID_LENGTH]
+        return sha256(jcs.canonicalize(self.model_dump(exclude_none=True))).hexdigest()[
+            :ID_LENGTH
+        ]
 
     @property
     def logs_path(self) -> Path:
