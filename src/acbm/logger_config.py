@@ -1,6 +1,11 @@
 import logging
+from datetime import datetime
 
-from acbm.utils import prepend_datetime
+
+def prepend_datetime(s: str, delimiter: str = "_") -> str:
+    current_date = datetime.now().strftime("%Y-%m-%d")
+    return f"{current_date}{delimiter}{s}"
+
 
 # # Configure the root logger
 # logging.basicConfig(

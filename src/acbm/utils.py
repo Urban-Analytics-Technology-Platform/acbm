@@ -1,15 +1,8 @@
-from datetime import datetime
-
 import numpy as np
 import pandas as pd
 from sklearn.metrics import mean_squared_error
 
 from acbm.config import Config
-
-
-def prepend_datetime(s: str, delimiter: str = "_") -> str:
-    current_date = datetime.now().strftime("%Y-%m-%d")
-    return f"{current_date}{delimiter}{s}"
 
 
 def calculate_rmse(predictions, targets):
