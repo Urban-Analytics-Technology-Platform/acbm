@@ -50,6 +50,12 @@ class WorkAssignmentParams(BaseModel):
 
 
 @dataclass(frozen=True)
+class Postprocessing(BaseModel):
+    pam_jitter: int
+    pam_min_duration: int
+
+
+@dataclass(frozen=True)
 class PathParams(BaseModel):
     root_path: Path | None = acbm.root_path
     output_path: Path | None = None
@@ -73,6 +79,9 @@ class Config(BaseModel):
         description="Config: parameters for work assignment."
     )
     matching: MatchingParams = Field(description="Config: parameters for matching.")
+    postprocessing: Postprocessing = Field(
+        description="Config: parameters for postprocessing."
+    )
     paths: PathParams | None = Field(description="Path overrides.", default=None)
 
     def make_dirs(self):
