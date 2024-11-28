@@ -28,7 +28,7 @@ def main(config_file):
         acbm.root_path / "data/external/boundaries/oa_england.geojson"
     )
 
-    boundaries = boundaries.to_crs(epsg=f"epsg:{config.output_crs}")
+    boundaries = boundaries.to_crs(epsg=config.output_crs)
 
     ## --- Dissolve boundaries if resolution is MSOA
 

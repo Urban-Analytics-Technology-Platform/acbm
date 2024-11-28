@@ -333,6 +333,7 @@ def zones_to_time_matrix(
     # define speed by mode
     mode_speeds_mps = {
         "car": 20 * 1000 / 3600,
+        "car_passenger": 20 * 1000 / 3600,
         "pt": 15 * 1000 / 3600,
         "cycle": 15 * 1000 / 3600,
         "walk": 5 * 1000 / 3600,
@@ -450,6 +451,7 @@ def intrazone_time(zones: gpd.GeoDataFrame, key_column: str) -> dict:
     # Mode speeds in m/s
     mode_speeds_mps = {
         "car": 20 * 1000 / 3600,
+        "car_passenger": 20 * 1000 / 3600,
         "pt": 15 * 1000 / 3600,
         "cycle": 15 * 1000 / 3600,
         "walk": 5 * 1000 / 3600,

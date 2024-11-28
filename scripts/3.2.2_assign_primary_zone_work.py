@@ -101,10 +101,10 @@ def main(config_file):
             "Train": "pt",
             "Underground, metro, light rail, tram": "pt",
             "On foot": "walk",
-            "Taxi": "car",
+            "Taxi": "car_passenger",
             "Other method of travel to work": "other",
             "Bicycle": "cycle",
-            "Passenger in a car or van": "car",
+            "Passenger in a car or van": "car_passenger",
             "Motorcycle, scooter or moped": "car",
             "Work mainly at or from home": "home",
         }
