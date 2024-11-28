@@ -7,7 +7,6 @@ from pam.read import load_travel_diary
 from pam.samplers.time import apply_jitter_to_plan
 from shapely import Point, wkt
 
-import acbm
 from acbm.cli import acbm_cli
 from acbm.config import load_and_setup_config
 from acbm.postprocessing.matsim import (
@@ -28,19 +27,11 @@ def main(config_file):
 
     logger.info("1 - Loading data")
 
-    individuals = pd.read_csv(
-        acbm.root_path / "data/processed/activities_pam/people.csv"
-    )
-    households = pd.read_csv(
-        acbm.root_path / "data/processed/activities_pam/households.csv"
-    )
-    activities = pd.read_csv(
-        acbm.root_path / "data/processed/activities_pam/activities.csv"
-    )
-    legs = pd.read_csv(acbm.root_path / "data/processed/activities_pam/legs.csv")
-    legs_geo = pd.read_parquet(
-        acbm.root_path / "data/processed/activities_pam/legs_with_locations.parquet"
-    )
+    individuals = pd.read_csv(config.output_path / "people.csv")
+    households = pd.read_csv(config.output_path / "households.csv")
+    activities = pd.read_csv(config.output_path / "activities.csv")
+    legs = pd.read_csv(config.output_path / "legs.csv")
+    legs_geo = pd.read_parquet(config.output_path / "legs_with_locations.parquet")
 
     # ----- Clean the data
 
@@ -154,7 +145,7 @@ def main(config_file):
 
     write.write_matsim_population_v6(
         population=population,
-        path=acbm.root_path / "data/processed/activities_pam/plans.xml",
+        path=config.output_path / "plans.xml",
     )
 
 
