@@ -47,6 +47,9 @@ def main(config_file):
 
     logger.info("2 - Cleaning data")
 
+    # rename age_years to age in individuals
+    individuals.rename(columns={"age_years": "age"}, inplace=True)
+
     # We will be removing some rows in each planning operation. This function helps keep a
     # record of the number of rows in each table after each operation.
 
