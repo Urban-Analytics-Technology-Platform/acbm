@@ -80,9 +80,6 @@ def main(config_file):
 
     logger.info("2.3 - Rename geometry columns (for PAM)")
 
-    # Print columns before renaming
-    print("Columns before renaming:", legs_geo.columns)
-
     # TODO: Rename columns upstream in 3.3_assign_facility_all script
     legs_geo.rename(
         columns={
@@ -92,17 +89,11 @@ def main(config_file):
         inplace=True,
     )
 
-    # Print columns after renaming
-    print("Columns after renaming:", legs_geo.columns)
-
     logger.info("2.4 - Remove people with missing location data ")
 
     individuals, households, activities, legs, legs_geo = filter_no_location(
         individuals, households, activities, legs, legs_geo
     )
-
-    # Print columns after calling filter_no_location
-    print("Columns after filter_no_location:", legs_geo.columns)
 
     log_row_count(individuals, "individuals", "2_filter_no_location", row_counts)
     log_row_count(households, "households", "2_filter_no_location", row_counts)
