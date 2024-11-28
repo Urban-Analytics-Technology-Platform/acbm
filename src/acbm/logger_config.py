@@ -41,22 +41,3 @@ def create_logger(name, log_file, logs_path):
         # avoid logs from being propagated to the root logger (so that they don't show in the notebook)
         logger.propagate = False
     return logger
-
-
-# # Create loggers for different modules
-# preprocessing_logger = create_logger("preprocessing", "preprocessing.log")
-# matching_logger = create_logger("matching", "matching.log")
-# assigning_primary_feasible_logger = create_logger(
-#     "assigning_primary_feasible", "assigning_primary_feasible.log"
-# )
-# assigning_primary_zones_logger = create_logger(
-#     "assigning_primary_zone", "assigning_primary_zone.log"
-# )
-# assigning_secondary_zones_logger = create_logger(
-#     "assigning_secondary_zone", "assigning_secondary_zone.log"
-# )
-# assigning_facility_locations_logger = create_logger(
-#     "assigning_facility_locations", "assigning_facility_locations.log"
-# )
-
-# validation_logger = create_logger("validation", "validation.log")

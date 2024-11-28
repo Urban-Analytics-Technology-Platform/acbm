@@ -68,10 +68,10 @@ def main(config_file):
     # Clean the data
 
     if commute_level == "MSOA":
-        print("Step 1: Reading in the zipped csv file")
+        logger.info("Step 1: Reading in the zipped csv file")
         travel_demand = pd.read_csv(config.travel_demand_filepath)
 
-        print("Step 2: Creating commute_mode_dict")
+        logger.info("Step 2: Creating commute_mode_dict")
         commute_mode_dict = {
             "Bus, minibus or coach": "pt",
             "Driving a car or van": "car",
@@ -86,12 +86,12 @@ def main(config_file):
             "Work mainly at or from home": "home",
         }
 
-        print("Step 3: Mapping commute mode to model mode")
+        logger.info("Step 3: Mapping commute mode to model mode")
         travel_demand["mode"] = travel_demand[
             "Method used to travel to workplace (12 categories) label"
         ].map(commute_mode_dict)
 
-        print("Step 4: Filtering rows and dropping unnecessary columns")
+        logger.info("Step 4: Filtering rows and dropping unnecessary columns")
         travel_demand_clipped = travel_demand[
             travel_demand["Place of work indicator (4 categories) code"].isin([1, 3])
         ]
@@ -106,7 +106,7 @@ def main(config_file):
             ]
         )
 
-        print("Step 5: Renaming columns and grouping")
+        logger.info("Step 5: Renaming columns and grouping")
         travel_demand_clipped = travel_demand_clipped.rename(
             columns={
                 "Middle layer Super Output Areas code": "MSOA21CD_home",
@@ -119,7 +119,7 @@ def main(config_file):
             .reset_index()
         )
 
-        print("Step 6: Filtering matrix to boundary")
+        logger.info("Step 6: Filtering matrix to boundary")
         travel_demand_clipped = filter_matrix_to_boundary(
             boundary=boundaries,
             matrix=travel_demand_clipped,
@@ -129,10 +129,10 @@ def main(config_file):
         )
 
     elif commute_level == "OA":
-        print("Step 1: Reading in the zipped csv file")
+        logger.info("Step 1: Reading in the zipped csv file")
         travel_demand = pd.read_csv(config.travel_demand_filepath)
 
-        print("Step 2: Filtering rows and dropping unnecessary columns")
+        logger.info("Step 2: Filtering rows and dropping unnecessary columns")
         travel_demand_clipped = travel_demand[
             travel_demand["Place of work indicator (4 categories) code"].isin([1, 3])
         ]
@@ -143,7 +143,7 @@ def main(config_file):
             ]
         )
 
-        print("Step 3: Renaming columns and grouping")
+        logger.info("Step 3: Renaming columns and grouping")
         travel_demand_clipped = travel_demand_clipped.rename(
             columns={
                 "Output Areas code": "OA21CD_home",
@@ -156,7 +156,7 @@ def main(config_file):
             .reset_index()
         )
 
-        print("Step 4: Filtering matrix to boundary")
+        logger.info("Step 4: Filtering matrix to boundary")
         travel_demand_clipped = filter_matrix_to_boundary(
             boundary=boundaries,
             matrix=travel_demand_clipped,

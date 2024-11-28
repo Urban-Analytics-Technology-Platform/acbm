@@ -1,3 +1,4 @@
+import logging
 from typing import Optional, Tuple
 
 import geopandas as gpd
@@ -5,7 +6,7 @@ import numpy as np
 import pandas as pd
 from shapely import Point
 
-from acbm.logger_config import assigning_facility_locations_logger as logger
+logger = logging.getLogger("assigning_facility_locations")
 
 
 def _select_facility(
