@@ -23,16 +23,16 @@ from acbm.assigning.utils import (
     activity_chains_for_assignment,
 )
 from acbm.cli import acbm_cli
-from acbm.config import load_config
-from acbm.logger_config import assigning_secondary_zones_logger as logger
+from acbm.config import load_and_setup_config
 from acbm.preprocessing import add_location
 from acbm.utils import get_travel_times
 
 
 @acbm_cli
 def main(config_file):
-    config = load_config(config_file)
-    config.init_rng()
+    config = load_and_setup_config(config_file)
+    logger = config.get_logger("assigning_secondary_zone", __file__)
+
     zone_id = config.zone_id
 
     # --- Load in the data

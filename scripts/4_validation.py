@@ -3,8 +3,7 @@ import pandas as pd
 import seaborn as sns
 
 from acbm.cli import acbm_cli
-from acbm.config import load_config
-from acbm.logger_config import validation_logger as logger
+from acbm.config import load_and_setup_config
 from acbm.validating.plots import (
     plot_activity_sequence_comparison,
     plot_comparison,
@@ -15,8 +14,8 @@ from acbm.validating.utils import calculate_od_distances, process_sequences
 
 @acbm_cli
 def main(config_file):
-    config = load_config(config_file)
-    config.init_rng()
+    config = load_and_setup_config(config_file)
+    logger = config.get_logger("validation", __file__)
 
     # ----- Folder for validation plots
 

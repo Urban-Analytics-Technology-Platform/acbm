@@ -4,12 +4,9 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-# from joblib import Parallel, delayed
-# from tqdm import trange
 from acbm.assigning.utils import cols_for_assignment_all
 from acbm.cli import acbm_cli
-from acbm.config import load_config
-from acbm.logger_config import matching_logger as logger
+from acbm.config import load_and_setup_config
 from acbm.matching import MatcherExact, match_individuals
 from acbm.preprocessing import (
     count_per_group,
@@ -23,9 +20,8 @@ from acbm.preprocessing import (
 
 @acbm_cli
 def main(config_file):
-    config = load_config(config_file)
-    config.init_rng()
-    config.make_dirs()
+    config = load_and_setup_config(config_file)
+    logger = config.get_logger("matching", __file__)
 
     pd.set_option("display.max_columns", None)
 

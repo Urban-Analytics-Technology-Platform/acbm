@@ -2,6 +2,7 @@ import os
 import random
 from dataclasses import dataclass
 from hashlib import sha256
+from logging import Logger
 from pathlib import Path
 from typing import Tuple
 
@@ -11,6 +12,7 @@ import tomlkit
 from pydantic import BaseModel, Field, field_serializer
 
 import acbm
+from acbm.logger_config import create_logger
 
 
 @dataclass(frozen=True)
@@ -72,6 +74,7 @@ class Config(BaseModel):
     def make_dirs(self):
         """Makes all directories requried from config"""
         os.makedirs(self.output_path, exist_ok=True)
+        os.makedirs(self.logs_path, exist_ok=True)
         os.makedirs(self.assigning_plots_path, exist_ok=True)
         os.makedirs(self.validation_plots_path, exist_ok=True)
         os.makedirs(self.activities_per_zone.parent, exist_ok=True)
@@ -97,6 +100,11 @@ class Config(BaseModel):
         # Take first 10 chars to enable paths to remain not too long
         ID_LENGTH = 10
         return sha256(jcs.canonicalize(self.model_dump())).hexdigest()[:ID_LENGTH]
+
+    @property
+    def logs_path(self) -> Path:
+        """Returns logs path."""
+        return self.output_path / "logs"
 
     @property
     def boundaries_filepath(self) -> Path:
@@ -317,7 +325,22 @@ class Config(BaseModel):
         with open(filepath, "w") as f:
             f.write(tomlkit.dumps(self.model_dump(exclude_none=True)))
 
+    def get_logger(self, name: str, filename: str) -> Logger:
+        return create_logger(name, os.path.basename(filename), self.logs_path)
+
 
 def load_config(filepath: str | Path) -> Config:
+    """Loads config from filepath."""
     with open(filepath, "rb") as f:
         return Config.model_validate(tomlkit.load(f))
+
+
+def load_and_setup_config(filepath: str | Path) -> Config:
+    """Loads config from filepath, makes required dirs, writes config and inits RNG."""
+    config = load_config(filepath)
+    config.make_dirs()
+    config_path = config.output_path / "config.toml"
+    if not os.path.isfile(config_path):
+        config.write(config_path)
+    config.init_rng()
+    return config

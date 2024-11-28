@@ -12,16 +12,15 @@ from acbm.assigning.utils import (
     filter_matrix_to_boundary,
 )
 from acbm.cli import acbm_cli
-from acbm.config import load_config
-from acbm.logger_config import assigning_primary_zones_logger as logger
+from acbm.config import load_and_setup_config
 from acbm.preprocessing import add_locations_to_activity_chains
 from acbm.utils import calculate_rmse
 
 
 @acbm_cli
 def main(config_file):
-    config = load_config(config_file)
-    config.init_rng()
+    config = load_and_setup_config(config_file)
+    logger = config.get_logger("assigning_primary_zone", __file__)
 
     #### LOAD DATA ####
 

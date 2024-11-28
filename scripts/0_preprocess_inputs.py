@@ -3,19 +3,14 @@ import pandas as pd
 from uatk_spc import Reader
 
 from acbm.cli import acbm_cli
-from acbm.config import load_config
-from acbm.logger_config import preprocessing_logger as logger
+from acbm.config import load_and_setup_config
 from acbm.preprocessing import edit_boundary_resolution
 
 
 @acbm_cli
 def main(config_file):
-    config = load_config(config_file)
-    config.make_dirs()
-    # Write config to file
-    config.write(config.output_path / "config.toml")
-
-    config.init_rng()
+    config = load_and_setup_config(config_file)
+    logger = config.get_logger("preprocessing", __file__)
 
     # ----- BOUNDARIES
     logger.info("Preprocessing Boundary Layer")

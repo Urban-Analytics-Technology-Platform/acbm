@@ -12,16 +12,14 @@ from acbm.assigning.utils import (
     zones_to_time_matrix,
 )
 from acbm.cli import acbm_cli
-from acbm.config import load_config
-from acbm.logger_config import assigning_primary_feasible_logger as logger
+from acbm.config import load_and_setup_config
 from acbm.preprocessing import add_locations_to_activity_chains
 
 
 @acbm_cli
 def main(config_file):
-    config = load_config(config_file)
-    config.init_rng()
-    config.make_dirs()
+    config = load_and_setup_config(config_file)
+    logger = config.get_logger("assigning_primary_feasible", __file__)
 
     #### LOAD DATA ####
 
