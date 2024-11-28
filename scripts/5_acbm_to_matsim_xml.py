@@ -74,11 +74,10 @@ def main(config_file):
         },
         inplace=True,
     )
-
     logger.info("2.4 - Remove people with missing location data ")
 
-    individuals, households, activities, legs, legs_geo = filter_no_location(
-        individuals, households, activities, legs, legs_geo
+    individuals, activities, legs, legs_geo, households = filter_no_location(
+        individuals, activities, legs, legs_geo, households
     )
 
     log_row_count(individuals, "individuals", "2_filter_no_location", row_counts)

@@ -68,14 +68,14 @@ def filter_no_location(
     ----------
     individuals : pd.DataFrame
         DataFrame containing individual data.
-    households : pd.DataFrame
-        DataFrame containing household data.
     activities : pd.DataFrame
         DataFrame containing activity data.
     legs : pd.DataFrame
         DataFrame containing legs data.
     legs_geo : pd.DataFrame
         DataFrame containing legs with geographic data.
+    households : pd.DataFrame
+        DataFrame containing household data.
 
     Returns
     -------
@@ -114,10 +114,10 @@ def filter_no_location(
 
     return (
         individuals_cleaned,
-        households_cleaned,
         activities_cleaned,
         legs_cleaned,
         legs_geo_cleaned,
+        households_cleaned,
     )
 
 
