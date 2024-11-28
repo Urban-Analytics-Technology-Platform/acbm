@@ -1,4 +1,13 @@
-def filter_by_pid(individuals, activities, legs, legs_geo, households):
+import pandas as pd
+
+
+def filter_by_pid(
+    individuals: pd.DataFrame,
+    activities: pd.DataFrame,
+    legs: pd.DataFrame,
+    legs_geo: pd.DataFrame,
+    households: pd.DataFrame,
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """
     Filter the input DataFrames to include only include people (pids) that exist in all
     dfs
@@ -41,7 +50,13 @@ def filter_by_pid(individuals, activities, legs, legs_geo, households):
     return individuals, activities, legs, legs_geo, households
 
 
-def filter_no_location(individuals, households, activities, legs, legs_geo):
+def filter_no_location(
+    individuals: pd.DataFrame,
+    activities: pd.DataFrame,
+    legs: pd.DataFrame,
+    legs_geo: pd.DataFrame,
+    households: pd.DataFrame,
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """
     Cleans the provided DataFrames by removing rows without location data. Gets all pids
     that have at least one row with missing location data, and removes all rows with
@@ -106,7 +121,9 @@ def filter_no_location(individuals, households, activities, legs, legs_geo):
     )
 
 
-def add_home_location_to_individuals(legs_geo, individuals):
+def add_home_location_to_individuals(
+    legs_geo: pd.DataFrame, individuals: pd.DataFrame
+) -> pd.DataFrame:
     """
     Adds home location to individuals dataframe. Location is obtained
     from legs_geo (rows with orign activity = home)
@@ -146,7 +163,9 @@ def add_home_location_to_individuals(legs_geo, individuals):
 # Tracking row counts after each operation
 
 
-def log_row_count(df, name, operation, row_counts):
+def log_row_count(
+    df: pd.DataFrame, name: str, operation: str, row_counts: list[tuple[str, str, int]]
+):
     """
     Logs the row count of a DataFrame along with a specified operation and name.
 
@@ -168,7 +187,9 @@ def log_row_count(df, name, operation, row_counts):
     row_counts.append((operation, name, len(df)))
 
 
-def calculate_percentage_remaining(row_counts):
+def calculate_percentage_remaining(
+    row_counts: list[tuple[str, str, int]],
+) -> list[tuple[str, str, int, float]]:
     """
     Calculate the percentage of rows remaining for each DataFrame based on the
     initial counts.
