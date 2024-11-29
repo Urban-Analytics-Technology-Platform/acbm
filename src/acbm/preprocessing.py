@@ -425,6 +425,8 @@ def add_locations_to_activity_chains(
         DataFrame containing the activity chains.
     target_crs : str
         The target CRS to reproject the locations to.
+    centroid_layer : pd.DataFrame
+        DataFrame containing zone centroids.
 
     Returns
     -------
