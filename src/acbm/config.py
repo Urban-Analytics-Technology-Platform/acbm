@@ -6,6 +6,7 @@ from logging import Logger
 from pathlib import Path
 from typing import Tuple
 
+import geopandas as gpd
 import jcs
 import numpy as np
 import tomlkit
@@ -357,6 +358,10 @@ class Config(BaseModel):
             stem_with_log_suffix,
             self.logs_path,
         )
+
+    def get_boundaries(self) -> gpd.GeoDataFrame:
+        boundaries = gpd.read_file(self.boundaries_filepath)
+        return boundaries.to_crs(epsg=self.output_crs)
 
 
 def load_config(filepath: str | Path) -> Config:

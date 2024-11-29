@@ -1,4 +1,3 @@
-import geopandas as gpd
 import pandas as pd
 from uatk_spc import Reader
 
@@ -19,9 +18,7 @@ def main(config_file):
 
     logger.info("1. Reading in the boundary layer for the whole of England")
 
-    boundaries = gpd.read_file(config.boundaries_filepath)
-
-    boundaries = boundaries.to_crs(epsg=config.output_crs)
+    boundaries = config.get_boundaries()
 
     ## --- Dissolve boundaries if resolution is MSOA
 

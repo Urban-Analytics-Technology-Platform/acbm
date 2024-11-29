@@ -37,14 +37,8 @@ def main(config_file):
     # --- Study area boundaries
 
     logger.info("Loading study area boundaries")
-
-    boundaries = gpd.read_file(config.study_areas_filepath)
-
-    logger.info("Study area boundaries loaded")
-
-    # Reproject boundaries to the output CRS specified in the config
-    boundaries = boundaries.to_crs(f"epsg:{config.output_crs}")
-    logger.info(f"Boundaries reprojected to {config.output_crs}")
+    boundaries = config.get_boundaries()
+    logger.info(f"Study area boundaries loaded and reprojected to {config.output_crs}")
 
     # --- Assign activity home locations to boundaries zoning system
 
