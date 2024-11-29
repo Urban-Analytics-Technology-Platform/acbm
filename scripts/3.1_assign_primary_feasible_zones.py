@@ -46,14 +46,18 @@ def main(config_file):
 
     logger.info("Study area boundaries loaded")
 
+    # Reproject boundaries to the output CRS specified in the config
+    boundaries = boundaries.to_crs(f"epsg:{config.output_crs}")
+    logger.info(f"Boundaries reprojected to {config.output_crs}")
+
     # --- Assign activity home locations to boundaries zoning system
 
     logger.info("Assigning activity home locations to boundaries zoning system")
-    activity_chains = add_locations_to_activity_chains(activity_chains)
 
-    # Convert the DataFrame into a GeoDataFrame, and assign a coordinate reference system (CRS)
-    activity_chains = gpd.GeoDataFrame(activity_chains, geometry="location")
-    activity_chains.crs = "EPSG:4326"  # I assume this is the crs
+    # add home location (based on OA11CD from SPC)
+    activity_chains = add_locations_to_activity_chains(
+        activity_chains=activity_chains, target_crs=f"EPSG:{config.output_crs}"
+    )
 
     # remove index_right column from activity_chains if it exists
     if "index_right" in activity_chains.columns:
@@ -75,13 +79,25 @@ def main(config_file):
     # are compared to the travel times of the individual's actual trips from the nts
     # (`tst`/`TripStart` and `tet`/`TripEnd`)
 
-    # TODO: move to config
-    travel_time_matrix_path = (
-        acbm.root_path / "data/external/travel_times/oa/travel_time_matrix.parquet"
+    logger.info("Creating estimated travel times matrix")
+    # Create a new travel time matrix based on distances between zones
+    travel_time_estimates = zones_to_time_matrix(
+        zones=boundaries, id_col=config.zone_id, time_units="m"
+    )
+    logger.info("Travel time estimates created")
+
+    # save travel_time_etstimates as parquet
+    travel_time_estimates.to_parquet(
+        acbm.root_path / "data/interim/assigning/travel_time_estimates.parquet"
     )
 
     if config.parameters.travel_times:
         logger.info("Loading travel time matrix")
+        # TODO: move to config
+        travel_time_matrix_path = (
+            acbm.root_path
+            / f"data/external/travel_times/{config.boundary_geography}/travel_time_matrix.parquet"
+        )
         try:
             travel_times = pd.read_parquet(travel_time_matrix_path)
             print("Travel time matrix loaded successfully.")
@@ -93,18 +109,8 @@ def main(config_file):
             )
             raise e
     else:
-        # If travel_times is not true or loading failed, create a new travel time matrix
-        logger.info("No travel time matrix found. Creating a new travel time matrix.")
-        # Create a new travel time matrix based on distances between zones
-        travel_times = zones_to_time_matrix(
-            zones=boundaries, id_col=config.zone_id, time_units="m"
-        )
-        logger.info("Travel time estimates created")
-        # save travel_times as parquet
-
-        travel_times.to_parquet(
-            acbm.root_path / "data/interim/assigning/travel_time_estimates.parquet"
-        )
+        # If travel_times is not true, set travel_times as travel_times_estimates
+        travel_times = travel_time_estimates
 
     # --- Intrazonal trip times
     #
@@ -147,7 +153,8 @@ def main(config_file):
 
     # osm data
     osm_data = gpd.read_parquet(
-        acbm.root_path / f"data/interim/osmox/{config.region}_epsg_4326.parquet"
+        acbm.root_path
+        / f"data/interim/osmox/{config.region}_epsg_{config.output_crs}.parquet"
     )
 
     logger.info("Activity locations loaded")

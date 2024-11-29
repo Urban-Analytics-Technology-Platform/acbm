@@ -56,3 +56,7 @@ assigning_facility_locations_logger = create_logger(
 )
 
 validation_logger = create_logger("validation", "validation.log")
+
+converting_to_matsim_logger = create_logger(
+    "converting_to_matsim", "converting_to_matsim.log"
+)

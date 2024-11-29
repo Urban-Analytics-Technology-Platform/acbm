@@ -26,7 +26,7 @@ from acbm.assigning.utils import (
 from acbm.cli import acbm_cli
 from acbm.config import load_config
 from acbm.logger_config import assigning_secondary_zones_logger as logger
-from acbm.preprocessing import add_location
+from acbm.preprocessing import add_locations_to_activity_chains
 
 
 @acbm_cli
@@ -50,22 +50,19 @@ def main(config_file):
     boundaries = gpd.read_file(
         acbm.root_path / "data/external/boundaries/study_area_zones.geojson"
     )
+    # Reproject boundaries to the output CRS specified in the config
+    boundaries = boundaries.to_crs(f"epsg:{config.output_crs}")
+    logger.info(f"Boundaries reprojected to {config.output_crs}")
 
     logger.info("Study area boundaries loaded")
 
     # --- Assign activity home locations to boundaries zoning system
 
-    # Convert location column in activity_chains to spatial column
-    centroid_layer = pd.read_csv(
-        acbm.root_path / "data/external/centroids/Output_Areas_Dec_2011_PWC_2022.csv"
+    logger.info("Assigning activity home locations to boundaries zoning system")
+    # add home location (based on OA11CD from SPC)
+    activity_chains = add_locations_to_activity_chains(
+        activity_chains=activity_chains, target_crs=f"EPSG:{config.output_crs}"
     )
-    activity_chains = add_location(
-        activity_chains, "EPSG:27700", "EPSG:4326", centroid_layer, "OA11CD", "OA11CD"
-    )
-
-    # Convert the DataFrame into a GeoDataFrame, and assign a coordinate reference system (CRS)
-    activity_chains = gpd.GeoDataFrame(activity_chains, geometry="location")
-    activity_chains.crs = "EPSG:4326"  # I assume this is the crs
 
     # remove index_right column from activity_chains if it exists
     if "index_right" in activity_chains.columns:
@@ -131,7 +128,6 @@ def main(config_file):
     logger.info("Preprocessing: Adding dzone for all home activities")
     # replace dzone column with OA21CD. For all home activities, the destination is home
     activity_chains_home["dzone"] = activity_chains_home[config.zone_id]
-    activity_chains_home.head(10)
 
     logger.info("Preprocessing: Combining all activity chains")
     # merge the three dataframes
@@ -311,7 +307,8 @@ def main(config_file):
     # TODO: improve / save in same directory / add paths to config
     if config.parameters.travel_times:
         travel_times = pd.read_parquet(
-            acbm.root_path / "data/external/travel_times/oa/travel_time_matrix.parquet"
+            acbm.root_path
+            / f"data/external/travel_times/{config.boundary_geography}/travel_time_matrix.parquet"
         )
     else:
         travel_times = pd.read_parquet(

@@ -18,6 +18,7 @@ class Parameters(BaseModel):
     nts_years: list[int]
     nts_regions: list[str]
     nts_day_of_week: int
+    output_crs: int
 
 
 @dataclass(frozen=True)
@@ -37,12 +38,21 @@ class WorkAssignmentParams(BaseModel):
     commute_level: str | None = None
 
 
+@dataclass(frozen=True)
+class Postprocessing(BaseModel):
+    pam_jitter: int
+    pam_min_duration: int
+
+
 class Config(BaseModel):
     parameters: Parameters = Field(description="Config: parameters.")
     work_assignment: WorkAssignmentParams = Field(
         description="Config: parameters for work assignment."
     )
     matching: MatchingParams = Field(description="Config: parameters for matching.")
+    postprocessing: Postprocessing = Field(
+        description="Config: parameters for postprocessing."
+    )
 
     @property
     def seed(self) -> int:
@@ -51,6 +61,10 @@ class Config(BaseModel):
     @property
     def region(self) -> str:
         return self.parameters.region
+
+    @property
+    def output_crs(self) -> str:
+        return self.parameters.output_crs
 
     @property
     def zone_id(self) -> str:
