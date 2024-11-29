@@ -168,7 +168,9 @@ class Config(BaseModel):
     def osm_path(self) -> Path:
         """Returns osm path."""
         return (
-            self.root_path / self.osmox_path / (self.region + "_epsg_4326.parquet")
+            self.root_path
+            / self.osmox_path
+            / (self.region + f"_epsg_{self.output_crs}.parquet")
             if self.paths is None or self.paths.osm_path is None
             else self.paths.osm_path
         )
