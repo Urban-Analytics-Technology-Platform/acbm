@@ -362,7 +362,7 @@ class Config(BaseModel):
         )
 
     def get_boundaries(self) -> gpd.GeoDataFrame:
-        boundaries = gpd.read_file(self.boundaries_filepath)
+        boundaries = gpd.read_file(self.study_areas_filepath)
         return boundaries.to_crs(epsg=self.output_crs)
 
 
