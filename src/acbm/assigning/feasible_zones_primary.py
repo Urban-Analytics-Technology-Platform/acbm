@@ -222,9 +222,16 @@ def get_possible_zones(
         # for all other modes, we don't care about time of day and weekday/weekend
         else:
             travel_times_filtered_mode_time_day = travel_times_filtered_mode
-            activity_chains_filtered = activity_chains[
-                (activity_chains["mode"] == mode)
-            ]
+            # if mode = car_passenger, we compare to the travel time for car (we don't
+            # have travel times for car_passenger)
+            if mode == "car_passenger":
+                activity_chains_filtered = activity_chains[
+                    (activity_chains["mode"] == "car")
+                ]
+            else:
+                activity_chains_filtered = activity_chains[
+                    (activity_chains["mode"] == mode)
+                ]
 
             if (
                 not travel_times_filtered_mode_time_day.empty

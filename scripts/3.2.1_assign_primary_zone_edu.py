@@ -11,7 +11,7 @@ from acbm.assigning.utils import (
 )
 from acbm.cli import acbm_cli
 from acbm.config import load_and_setup_config
-from acbm.preprocessing import add_location
+from acbm.preprocessing import add_locations_to_activity_chains
 from acbm.utils import get_travel_times
 
 
@@ -38,6 +38,10 @@ def main(config_file):
 
     logger.info("Study area boundaries loaded")
 
+    # Reproject boundaries to the output CRS specified in the config
+    boundaries = boundaries.to_crs(f"epsg:{config.output_crs}")
+    logger.info(f"Boundaries reprojected to {config.output_crs}")
+
     # --- osm POI data
     logger.info("Loading OSM POI data")
 
@@ -45,7 +49,9 @@ def main(config_file):
     # Convert the DataFrame into a GeoDataFrame, and assign a coordinate reference system (CRS)
     logger.info("Converting OSM POI data to GeoDataFrame")
 
-    osm_data_gdf = gpd.GeoDataFrame(osm_data_gdf, geometry="geometry", crs="EPSG:4326")
+    osm_data_gdf = gpd.GeoDataFrame(
+        osm_data_gdf, geometry="geometry", crs=f"EPSG:{config.output_crs}"
+    )
 
     # --- Activity chains
     logger.info("Loading activity chains")
@@ -62,15 +68,11 @@ def main(config_file):
 
     logger.info("Assigning activity home locations to boundaries zoning system")
 
-    # Convert location column in activity_chains to spatial column
-    centroid_layer = pd.read_csv(config.centroid_layer_filepath)
-    activity_chains_edu = add_location(
-        activity_chains_edu,
-        "EPSG:27700",
-        "EPSG:4326",
-        centroid_layer,
-        "OA11CD",
-        "OA11CD",
+    # add home location (based on OA11CD from SPC)
+    activity_chains_edu = add_locations_to_activity_chains(
+        activity_chains=activity_chains_edu,
+        target_crs=f"EPSG:{config.output_crs}",
+        centroid_layer=pd.read_csv(config.centroid_layer_filepath),
     )
 
     # remove index_right column from activity_chains if it exists

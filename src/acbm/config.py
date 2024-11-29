@@ -26,6 +26,7 @@ class Parameters(BaseModel):
     nts_years: list[int]
     nts_regions: list[str]
     nts_day_of_week: int
+    output_crs: int
 
 
 @dataclass(frozen=True)
@@ -314,6 +315,10 @@ class Config(BaseModel):
     @property
     def region(self) -> str:
         return self.parameters.region
+
+    @property
+    def output_crs(self) -> str:
+        return self.parameters.output_crs
 
     @property
     def zone_id(self) -> str:

@@ -24,7 +24,7 @@ from acbm.assigning.utils import (
 )
 from acbm.cli import acbm_cli
 from acbm.config import load_and_setup_config
-from acbm.preprocessing import add_location
+from acbm.preprocessing import add_locations_to_activity_chains
 from acbm.utils import get_travel_times
 
 
@@ -48,20 +48,21 @@ def main(config_file):
     logger.info("Preprocessing: Adding OA21CD to the data")
 
     boundaries = gpd.read_file(config.study_areas_filepath)
+    # Reproject boundaries to the output CRS specified in the config
+    boundaries = boundaries.to_crs(f"epsg:{config.output_crs}")
+    logger.info(f"Boundaries reprojected to {config.output_crs}")
 
     logger.info("Study area boundaries loaded")
 
     # --- Assign activity home locations to boundaries zoning system
 
-    # Convert location column in activity_chains to spatial column
-    centroid_layer = pd.read_csv(config.centroid_layer_filepath)
-    activity_chains = add_location(
-        activity_chains, "EPSG:27700", "EPSG:4326", centroid_layer, "OA11CD", "OA11CD"
+    logger.info("Assigning activity home locations to boundaries zoning system")
+    # add home location (based on OA11CD from SPC)
+    activity_chains = add_locations_to_activity_chains(
+        activity_chains=activity_chains,
+        target_crs=f"EPSG:{config.output_crs}",
+        centroid_layer=pd.read_csv(config.centroid_layer_filepath),
     )
-
-    # Convert the DataFrame into a GeoDataFrame, and assign a coordinate reference system (CRS)
-    activity_chains = gpd.GeoDataFrame(activity_chains, geometry="location")
-    activity_chains.crs = "EPSG:4326"  # I assume this is the crs
 
     # remove index_right column from activity_chains if it exists
     if "index_right" in activity_chains.columns:
@@ -124,7 +125,6 @@ def main(config_file):
     logger.info("Preprocessing: Adding dzone for all home activities")
     # replace dzone column with OA21CD. For all home activities, the destination is home
     activity_chains_home["dzone"] = activity_chains_home[config.zone_id]
-    activity_chains_home.head(10)
 
     logger.info("Preprocessing: Combining all activity chains")
     # merge the three dataframes

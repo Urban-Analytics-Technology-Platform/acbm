@@ -38,9 +38,9 @@ The structure of the folder is as follows:
 │   │   │           ├── trip_eul_2002-2022.tab
 │   │   │           └── <other_nts_tables>.tab
 |   |   └── travel_times
-|   |   │   │       ├── oa
+|   |   │   │       ├── OA
 |   |   │   │       |   ├── travel_time_matrix.parquet
-|   |   |   |       └── msoa
+|   |   |   |       └── MSOA
 |   |   │   │           └── travel_time_matrix.parquet
 │   │   ├── ODWP01EW_OA.zip
 │   │   ├── ODWP15EW_MSOA_v1.zip

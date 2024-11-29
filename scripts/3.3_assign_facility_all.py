@@ -49,6 +49,10 @@ def main(config_file):
 
     logger.info("Study area boundaries loaded")
 
+    # Reproject boundaries to the output CRS specified in the config
+    boundaries = boundaries.to_crs(f"epsg:{config.output_crs}")
+    logger.info(f"Boundaries reprojected to {config.output_crs}")
+
     # --- Prepprocess: add zone column to POI data
     logger.info("Adding zone column to POI data")
 
@@ -309,6 +313,7 @@ def main(config_file):
             y_col="length",
             x_label="Reported Travel Distance (km)",
             y_label="Actual Distance - Euclidian (km)",
+            crs=f"EPSG:{config.output_crs}",
             title_prefix=f"Scatter plot of TripDisIncSW vs. Length for {activity_type}",
             save_dir=config.output_path / "plots/assigning/",
         )
@@ -332,6 +337,7 @@ def main(config_file):
             y_col="length",
             x_label="Reported Travel TIme (min)",
             y_label="Actual Distance - Euclidian (km)",
+            crs=f"EPSG:{config.output_crs}",
             title_prefix="Scatter plot of TripTotalTime vs. Length",
             save_dir=config.output_path / "plots/assigning/",
         )
@@ -349,6 +355,7 @@ def main(config_file):
             bin_size=5000,
             boundaries=boundaries,
             sample_size=1000,
+            crs=f"EPSG:{config.output_crs}",
             save_dir=config.output_path / "plots/assigning/",
         )
 

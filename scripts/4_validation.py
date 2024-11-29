@@ -110,6 +110,8 @@ def main(config_file):
         "count"
     ].transform(lambda x: (x / x.sum()) * 100)
 
+    plt.figure()
+
     sns.barplot(data=purpose_compare, x="dact", y="percentage", hue="source")
     plt.xlabel("Trip purpose")
     plt.ylabel("Percentage of total trips")
@@ -139,6 +141,8 @@ def main(config_file):
     ].transform(lambda x: (x / x.sum()) * 100)
 
     # Plot
+    plt.figure()
+
     sns.barplot(data=modeshare_compare, x="mode", y="percentage", hue="source")
     plt.ylabel("Percentage of total trips")
     plt.title("Percentage of Trips by Mode for NTS and ACBM")
@@ -212,6 +216,7 @@ def main(config_file):
         df=legs_acbm_geo,
         start_wkt_col="start_location_geometry_wkt",
         end_wkt_col="end_location_geometry_wkt",
+        crs_epsg=config.output_crs,
     )
 
     # Plot: Aggregate

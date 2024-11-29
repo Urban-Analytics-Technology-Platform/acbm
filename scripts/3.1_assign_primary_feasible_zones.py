@@ -42,16 +42,20 @@ def main(config_file):
 
     logger.info("Study area boundaries loaded")
 
+    # Reproject boundaries to the output CRS specified in the config
+    boundaries = boundaries.to_crs(f"epsg:{config.output_crs}")
+    logger.info(f"Boundaries reprojected to {config.output_crs}")
+
     # --- Assign activity home locations to boundaries zoning system
 
     logger.info("Assigning activity home locations to boundaries zoning system")
-    activity_chains = add_locations_to_activity_chains(
-        activity_chains, centroid_layer=pd.read_csv(config.centroid_layer_filepath)
-    )
 
-    # Convert the DataFrame into a GeoDataFrame, and assign a coordinate reference system (CRS)
-    activity_chains = gpd.GeoDataFrame(activity_chains, geometry="location")
-    activity_chains.crs = "EPSG:4326"  # I assume this is the crs
+    # add home location (based on OA11CD from SPC)
+    activity_chains = add_locations_to_activity_chains(
+        activity_chains=activity_chains,
+        target_crs=f"EPSG:{config.output_crs}",
+        centroid_layer=pd.read_csv(config.centroid_layer_filepath),
+    )
 
     # remove index_right column from activity_chains if it exists
     if "index_right" in activity_chains.columns:

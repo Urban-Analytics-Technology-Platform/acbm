@@ -1008,7 +1008,7 @@ def main(config_file):
         1: "walk",
         2: "bike",
         3: "car",  #'Car/van driver'
-        4: "car",  #'Car/van driver'
+        4: "car_passenger",  #'Car/van passenger'
         5: "motorcycle",  #'Motorcycle',
         6: "car",  #'Other private transport',
         7: "pt",  # Bus in London',
@@ -1016,7 +1016,7 @@ def main(config_file):
         9: "pt",  #'Non-local bus',
         10: "pt",  #'London Underground',
         11: "pt",  #'Surface Rail',
-        12: "car",  #'Taxi/minicab',
+        12: "car_passenger",  #'Taxi/minicab',
         13: "pt",  #'Other public transport',
         -10: "DEAD",
         -8: "NA",

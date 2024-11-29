@@ -21,7 +21,7 @@ def main(config_file):
 
     boundaries = gpd.read_file(config.boundaries_filepath)
 
-    boundaries = boundaries.to_crs(epsg=4326)
+    boundaries = boundaries.to_crs(epsg=config.output_crs)
 
     ## --- Dissolve boundaries if resolution is MSOA
 

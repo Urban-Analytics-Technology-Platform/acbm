@@ -3,8 +3,7 @@ from typing import Optional
 import geopandas as gpd
 import numpy as np
 import pandas as pd
-from pyproj import Transformer
-from shapely.geometry import MultiPolygon, Point
+from shapely.geometry import MultiPolygon
 
 # ----- PREPROCESSING BOUNDARIES
 
@@ -363,32 +362,75 @@ def add_location(
     centroid_layer: pd.DataFrame,
     df_geo_id: str,
     centroid_layer_geo_id: str,
-) -> pd.DataFrame:
-    # TODO: add doc comment
-    # make transformer
-    transformer = Transformer.from_crs(source_crs, target_crs, always_xy=True)
+) -> gpd.GeoDataFrame:
+    """
+    Add location column as spatial column from centroid_layer and reproject to target CRS.
+    Used to add the home location to activity chains based on the centroid of their 0A11CD
+    column (from the SPC)
 
-    # convert loc from source to target CRS returning as Point type
-    def get_new_coords(loc):
-        x, y = transformer.transform(loc["x"], loc["y"])
-        return Point(x, y)
+    Parameters
+    ----------
+    df : pd.DataFrame
+        DataFrame containing the activity chains.
+    source_crs : str
+        The source CRS of the centroid_layer.
+    target_crs : str
+        The target CRS to reproject the locations to.
+    centroid_layer : pd.DataFrame
+        DataFrame containing the centroid locations.
+    df_geo_id : str
+        The column name in `df` that contains the geographic identifiers.
+    centroid_layer_geo_id : str
+        The column name in `centroid_layer` that contains the geographic identifiers.
 
-    centroid_layer["location"] = centroid_layer.apply(
-        lambda loc: get_new_coords(loc), axis=1
+    Returns
+    -------
+    gpd.GeoDataFrame
+        GeoDataFrame with locations added and reprojected to the target CRS.
+    """
+    # Convert centroid_layer to GeoDataFrame
+    centroid_layer_gdf = gpd.GeoDataFrame(
+        centroid_layer,
+        geometry=gpd.points_from_xy(centroid_layer["x"], centroid_layer["y"]),
+        crs=source_crs,
     )
+
+    # Reproject centroid_layer to target CRS
+    centroid_layer_gdf = centroid_layer_gdf.to_crs(target_crs)
+
+    # Rename the geometry column to 'location'
+    # TODO: check if I can avoid renaiming without breaking anything downstream
+    centroid_layer_gdf = centroid_layer_gdf.rename(columns={"geometry": "location"})
+
+    # Merge df with centroid_layer_gdf
     merged_df = df.merge(
-        centroid_layer[[centroid_layer_geo_id, "location"]],
+        centroid_layer_gdf[[centroid_layer_geo_id, "location"]],
         left_on=df_geo_id,
         right_on=centroid_layer_geo_id,
     )
 
-    # Convert to GeoDataFrame
+    # Convert to GeoDataFrame with 'location' as the geometry column
     return gpd.GeoDataFrame(merged_df, geometry="location", crs=target_crs)
 
 
 def add_locations_to_activity_chains(
-    activity_chains: pd.DataFrame, centroid_layer: pd.DataFrame
-) -> pd.DataFrame:
+    activity_chains: pd.DataFrame, target_crs: str, centroid_layer: pd.DataFrame
+) -> gpd.GeoDataFrame:
+    """
+    Add locations to activity chains and reproject to the target CRS.
+
+    Parameters
+    ----------
+    activity_chains : pd.DataFrame
+        DataFrame containing the activity chains.
+    target_crs : str
+        The target CRS to reproject the locations to.
+
+    Returns
+    -------
+    gpd.GeoDataFrame
+        GeoDataFrame with locations added and reprojected to the target CRS.
+    """
     return add_location(
-        activity_chains, "EPSG:27700", "EPSG:4326", centroid_layer, "OA11CD", "OA11CD"
+        activity_chains, "EPSG:27700", target_crs, centroid_layer, "OA11CD", "OA11CD"
     )
