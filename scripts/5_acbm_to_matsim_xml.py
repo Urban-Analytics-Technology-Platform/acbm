@@ -141,7 +141,6 @@ def main(config_file):
         tour_based=False,
         include_loc=True,
         sort_by_seq=True,
-        # hhs_attributes = None,
     )
 
     logger.info("4.2 - Jittering plans")

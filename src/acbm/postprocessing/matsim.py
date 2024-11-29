@@ -160,9 +160,6 @@ def add_home_location_to_individuals(
     return individuals_geo[individuals_geo["loc"].notnull()]
 
 
-# Tracking row counts after each operation
-
-
 def log_row_count(
     df: pd.DataFrame, name: str, operation: str, row_counts: list[tuple[str, str, int]]
 ):
