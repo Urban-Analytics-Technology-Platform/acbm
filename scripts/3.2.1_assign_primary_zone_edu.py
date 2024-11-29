@@ -13,7 +13,7 @@ from acbm.assigning.utils import (
 from acbm.cli import acbm_cli
 from acbm.config import load_config
 from acbm.logger_config import assigning_primary_zones_logger as logger
-from acbm.preprocessing import add_location
+from acbm.preprocessing import add_locations_to_activity_chains
 
 
 @acbm_cli
@@ -38,8 +38,11 @@ def main(config_file):
     boundaries = gpd.read_file(
         acbm.root_path / "data/external/boundaries/study_area_zones.geojson"
     )
-
     logger.info("Study area boundaries loaded")
+
+    # Reproject boundaries to the output CRS specified in the config
+    boundaries = boundaries.to_crs(f"epsg:{config.output_crs}")
+    logger.info(f"Boundaries reprojected to {config.output_crs}")
 
     # --- osm POI data
     logger.info("Loading OSM POI data")
@@ -50,7 +53,9 @@ def main(config_file):
     # Convert the DataFrame into a GeoDataFrame, and assign a coordinate reference system (CRS)
     logger.info("Converting OSM POI data to GeoDataFrame")
 
-    osm_data_gdf = gpd.GeoDataFrame(osm_data_gdf, geometry="geometry", crs="EPSG:4326")
+    osm_data_gdf = gpd.GeoDataFrame(
+        osm_data_gdf, geometry="geometry", crs=f"EPSG:{config.output_crs}"
+    )
 
     # --- Activity chains
     logger.info("Loading activity chains")
@@ -65,17 +70,9 @@ def main(config_file):
 
     logger.info("Assigning activity home locations to boundaries zoning system")
 
-    # Convert location column in activity_chains to spatial column
-    centroid_layer = pd.read_csv(
-        acbm.root_path / "data/external/centroids/Output_Areas_Dec_2011_PWC_2022.csv"
-    )
-    activity_chains_edu = add_location(
-        activity_chains_edu,
-        "EPSG:27700",
-        "EPSG:4326",
-        centroid_layer,
-        "OA11CD",
-        "OA11CD",
+    # add home location (based on OA11CD from SPC)
+    activity_chains_edu = add_locations_to_activity_chains(
+        activity_chains=activity_chains_edu, target_crs=f"EPSG:{config.output_crs}"
     )
 
     # remove index_right column from activity_chains if it exists

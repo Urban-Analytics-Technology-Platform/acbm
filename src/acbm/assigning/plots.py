@@ -239,6 +239,7 @@ def plot_desire_lines(
     activity_type: str,
     bin_size: int,
     boundaries: gpd.GeoDataFrame,
+    crs: str,
     sample_size: Optional[int] = None,
     save_dir: str | Path | None = None,
 ) -> None:
@@ -256,6 +257,8 @@ def plot_desire_lines(
         The size of the bins for the histogram. (in meters)
     boundaries: gpd.GeoDataFrame
         A GeoDataFrame containing the geographical boundaries for the plot.
+    crs: str
+        The coordinate reference system (CRS) of the activities data.
     sample_size: int, optional
         The size of the sample to plot. If None, all data is plotted.
 
@@ -284,18 +287,13 @@ def plot_desire_lines(
 
     # Convert to GeoDataFrame and set the geometry column to 'line_geometry'
     activity_chains_plot = gpd.GeoDataFrame(
-        activity_chains_plot, geometry="line_geometry"
+        activity_chains_plot, geometry="line_geometry", crs=crs
     )
-
-    # add the original crs
-    activity_chains_plot.crs = "EPSG:4326"
 
     # convert crs to metric
     activity_chains_plot = activity_chains_plot.to_crs(epsg=3857)
     # calculate the length of the line_geometry in meters
     activity_chains_plot["length"] = activity_chains_plot["line_geometry"].length
-    # convert crs back to 4326
-    activity_chains_plot = activity_chains_plot.to_crs(epsg=4326)
 
     # If a sample size is specified, sample the activities
     if sample_size is not None and sample_size < len(activity_chains_plot):
@@ -389,6 +387,7 @@ def plot_scatter_actual_reported(
     title_prefix: str,
     activity_type: str,
     activity_type_col: str,
+    crs: str,
     save_dir: str | Path | None = None,
     display: bool = False,
 ):
@@ -396,6 +395,7 @@ def plot_scatter_actual_reported(
     Plots scatter plots with trend lines for different modes in activity chains.
 
     Parameters:
+    -----------
     - activity_chains_plot: DataFrame containing the activity chains data.
     - x_col: Column name for the x-axis values.
     - y_col: Column name for the y-axis values.
@@ -404,6 +404,7 @@ def plot_scatter_actual_reported(
     - title_prefix: Prefix for the plot titles.
     - activity_type: Type of activity to plot.
     - activity_type_col: Column name for the activity type.
+    - crs: Coordinate reference system (CRS) of the activities data.
     - save_dir: Directory to save the plots. If None, plots are not saved.
     - display: Whether to display plots by calling `plt.show()`.
     """
@@ -425,18 +426,13 @@ def plot_scatter_actual_reported(
         axis=1,
     )
     # Set the geometry column to 'line_geometry'
-    activity_chains_plot = activity_chains_plot.set_geometry("line_geometry")
-
-    # add the original crs
-    activity_chains_plot.crs = "EPSG:4326"
+    activity_chains_plot = activity_chains_plot.set_geometry("line_geometry", crs=crs)
 
     # convert crs to metric
     activity_chains_plot = activity_chains_plot.to_crs(epsg=3857)
     # calculate the length of the line_geometry in meters
     activity_chains_plot["length"] = activity_chains_plot["line_geometry"].length
 
-    # convert crs back to 4326
-    activity_chains_plot = activity_chains_plot.to_crs(epsg=4326)
     # Calculate the number of rows and columns for the subplots. It is a function of the number of modes
     nrows = math.ceil(len(activity_chains_plot["mode"].unique()) / 2)
     ncols = 2

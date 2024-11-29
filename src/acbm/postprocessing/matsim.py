@@ -52,10 +52,10 @@ def filter_by_pid(
 
 def filter_no_location(
     individuals: pd.DataFrame,
+    households: pd.DataFrame,
     activities: pd.DataFrame,
     legs: pd.DataFrame,
     legs_geo: pd.DataFrame,
-    households: pd.DataFrame,
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """
     Cleans the provided DataFrames by removing rows without location data. Gets all pids

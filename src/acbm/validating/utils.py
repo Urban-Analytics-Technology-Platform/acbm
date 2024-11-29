@@ -74,7 +74,7 @@ def calculate_od_distances(
     df: pd.DataFrame,
     start_wkt_col: str,
     end_wkt_col: str,
-    crs_epsg: int = 4326,
+    crs_epsg: int,
     projected_epsg: int = 3857,
 ) -> pd.DataFrame:
     """
@@ -92,7 +92,8 @@ def calculate_od_distances(
     crs_epsg: int
         EPSG code for the original CRS (default is 4326 for WGS84).
     projected_epsg: int
-        EPSG code for the projected CRS (default is 3857).
+        EPSG code for the projected CRS (default is 3857). We need a metric crs
+        to calculte distances in meters.
 
     Returns
     -------

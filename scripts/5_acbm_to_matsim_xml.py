@@ -47,6 +47,9 @@ def main(config_file):
 
     logger.info("2 - Cleaning data")
 
+    # rename age_years to age in individuals
+    individuals.rename(columns={"age_years": "age"}, inplace=True)
+
     # We will be removing some rows in each planning operation. This function helps keep a
     # record of the number of rows in each table after each operation.
 
@@ -76,6 +79,7 @@ def main(config_file):
     log_row_count(legs_geo, "legs_geo", "1_filter_by_pid", row_counts)
 
     logger.info("2.3 - Rename geometry columns (for PAM)")
+
     # TODO: Rename columns upstream in 3.3_assign_facility_all script
     legs_geo.rename(
         columns={
@@ -156,6 +160,7 @@ def main(config_file):
     write.write_matsim_population_v6(
         population=population,
         path=acbm.root_path / "data/processed/activities_pam/plans.xml",
+        coordinate_reference_system=f"EPSG:{config.output_crs}",
     )
 
 

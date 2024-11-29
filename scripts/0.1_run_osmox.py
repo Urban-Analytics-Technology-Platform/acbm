@@ -24,7 +24,7 @@ def main(config_file):
             "-f",
             "geoparquet",
             "-crs",
-            "epsg:27700",
+            f"epsg:{config.output_crs}",
             "-l",
         ],
         check=False,
