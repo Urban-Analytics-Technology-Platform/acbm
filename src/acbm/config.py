@@ -339,7 +339,6 @@ class Config(BaseModel):
     def boundary_geography(self) -> str:
         return self.parameters.boundary_geography
 
-    # TODO: consider moving to method in config
     def init_rng(self):
         try:
             np.random.seed(self.seed)
