@@ -93,7 +93,7 @@ class Config(BaseModel):
         os.makedirs(self.assigning_plots_path, exist_ok=True)
         os.makedirs(self.validation_plots_path, exist_ok=True)
         os.makedirs(self.activities_per_zone.parent, exist_ok=True)
-        os.makedirs(self.study_areas_filepath.parent, exist_ok=True)
+        os.makedirs(self.study_area_filepath.parent, exist_ok=True)
         os.makedirs(self.interim_path, exist_ok=True)
         os.makedirs(self.travel_times_estimates_filepath.parent, exist_ok=True)
         os.makedirs(self.spc_combined_filepath.parent, exist_ok=True)
@@ -147,7 +147,7 @@ class Config(BaseModel):
         return self.interim_path / f"{self.region}_people_hh.parquet"
 
     @property
-    def study_areas_filepath(self) -> Path:
+    def study_area_filepath(self) -> Path:
         """Returns boundaries path."""
         return (
             self.output_path / "boundaries" / "study_area_zones.geojson"

@@ -51,9 +51,9 @@ def main(config_file):
     boundaries_filtered = boundaries[boundaries["MSOA21CD"].isin(msoa21cd_values)]
 
     ## Save the output as parquet
-    logger.info(f"4. Saving the boundaries to {config.study_areas_filepath} path")
+    logger.info(f"4. Saving the boundaries to {config.study_area_filepath} path")
     boundaries_filtered.to_file(
-        config.study_areas_filepath,
+        config.study_area_filepath,
         driver="GeoJSON",
     )
 
