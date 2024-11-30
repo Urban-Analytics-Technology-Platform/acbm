@@ -18,7 +18,7 @@ def main(config_file):
 
     logger.info("1. Reading in the boundary layer for the whole of England")
 
-    boundaries = config.get_boundaries()
+    boundaries = config.get_study_area_boundaries()
 
     ## --- Dissolve boundaries if resolution is MSOA
 

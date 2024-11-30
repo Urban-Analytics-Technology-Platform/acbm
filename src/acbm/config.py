@@ -361,9 +361,9 @@ class Config(BaseModel):
             self.logs_path,
         )
 
-    def get_boundaries(self) -> gpd.GeoDataFrame:
-        boundaries = gpd.read_file(self.study_areas_filepath)
-        return boundaries.to_crs(epsg=self.output_crs)
+    def get_study_area_boundaries(self) -> gpd.GeoDataFrame:
+        study_area = gpd.read_file(self.study_area_filepath)
+        return study_area.to_crs(epsg=self.output_crs)
 
 
 def load_config(filepath: str | Path) -> Config:

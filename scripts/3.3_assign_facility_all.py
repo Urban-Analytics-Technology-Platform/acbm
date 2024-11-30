@@ -44,7 +44,7 @@ def main(config_file):
 
     # --- Load data: Boundaries
     logger.info("Loading study area boundaries")
-    boundaries = config.get_boundaries()
+    boundaries = config.get_study_area_boundaries()
     logger.info(f"Study area boundaries loaded and reprojected to {config.output_crs}")
 
     # --- Prepprocess: add zone column to POI data

@@ -37,7 +37,7 @@ def main(config_file):
     # --- Study area boundaries
 
     logger.info("Loading study area boundaries")
-    boundaries = config.get_boundaries()
+    boundaries = config.get_study_area_boundaries()
     logger.info(f"Study area boundaries loaded and reprojected to {config.output_crs}")
 
     # --- Assign activity home locations to boundaries zoning system
