@@ -1,5 +1,6 @@
 from typing import Optional
 
+import numpy as np
 import pandas as pd
 
 
@@ -340,3 +341,65 @@ def get_students(
     individuals["isStudent"] = individuals["pid"].isin(student_pids)
 
     return individuals
+
+
+def get_hhlIncome(
+    individuals: pd.DataFrame,
+    individuals_with_salary: pd.DataFrame,
+    pension_age: int = 66,
+    pension: int = 13000,
+) -> pd.DataFrame:
+    """
+    Function to calculate the household level income from the individual level income data in the SPC
+    dataset. The function groups salary data by household and then merges the household level income
+    data back onto the individual level data.
+
+    The salary data is missing for many individuals in the SPC dataset. It also does not include pension
+    We add the state pension if the person has reached the state pension age (66 years) and has no salary data.
+
+    TODO: add student maintenance loan?
+
+    Parameters
+    ----------
+    individuals : pd.DataFrame
+        The individual level data output from acbm
+    individuals_with_salary : pd.DataFrame
+        The original SPC dataset with the salary_yearly column
+
+    Returns
+    -------
+    pd.DataFrame
+        The individual level data with the hhlIncome column added
+    """
+    individuals_income = individuals.copy()
+
+    # If person is a pensioner, add pension, otherwise keep salary
+    individuals_with_salary["income_modeled"] = np.where(
+        (individuals_with_salary["salary_yearly"] == 0)
+        | (individuals_with_salary["salary_yearly"].isna()),
+        np.where(individuals_with_salary["age_years"] >= pension_age, pension, 0),
+        individuals_with_salary["salary_yearly"],
+    )
+
+    # Summarize the data by household to create the hhlIncome column
+    household_income = (
+        individuals_with_salary.groupby("household")["income_modeled"]
+        .sum()
+        .reset_index()
+    )
+    household_income.rename(columns={"income_modeled": "hhlIncome"}, inplace=True)
+    # round hhlIncome to the nearest whole number
+    household_income["hhlIncome"] = household_income["hhlIncome"].round()
+
+    # Merge the household_income data onto the individuals data
+    individuals_income = pd.merge(
+        individuals_income,
+        household_income,
+        how="left",
+        left_on="hid",
+        right_on="household",
+    )
+
+    individuals_income.drop(columns="household", inplace=True)
+
+    return individuals_income

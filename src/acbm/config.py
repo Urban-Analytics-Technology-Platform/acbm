@@ -46,6 +46,7 @@ class Postprocessing(BaseModel):
     student_age_upper: int
     modes_passenger: list[str]
     pt_subscription_age: int
+    state_pension: int
 
 
 class Config(BaseModel):

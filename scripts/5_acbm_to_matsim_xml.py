@@ -16,6 +16,7 @@ from acbm.postprocessing.matsim import (
     calculate_percentage_remaining,
     filter_by_pid,
     filter_no_location,
+    get_hhlIncome,
     get_passengers,
     get_pt_subscription,
     get_students,
@@ -61,23 +62,23 @@ def main(config_file):
     # TODO: add sex column upstream in the beginning of the pipeline
     spc = pd.read_parquet(
         acbm.root_path / f"data/external/spc_output/{config.region}_people_hh.parquet",
-        columns=["id", "sex"],
+        columns=["id", "household", "age_years", "sex", "salary_yearly"],
     )
-    spc.head(5)
 
     # change spc["sex"] column: 1 = male, 2 = female
     spc["sex"] = spc["sex"].map({1: "male", 2: "female"})
     # merge it on
-    individuals = individuals.merge(spc, left_on="pid", right_on="id", how="left")
+    individuals = individuals.merge(
+        spc[["id", "sex"]], left_on="pid", right_on="id", how="left"
+    )
     individuals = individuals.drop(columns="id")
 
     # isStudent
-
     individuals = get_students(
         individuals=individuals,
         activities=activities,
         age_base_threshold=config.postprocessing.student_age_base,
-        # age_upper_threshold = config.postprocessing.student_age_upper,,
+        # age_upper_threshold = config.postprocessing.student_age_upper,
         activity="education",
     )
 
@@ -90,6 +91,14 @@ def main(config_file):
 
     individuals = get_pt_subscription(
         individuals=individuals, age_threshold=config.postprocessing.pt_subscription_age
+    )
+
+    ## hhlIncome
+    individuals = get_hhlIncome(
+        individuals=individuals,
+        individuals_with_salary=spc,
+        pension_age=config.postprocessing.pt_subscription_age,
+        pension=config.postprocessing.state_pension,
     )
 
     # We will be removing some rows in each planning operation. This function helps keep a
