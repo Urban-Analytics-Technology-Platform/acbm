@@ -42,6 +42,11 @@ class WorkAssignmentParams(BaseModel):
 class Postprocessing(BaseModel):
     pam_jitter: int
     pam_min_duration: int
+    student_age_base: int
+    student_age_upper: int
+    modes_passenger: list[str]
+    pt_subscription_age: int
+    state_pension: int
 
 
 class Config(BaseModel):
