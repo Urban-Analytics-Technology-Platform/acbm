@@ -24,7 +24,9 @@ def main(config_file):
             "-f",
             "geoparquet",
             "-crs",
-            f"epsg:{config.output_crs}",
+            # TODO: check if this can be specified as the output CRS
+            # See: https://github.com/arup-group/osmox/blob/82602d411374ebc9fd33443f8f7c9816b63715ec/docs/osmox_run.md#L35-L38
+            "epsg:27700",
             "-l",
         ],
         check=False,
