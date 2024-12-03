@@ -16,6 +16,9 @@ from acbm.postprocessing.matsim import (
     calculate_percentage_remaining,
     filter_by_pid,
     filter_no_location,
+    get_passengers,
+    get_pt_subscription,
+    get_students,
     log_row_count,
 )
 
@@ -49,6 +52,45 @@ def main(config_file):
 
     # rename age_years to age in individuals
     individuals.rename(columns={"age_years": "age"}, inplace=True)
+
+    # ----- Add some person attributes to the individuals dataframe
+
+    # sex
+
+    # get sex column from spc
+    # TODO: add sex column upstream in the beginning of the pipeline
+    spc = pd.read_parquet(
+        acbm.root_path / f"data/external/spc_output/{config.region}_people_hh.parquet",
+        columns=["id", "sex"],
+    )
+    spc.head(5)
+
+    # change spc["sex"] column: 1 = male, 2 = female
+    spc["sex"] = spc["sex"].map({1: "male", 2: "female"})
+    # merge it on
+    individuals = individuals.merge(spc, left_on="pid", right_on="id", how="left")
+    individuals = individuals.drop(columns="id")
+
+    # isStudent
+
+    individuals = get_students(
+        individuals=individuals,
+        activities=activities,
+        age_base_threshold=config.postprocessing.student_age_base,
+        # age_upper_threshold = config.postprocessing.student_age_upper,,
+        activity="education",
+    )
+
+    # isPassenger
+    individuals = get_passengers(
+        legs=legs, individuals=individuals, modes=config.postprocessing.modes_passenger
+    )
+
+    # hasPTsubscription
+
+    individuals = get_pt_subscription(
+        individuals=individuals, age_threshold=config.postprocessing.pt_subscription_age
+    )
 
     # We will be removing some rows in each planning operation. This function helps keep a
     # record of the number of rows in each table after each operation.

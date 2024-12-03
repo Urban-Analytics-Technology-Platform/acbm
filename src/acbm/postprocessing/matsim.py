@@ -1,3 +1,5 @@
+from typing import Optional
+
 import pandas as pd
 
 
@@ -220,3 +222,121 @@ def calculate_percentage_remaining(
     percentage_remaining.sort(key=lambda x: x[1])
 
     return percentage_remaining
+
+
+# FUNCTIONS TO ADD ATTRIBUTES TO INDIVIDUALS
+
+
+def get_passengers(
+    legs: pd.DataFrame, individuals: pd.DataFrame, modes: list
+) -> pd.DataFrame:
+    """
+    Marks individuals as (car) passengers based on the mode of transportation in the legs DataFrame.
+
+    Parameters
+    ----------
+    legs : pd.DataFrame
+        DataFrame containing legs data with info on an activity leg. Needs a 'mode' column and a 'pid' column.
+    individuals : pd.DataFrame
+        DataFrame containing individual data with a 'pid' column.
+    modes : list
+        List of passenger modes.
+
+    Returns
+    -------
+    pd.DataFrame
+        Updated individuals DataFrame with an 'isPassenger' boolean column.
+    """
+    # Get a list of unique pids where mode matches the chosen list of modes
+    passenger_pids = legs[legs["mode"].isin(modes)]["pid"].unique()
+
+    # Add a boolean column 'isPassenger' to the individuals DataFrame
+    individuals["isPassenger"] = individuals["pid"].isin(passenger_pids)
+
+    return individuals
+
+
+def get_pt_subscription(individuals: pd.DataFrame, age_threshold=60):
+    """
+    Marks individuals as having a public transport subscription based on their age.
+
+    Parameters
+    ----------
+    individuals : pd.DataFrame
+        DataFrame containing individual data with an 'age' column.
+    age_threshold : int
+        Age threshold for public transport subscription. (normally the pension age)
+
+    Returns
+    -------
+    pd.DataFrame
+        Updated individuals DataFrame with an 'hasPTSubscription' boolean column.
+    """
+    # Add a boolean column 'hasPTSubscription' to the individuals DataFrame
+    individuals["hasPTSubscription"] = individuals["age"] >= age_threshold
+
+    return individuals
+
+
+def get_students(
+    individuals: pd.DataFrame,
+    activities: pd.DataFrame,
+    age_base_threshold: Optional[int] = None,
+    age_upper_threshold: Optional[int] = None,
+    activity: str = "education",
+) -> pd.DataFrame:
+    """
+    Marks individuals as students based on whether they have an education activity,
+    and optionally whether they are also below certain age thresholds.
+
+    Parameters
+    ----------
+    individuals : pd.DataFrame
+        DataFrame containing individual data with a 'pid' column.
+    activities : pd.DataFrame
+        DataFrame containing activity data with a 'pid' column.
+    age_base_threshold : Optional[int]
+        If specified, anyone below this age is automatically a student
+    age_upper_threshold : Optional[int]
+        If specified, this is the age limit for people to be a student. If someone has an education
+        trip but is above this threshold, they are not a student
+    activity : str, optional
+        Activity type to consider for being a student. Default is 'education'.
+
+    Returns
+    -------
+    pd.DataFrame
+        Updated individuals DataFrame with an 'isStudent' boolean column.
+    """
+
+    # Get a list of unique pids where the activity is 'education'
+    education_pids = activities[activities["activity"] == activity]["pid"].unique()
+
+    if age_base_threshold is not None:
+        # Everyone below age_base_threshold should be assigned to student
+        base_students = individuals[individuals["age"] < age_base_threshold][
+            "pid"
+        ].unique()
+        # Everyone below age_upper_threshold who has an education trip should also be a student
+        if age_upper_threshold is not None:
+            upper_students = individuals[
+                (individuals["age"] < age_upper_threshold)
+                & (individuals["pid"].isin(education_pids))
+            ]["pid"].unique()
+            student_pids = set(base_students).union(set(upper_students))
+        else:
+            student_pids = set(base_students)
+    elif age_upper_threshold is not None:
+        # Everyone below age_upper_threshold who has an education trip should be a student
+        student_pids = individuals[
+            (individuals["age"] < age_upper_threshold)
+            & (individuals["pid"].isin(education_pids))
+        ]["pid"].unique()
+    else:
+        # Only people with an education trip should be students
+        student_pids = education_pids
+
+    # Add a boolean column 'isStudent' to the individuals DataFrame
+    individuals["isStudent"] = individuals["pid"].isin(student_pids)
+
+    return individuals
