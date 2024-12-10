@@ -134,7 +134,7 @@ def main(config_file):
             "EdAttn1_B01ID",
             "EdAttn2_B01ID",
             "EdAttn3_B01ID",
-            "OwnCycle_B01ID",  # Owns a cycle
+            "OwnCycleN_B01ID",  # Owns a cycle
             "DrivLic_B02ID",  # type of driving license
             "CarAccess_B01ID",
             "IndIncome2002_B02ID",
