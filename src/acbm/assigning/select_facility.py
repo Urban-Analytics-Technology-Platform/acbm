@@ -1,4 +1,6 @@
 import logging
+import multiprocessing
+from multiprocessing import Pool
 from typing import Optional, Tuple
 
 import geopandas as gpd
@@ -64,7 +66,7 @@ def _select_facility(
         {unique_id_col: (np.nan, np.nan)} if no suitable facility is found.
     """
     # ----- Step 1. Find valid facilities in the destination zone
-
+    pd.options.mode.copy_on_write = True
     # Extract the destination zone from the input row
     destination_zone = row[row_destination_zone_col]
     if pd.isna(destination_zone):
@@ -202,29 +204,35 @@ def select_facility(
     dict[str, Tuple[str, Point ] | Tuple[float, float]]: Unique ID column as
         keys with selected facility ID and facility ID's geometry, or (np.nan, np.nan)
     """
-    # Initialize a dictionary to store the selected facilities
-    selected_facilities = {}
-
-    # Select a facility for each row in the DataFrame
-    for _, row in tqdm(df.iterrows(), total=df.shape[0]):
-        selected_facility = _select_facility(
-            row=row,
-            unique_id_col=unique_id_col,
-            facilities_gdf=facilities_gdf,
-            row_destination_zone_col=row_destination_zone_col,
-            row_activity_type_col=row_activity_type_col,
-            gdf_facility_zone_col=gdf_facility_zone_col,
-            gdf_facility_type_col=gdf_facility_type_col,
-            gdf_sample_col=gdf_sample_col,
-            neighboring_zones=neighboring_zones,
-            fallback_type=fallback_type,
-            fallback_to_random=fallback_to_random,
-        )
-
-        # Update the dictionary with the selected facility
-        selected_facilities.update(selected_facility)
-
-    return selected_facilities
+    # TODO: update this to be configurable
+    n_threads = multiprocessing.cpu_count()
+    with Pool(n_threads) as p:
+        # Set to a large enough chunk size so that each thread
+        # has a sufficiently large amount of processing to do.
+        chunk_size = 16_000
+        d = {}
+        for start in tqdm(range(0, df.shape[0], chunk_size)):
+            chunk = df.iloc[start : start + chunk_size, :]
+            args = [
+                (
+                    row,
+                    unique_id_col,
+                    facilities_gdf,
+                    row_destination_zone_col,
+                    gdf_facility_zone_col,
+                    row_activity_type_col,
+                    gdf_facility_type_col,
+                    fallback_type,
+                    fallback_to_random,
+                    neighboring_zones,
+                    gdf_sample_col,
+                )
+                for _, row in chunk.iterrows()
+            ]
+            results = p.starmap(_select_facility, args)
+            for result in results:
+                d.update(result)
+        return d
 
 
 def map_activity_locations(
