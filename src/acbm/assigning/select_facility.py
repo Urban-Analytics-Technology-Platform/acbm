@@ -1,5 +1,4 @@
 import logging
-import multiprocessing
 from multiprocessing import Pool
 from typing import Optional, Tuple
 
@@ -204,10 +203,9 @@ def select_facility(
     dict[str, Tuple[str, Point ] | Tuple[float, float]]: Unique ID column as
         keys with selected facility ID and facility ID's geometry, or (np.nan, np.nan)
     """
-    # TODO: update this to be configurable
-    n_threads = multiprocessing.cpu_count()
-    with Pool(n_threads) as p:
-        # Set to a large enough chunk size so that each thread
+    # TODO: update this to be configurable, `None` is os.process_cpu_count()
+    with Pool(None) as p:
+        # Set to a large enough chunk size so that each process
         # has a sufficiently large amount of processing to do.
         chunk_size = 16_000
         d = {}
