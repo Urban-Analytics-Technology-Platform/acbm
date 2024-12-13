@@ -1,5 +1,3 @@
-from typing import Optional
-
 import numpy as np
 import pandas as pd
 
@@ -282,8 +280,8 @@ def get_pt_subscription(individuals: pd.DataFrame, age_threshold=60):
 def get_students(
     individuals: pd.DataFrame,
     activities: pd.DataFrame,
-    age_base_threshold: Optional[int] = None,
-    age_upper_threshold: Optional[int] = None,
+    age_base_threshold: int | None = None,
+    age_upper_threshold: int | None = None,
     activity: str = "education",
 ) -> pd.DataFrame:
     """
