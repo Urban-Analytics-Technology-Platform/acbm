@@ -310,7 +310,7 @@ def _adjust_distance(
     float
         The adjusted distance.
     """
-    return distance * (1 + ((detour_factor - 1) * np.exp(-decay_rate * distance)))
+    return distance * ((1 + (detour_factor - 1)) * np.exp(-decay_rate * distance))
 
 
 def zones_to_time_matrix(
