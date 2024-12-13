@@ -1040,7 +1040,7 @@ def main(config_file):
         9: "pt",  #'Non-local bus',
         10: "pt",  #'London Underground',
         11: "pt",  #'Surface Rail',
-        12: "car_passenger",  #'Taxi/minicab',
+        12: "taxi",  #'Taxi/minicab',
         13: "pt",  #'Other public transport',
         -10: "DEAD",
         -8: "NA",
