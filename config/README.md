@@ -3,31 +3,74 @@ The config.toml file has an explanation for each parameter. You can copy the tom
 ``` toml
 [parameters]
 seed = 0
-region = "leeds"  # this is used to query poi data from osm and to load in SPC data
-number_of_households = 5000  # how many people from the SPC do we want to run the model for? Comment out if you want to run the analysis on the entire SPC populaiton
-zone_id = "OA21CD" # "OA21CD": OA level, "MSOA11CD": MSOA level
-travel_times = true  # Only set to true if you have travel time matrix at the level specified in boundary_geography
-boundary_geography = "OA"
+ # this is used to query poi data from osm and to load in SPC data
+region = "leeds"
+# how many people from the SPC do we want to run the model for? Comment out if you want to run the analysis on the entire SPC populaiton
+number_of_households = 2500
+# "OA21CD": OA level, "MSOA11CD": MSOA level
+zone_id = "MSOA21CD"
+ # Only set to true if you have travel time matrix at the level specified in boundary_geography
+travel_times = false
+boundary_geography = "MSOA"
+# NTS years to use
+nts_years = [2019, 2021, 2022]
+# NTS regions to use
+nts_regions = [
+    'Yorkshire and the Humber',
+    'North West',
+    'North East',
+    'East Midlands',
+    'West Midlands',
+    'East of England',
+    'South East',
+    'South West']
+# nts day of the week to use
+# 1: Monday, 2: Tuesday, 3: Wednesday, 4: Thursday, 5: Friday, 6: Saturday, 7: Sunday
+nts_day_of_week = 3
+# what crs do we want the output to be in? (just add the number, e.g. 3857)
+output_crs = 3857
 
 [matching]
 # for optional and required columns, see the [iterative_match_categorical](https://github.com/Urban-Analytics-Technology-Platform/acbm/blob/ca181c54d7484ebe44706ff4b43c26286b22aceb/src/acbm/matching.py#L110) function
 # Do not add any column not listed below. You can only move a column from optional to require (or vise versa)
-required_columns = ["number_adults", "number_children"]
+required_columns = [
+    "number_adults",
+    "number_children",
+    "num_pension_age",
+]
 optional_columns = [
     "number_cars",
-    "num_pension_age",
     "rural_urban_2_categories",
     "employment_status",
     "tenure_status",
 ]
-n_matches = 10 # What is the maximum number of NTS matches we want for each SPC household?
+# What is the maximum number of NTS matches we want for each SPC household?
+n_matches = 10
 
 [work_assignment]
-use_percentages = true  # if true, optimization problem will try to minimize percentage difference at OD level (not absolute numbers). Recommended to set it to true
+commute_level = "MSOA"
+# if true, optimization problem will try to minimize percentage difference at OD level (not absolute numbers). Recommended to set it to true
+use_percentages = true
 # weights to add for each objective in the optimization problem
 weight_max_dev = 0.2
 weight_total_dev = 0.8
-max_zones = 8   # maximum number of feasible zones to include in the optimization problem (less zones makes problem smaller - so faster, but at the cost of a better solution)
+# maximum number of feasible zones to include in the optimization problem (less zones makes problem smaller - so faster, but at the cost of a better solution)
+max_zones = 10
 
+[postprocessing]
+pam_jitter = 30
+pam_min_duration = 10
+# for get_pt_subscription: everyone above this age has a subscription (pensioners get free travel)
+# TODO: more sophisticated approach
+pt_subscription_age = 66
+# to define if a person is a student:
+# eveyone below this age is a student
+student_age_base = 16
+# everyone below this age that has at least one "education" activity is a student
+student_age_upper = 30
+# eveyone who uses one of the modes below is classified as a passenger (isPassenger = True)
+modes_passenger =  ['car_passenger', 'taxi']
+# yearly state pension: for getting hhlIncome of pensioners
+state_pension = 11502
 
 ```
