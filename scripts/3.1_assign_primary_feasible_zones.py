@@ -82,7 +82,11 @@ def main(config_file):
     logger.info("Creating estimated travel times matrix")
     # Create a new travel time matrix based on distances between zones
     travel_time_estimates = zones_to_time_matrix(
-        zones=boundaries, id_col=config.zone_id, time_units="m"
+        zones=boundaries,
+        id_col=config.zone_id,
+        time_units="m",
+        detour_factor=config.feasible_assignment.detour_factor,
+        decay_rate=config.feasible_assignment.decay_rate,
     )
     logger.info("Travel time estimates created")
 
@@ -223,6 +227,8 @@ def main(config_file):
         filter_by_activity=True,
         activity_col="education_type",
         time_tolerance=0.3,
+        detour_factor=config.feasible_assignment.detour_factor,
+        decay_rate=config.feasible_assignment.decay_rate,
     )
 
     logger.info("Saving feasible zones for education activities")
@@ -250,6 +256,8 @@ def main(config_file):
         filter_by_activity=True,
         activity_col="dact",
         time_tolerance=0.3,
+        detour_factor=config.feasible_assignment.detour_factor,
+        decay_rate=config.feasible_assignment.decay_rate,
     )
 
     logger.info("Saving feasible zones for work activities")
