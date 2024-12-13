@@ -483,7 +483,8 @@ def intrazone_time(zones: gpd.GeoDataFrame, key_column: str) -> dict:
     # Calculate the area of each zone
     zones["area"] = zones["geometry"].area
     # Calculate the average distance within each zone
-    zones["average_dist"] = np.sqrt(zones["area"]) / 2
+    # sqrt(area) / 2 would be radius
+    zones["average_dist"] = np.sqrt(zones["area"]) / 1.5
 
     # Mode speeds in m/s
     mode_speeds_mps = {
