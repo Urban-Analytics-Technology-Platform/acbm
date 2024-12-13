@@ -65,6 +65,7 @@ def _select_facility(
         {unique_id_col: (np.nan, np.nan)} if no suitable facility is found.
     """
     # ----- Step 1. Find valid facilities in the destination zone
+    # Added to enable multiprocessing
     pd.options.mode.copy_on_write = True
     # Extract the destination zone from the input row
     destination_zone = row[row_destination_zone_col]
@@ -204,6 +205,7 @@ def select_facility(
         keys with selected facility ID and facility ID's geometry, or (np.nan, np.nan)
     """
     # TODO: update this to be configurable, `None` is os.process_cpu_count()
+    # TODO: check if this is deterministic for a given seed (or pass seed to pool)
     with Pool(None) as p:
         # Set to a large enough chunk size so that each process
         # has a sufficiently large amount of processing to do.
@@ -212,6 +214,7 @@ def select_facility(
         for start in tqdm(range(0, df.shape[0], chunk_size)):
             chunk = df.iloc[start : start + chunk_size, :]
             args = [
+                # TODO: add seed (derived from global seed as an argument)
                 (
                     row,
                     unique_id_col,
