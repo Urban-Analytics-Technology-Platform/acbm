@@ -16,6 +16,10 @@ from acbm.postprocessing.matsim import (
     calculate_percentage_remaining,
     filter_by_pid,
     filter_no_location,
+    get_hhlIncome,
+    get_passengers,
+    get_pt_subscription,
+    get_students,
     log_row_count,
 )
 
@@ -49,6 +53,126 @@ def main(config_file):
 
     # rename age_years to age in individuals
     individuals.rename(columns={"age_years": "age"}, inplace=True)
+
+    # ----- Add some person attributes to the individuals dataframe
+
+    # sex
+
+    # get sex column from spc
+    # TODO: add sex column upstream in the beginning of the pipeline
+    spc = pd.read_parquet(
+        acbm.root_path / f"data/external/spc_output/{config.region}_people_hh.parquet",
+        columns=["id", "household", "age_years", "sex", "salary_yearly"],
+    )
+
+    # change spc["sex"] column: 1 = male, 2 = female
+    spc["sex"] = spc["sex"].map({1: "male", 2: "female"})
+    # merge it on
+    individuals = individuals.merge(
+        spc[["id", "sex"]], left_on="pid", right_on="id", how="left"
+    )
+    individuals = individuals.drop(columns="id")
+
+    # isStudent
+    individuals = get_students(
+        individuals=individuals,
+        activities=activities,
+        age_base_threshold=config.postprocessing.student_age_base,
+        # age_upper_threshold = config.postprocessing.student_age_upper,
+        activity="education",
+    )
+
+    # isPassenger
+    individuals = get_passengers(
+        legs=legs, individuals=individuals, modes=config.postprocessing.modes_passenger
+    )
+
+    # hasPTsubscription
+
+    individuals = get_pt_subscription(
+        individuals=individuals, age_threshold=config.postprocessing.pt_subscription_age
+    )
+
+    ## hhlIncome
+    individuals = get_hhlIncome(
+        individuals=individuals,
+        individuals_with_salary=spc,
+        pension_age=config.postprocessing.pt_subscription_age,
+        pension=config.postprocessing.state_pension,
+    )
+
+    # ----- Add vehicle ownership attributes (car, bicycle) to the individuals dataframe
+    # TODO: move this upstream
+
+    # a. spc to nts match (used to get nts_id: spc_id match)
+    spc_with_nts = pd.read_parquet(
+        acbm.root_path / "data/interim/matching/spc_with_nts_trips.parquet"
+    )
+    nts_individuals = pd.read_parquet(
+        acbm.root_path / "data/external/nts/filtered/nts_individuals.parquet"
+    )
+
+    # b. Create a df with the vehicle ownership data (from the nts)
+
+    nts_individuals = nts_individuals[
+        ["IndividualID", "OwnCycleN_B01ID", "DrivLic_B02ID", "CarAccess_B01ID"]
+    ]
+
+    # Create CarAvailability colum
+
+    car_availability_mapping = {
+        1: "yes",  # Main driver of company car
+        2: "yes",  # Other main driver
+        3: "some",  # Not main driver of household car
+    }
+
+    nts_individuals["CarAvailability"] = (
+        nts_individuals["CarAccess_B01ID"].map(car_availability_mapping).fillna("no")
+    )
+    # Create BicycleAvailability column
+
+    bicycle_availability_mapping = {
+        1: "yes",  # Own a pedal cycle yourself
+        2: "some",  # Have use of household pedal cycle
+        3: "no",  # Have use of non-household pedal cycle
+    }
+
+    nts_individuals["BicycleAvailability"] = (
+        nts_individuals["OwnCycleN_B01ID"]
+        .map(bicycle_availability_mapping)
+        .fillna("no")
+    )
+
+    # Create hasLicence column
+    # 1: Full licence, 2: Provisional licence, 3: Other or none
+    nts_individuals["hasLicence"] = nts_individuals["DrivLic_B02ID"].apply(
+        lambda x: x == 1
+    )
+
+    # Keep only the columns we created
+    nts_individuals = nts_individuals[
+        ["IndividualID", "CarAvailability", "BicycleAvailability", "hasLicence"]
+    ]
+    nts_individuals.head(10)
+
+    # c. add spc id to nts_individuals
+
+    # create a df with spc_id and nts_id
+    spcid_to_ntsid = spc_with_nts[
+        ["id", "nts_ind_id"]
+    ].drop_duplicates()  # spc_with_nts has one row per travel day
+
+    # add the spc_id column
+    nts_individuals = nts_individuals.merge(
+        spcid_to_ntsid, left_on="IndividualID", right_on="nts_ind_id", how="inner"
+    ).drop(columns=["nts_ind_id"])
+
+    nts_individuals.rename(columns={"id": "spc_id"}, inplace=True)
+
+    # d. merge nts_individuals with individuals to get the vehicle ownership data
+    individuals = individuals.merge(
+        nts_individuals, left_on="pid", right_on="spc_id", how="left"
+    ).drop(columns=["spc_id", "IndividualID"])
 
     # We will be removing some rows in each planning operation. This function helps keep a
     # record of the number of rows in each table after each operation.
