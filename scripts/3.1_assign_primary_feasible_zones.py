@@ -226,7 +226,7 @@ def main(config_file):
         zone_id=config.zone_id,
         filter_by_activity=True,
         activity_col="education_type",
-        time_tolerance=0.3,
+        time_tolerance=0.2,
         detour_factor=config.feasible_assignment.detour_factor,
         decay_rate=config.feasible_assignment.decay_rate,
     )
@@ -255,7 +255,7 @@ def main(config_file):
         zone_id=config.zone_id,
         filter_by_activity=True,
         activity_col="dact",
-        time_tolerance=0.3,
+        time_tolerance=0.2,
         detour_factor=config.feasible_assignment.detour_factor,
         decay_rate=config.feasible_assignment.decay_rate,
     )
