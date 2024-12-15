@@ -1,5 +1,7 @@
+import os
 import subprocess
 
+import requests
 from pyrosm import get_data
 
 from acbm.cli import acbm_cli
@@ -11,7 +13,20 @@ def main(config_file):
     config = load_and_setup_config(config_file)
     logger = config.get_logger("preprocessing", __file__)
     logger.info("Getting OSM data")
-    fp = get_data(config.region, directory=config.osmox_path)
+    try:
+        fp = get_data(config.region, directory=config.osmox_path)
+    except Exception as e:
+        logger.error(e)
+        logger.info(f"Trying manual download of region: {config.region}")
+        url = f"http://download.geofabrik.de/europe/united-kingdom/england/{config.region}-latest.osm.pbf"
+        filename = url.split("/")[-1]
+        fp = os.path.join(config.osmox_path, filename)
+        response = requests.get(url, stream=True)
+        response.raise_for_status()
+        with open(fp, "wb") as file:
+            for chunk in response.iter_content(chunk_size=8192):
+                file.write(chunk)
+        logger.info(f"Region ({config.region}) successfully downloaded to: {fp}")
     logger.info("Running osmox")
     subprocess.run(
         [
