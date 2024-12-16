@@ -291,7 +291,7 @@ def plot_desire_lines(
     )
 
     # convert crs to metric
-    activity_chains_plot = activity_chains_plot.to_crs(epsg=3857)
+    activity_chains_plot = activity_chains_plot.to_crs(crs=crs)
     # calculate the length of the line_geometry in meters
     activity_chains_plot["length"] = activity_chains_plot["line_geometry"].length
 
@@ -429,7 +429,7 @@ def plot_scatter_actual_reported(
     activity_chains_plot = activity_chains_plot.set_geometry("line_geometry", crs=crs)
 
     # convert crs to metric
-    activity_chains_plot = activity_chains_plot.to_crs(epsg=3857)
+    activity_chains_plot = activity_chains_plot.to_crs(crs=crs)
     # calculate the length of the line_geometry in meters
     activity_chains_plot["length"] = activity_chains_plot["line_geometry"].length
 
