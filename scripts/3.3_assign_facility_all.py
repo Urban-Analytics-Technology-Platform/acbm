@@ -6,6 +6,7 @@ from acbm.assigning.plots import plot_desire_lines, plot_scatter_actual_reported
 from acbm.assigning.select_facility import map_activity_locations, select_facility
 from acbm.cli import acbm_cli
 from acbm.config import load_and_setup_config
+from acbm.utils import get_travel_times
 
 
 @acbm_cli
@@ -336,6 +337,28 @@ def main(config_file):
             save_dir=config.output_path / "plots/assigning/",
         )
 
+    # Add travel times
+    tte = get_travel_times(config)
+    activity_chains_all = activity_chains_all.merge(
+        tte[[tte.columns[0], tte.columns[1], "mode", "time"]],
+        left_on=["ozone", "dzone", "mode"],
+        right_on=[tte.columns[0], tte.columns[1], "mode"],
+        how="left",
+    )
+    # Iterate over each unique activity type and create a plot
+    for activity_type in unique_activity_types:
+        plot_scatter_actual_reported(
+            activities=activity_chains_all,
+            activity_type=activity_type,
+            activity_type_col="destination activity",
+            x_col="TripTotalTime",
+            y_col="time",
+            x_label="Reported Travel TIme (min)",
+            y_label="Modelled time (min)",
+            crs=f"EPSG:{config.output_crs}",
+            title_prefix="Scatter plot of TripTotalTime vs. Modelled time",
+            save_dir=config.output_path / "plots/assigning/",
+        )
     # ....
 
     # Plot 3: Desire lines between start and end locations
