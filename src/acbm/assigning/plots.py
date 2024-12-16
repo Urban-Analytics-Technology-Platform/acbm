@@ -390,6 +390,7 @@ def plot_scatter_actual_reported(
     crs: str,
     save_dir: str | Path | None = None,
     display: bool = False,
+    y_scale: float = 1 / 1000,
 ):
     """
     Plots scatter plots with trend lines for different modes in activity chains.
@@ -451,11 +452,11 @@ def plot_scatter_actual_reported(
         # Plot the scatter plot
         ax = axs[i]
         ax.scatter(
-            subset_mode[x_col], subset_mode[y_col] / 1000, alpha=0.1, lw=0
+            subset_mode[x_col], subset_mode[y_col] * y_scale, alpha=0.1, lw=0
         )  # Use a single color for all plots
 
         # Calculate and plot the trend line
-        z = np.polyfit(subset_mode[x_col], subset_mode[y_col] / 1000, 1)
+        z = np.polyfit(subset_mode[x_col], subset_mode[y_col] * y_scale, 1)
         p = np.poly1d(z)
         ax.plot(subset_mode[x_col], p(subset_mode[x_col]), "r--")
 

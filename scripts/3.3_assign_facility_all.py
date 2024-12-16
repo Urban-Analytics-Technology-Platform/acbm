@@ -358,6 +358,7 @@ def main(config_file):
             crs=f"EPSG:{config.output_crs}",
             title_prefix="Scatter plot of TripTotalTime vs. Modelled time",
             save_dir=config.output_path / "plots/assigning/",
+            y_scale=1.0,
         )
     # ....
 
