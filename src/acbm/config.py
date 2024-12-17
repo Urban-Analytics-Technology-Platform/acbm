@@ -28,6 +28,8 @@ class Parameters(BaseModel):
     nts_regions: list[str]
     nts_day_of_week: int
     output_crs: int
+    tolerance_work: float | None = None
+    tolerance_edu: float | None = None
 
 
 @dataclass(frozen=True)

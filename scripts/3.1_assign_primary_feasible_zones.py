@@ -200,7 +200,9 @@ def main(config_file):
         zone_id=config.zone_id,
         filter_by_activity=True,
         activity_col="education_type",
-        time_tolerance=0.3,
+        time_tolerance=config.parameters.tolerance_edu
+        if config.parameters.tolerance_edu is not None
+        else 0.3,
     )
 
     logger.info("Saving feasible zones for education activities")
@@ -225,7 +227,9 @@ def main(config_file):
         zone_id=config.zone_id,
         filter_by_activity=True,
         activity_col="dact",
-        time_tolerance=0.3,
+        time_tolerance=config.parameters.tolerance_work
+        if config.parameters.tolerance_work is not None
+        else 0.3,
     )
 
     logger.info("Saving feasible zones for work activities")
