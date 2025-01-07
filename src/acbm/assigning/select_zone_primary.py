@@ -241,7 +241,7 @@ def _get_zones_using_time_estimate(
     str
         The zone that has the estimated time closest to the given time.
     """
-    acceptable_modes = ["car", "car_passenger", "pt", "walk", "cycle"]
+    acceptable_modes = ["car", "car_passenger", "pt", "walk", "cycle", "taxi"]
 
     if mode is not None and mode not in acceptable_modes:
         error_message = f"Invalid mode: {mode}. Mode must be one of {acceptable_modes}."
