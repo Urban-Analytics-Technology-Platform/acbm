@@ -27,7 +27,7 @@ class Parameters(BaseModel):
     boundary_geography: str
     nts_years: list[int]
     nts_regions: list[str]
-    nts_day_of_week: int
+    nts_days_of_week: list[int]
     output_crs: int
     tolerance_work: float | None = None
     tolerance_edu: float | None = None

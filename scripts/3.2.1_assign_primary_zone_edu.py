@@ -54,7 +54,7 @@ def main(config_file):
         config, columns=cols_for_assignment_edu()
     )
     activity_chains = activity_chains[
-        activity_chains["TravDay"] == config.parameters.nts_day_of_week
+        activity_chains["TravDay"].isin(config.parameters.nts_days_of_week)
     ]
 
     logger.info("Filtering activity chains for trip purpose: education")
