@@ -16,6 +16,7 @@ from acbm.preprocessing import (
     transform_by_group,
     truncate_values,
 )
+from acbm.utils import households_with_common_travel_days
 
 
 @acbm_cli
@@ -237,8 +238,18 @@ def main(config_file):
     nts_households = nts_filter_by_region(nts_households, psu, regions)
     nts_trips = nts_filter_by_region(nts_trips, psu, regions)
 
-    # Create dictionaries of key value pairs
+    # Ensure that the households have at least one day in `nts_days_of_week` that
+    # all household members have trips for
+    hids = households_with_common_travel_days(
+        nts_trips, config.parameters.nts_days_of_week
+    )
 
+    # Subset individuals and households given filtering of trips
+    nts_trips = nts_trips[nts_trips["HouseholdID"].isin(hids)]
+    nts_individuals = nts_individuals[nts_individuals["HouseholdID"].isin(hids)]
+    nts_households = nts_households[nts_households["HouseholdID"].isin(hids)]
+
+    # Create dictionaries of key value pairs
     """
     guide to the dictionaries:
 
