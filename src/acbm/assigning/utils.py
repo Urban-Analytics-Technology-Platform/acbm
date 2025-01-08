@@ -11,7 +11,6 @@ def cols_for_assignment_all() -> list[str]:
     """Gets activity chains with subset of columns required for assignment."""
     return [
         *cols_for_assignment_edu(),
-        "household",
         "oact",
         "nts_ind_id",
         "nts_hh_id",
@@ -25,12 +24,13 @@ def cols_for_assignment_all() -> list[str]:
 def cols_for_assignment_edu() -> list[str]:
     """Gets activity chains with subset of columns required for assignment."""
     return [
+        "id",
+        "household",
         "TravDay",
         "OA11CD",
         "dact",
         "mode",
         "tst",
-        "id",
         "seq",
         "TripTotalTime",
         "education_type",
@@ -43,15 +43,25 @@ def cols_for_assignment_work() -> list[str]:
 
 
 def activity_chains_for_assignment(
-    config: Config, columns: list[str] | None = None
+    config: Config, columns: list[str] | None = None, subset_to_chosen_day: bool = False
 ) -> pd.DataFrame:
     """Gets activity chains with subset of columns required for assignment."""
     if columns is None:
         columns = cols_for_assignment_all()
 
-    return pd.read_parquet(
+    activity_chains = pd.read_parquet(
         config.spc_with_nts_trips_filepath,
         columns=columns,
+    )
+    if not subset_to_chosen_day:
+        return activity_chains
+
+    return activity_chains.merge(
+        pd.read_parquet(
+            config.output_path / "interim" / "assigning" / "chosen_trav_day.parquet"
+        ),
+        on=["id", "household", "TravDay"],
+        how="inner",
     )
 
 

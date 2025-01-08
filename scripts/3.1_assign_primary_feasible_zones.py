@@ -1,6 +1,7 @@
 import pickle as pkl
 
 import geopandas as gpd
+import numpy as np
 import pandas as pd
 
 from acbm.assigning.feasible_zones_primary import get_possible_zones
@@ -28,11 +29,23 @@ def main(config_file):
     activity_chains = activity_chains_for_assignment(config)
     logger.info("Activity chains loaded")
 
-    # Filter to a specific day of the week
     logger.info("Filtering activity chains to a specific day of the week")
-    activity_chains = activity_chains[
-        activity_chains["TravDay"].isin(config.parameters.nts_days_of_week)
-    ]
+
+    # Generate random sample of days by household
+    activity_chains.merge(
+        activity_chains.groupby(["household"])["TravDay"]
+        .apply(np.unique)
+        .apply(np.random.choice)
+        .rename("ChosenTravDay"),
+        left_on=["household", "TravDay"],
+        right_on=["household", "ChosenTravDay"],
+        how="inner",
+    )[["id", "household", "TravDay"]].drop_duplicates().to_parquet(
+        config.output_path / "interim" / "assigning" / "chosen_trav_day.parquet"
+    )
+
+    # Filter to chosen day
+    activity_chains = activity_chains_for_assignment(config, subset_to_chosen_day=True)
 
     # --- Study area boundaries
 
