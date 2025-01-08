@@ -18,6 +18,7 @@ def cols_for_assignment_all() -> list[str]:
         "age_years",
         "TripDisIncSW",
         "tet",
+        "DayID",
     ]
 
 
