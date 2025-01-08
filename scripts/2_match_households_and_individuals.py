@@ -245,7 +245,10 @@ def main(config_file):
     )
 
     # Subset individuals and households given filtering of trips
-    nts_trips = nts_trips[nts_trips["HouseholdID"].isin(hids)]
+    nts_trips = nts_trips[
+        nts_trips["HouseholdID"].isin(hids)
+        & nts_trips["TravDay"].isin(config.parameters.nts_days_of_week)
+    ]
     nts_individuals = nts_individuals[nts_individuals["HouseholdID"].isin(hids)]
     nts_households = nts_households[nts_households["HouseholdID"].isin(hids)]
 
