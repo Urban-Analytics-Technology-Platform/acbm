@@ -234,6 +234,7 @@ def main(config_file):
 
     regions = config.parameters.nts_regions
 
+    # TODO: Currently this only seems to work for 2019, check this
     nts_individuals = nts_filter_by_region(nts_individuals, psu, regions)
     nts_households = nts_filter_by_region(nts_households, psu, regions)
     nts_trips = nts_filter_by_region(nts_trips, psu, regions)
