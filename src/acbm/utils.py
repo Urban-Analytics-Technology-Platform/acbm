@@ -59,6 +59,8 @@ def households_with_common_travel_days(
         .apply(
             lambda common_days: [day for day in common_days if day in days]
             if common_days is not None
+            and common_days != {pd.NA}
+            and common_days != {np.nan}
             else []
         )
         .apply(lambda common_days: common_days if common_days else pd.NA)
