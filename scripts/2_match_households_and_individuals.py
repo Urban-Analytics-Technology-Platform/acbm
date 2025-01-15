@@ -16,7 +16,10 @@ from acbm.preprocessing import (
     transform_by_group,
     truncate_values,
 )
-from acbm.utils import households_with_common_travel_days
+from acbm.utils import (
+    households_with_common_travel_days,
+    households_with_travel_days_in_nts_weeks,
+)
 
 
 @acbm_cli
@@ -241,9 +244,14 @@ def main(config_file):
 
     # Ensure that the households have at least one day in `nts_days_of_week` that
     # all household members have trips for
-    hids = households_with_common_travel_days(
-        nts_trips, config.parameters.nts_days_of_week
-    )
+    if config.parameters.common_household_day:
+        hids = households_with_common_travel_days(
+            nts_trips, config.parameters.nts_days_of_week
+        )
+    else:
+        hids = households_with_travel_days_in_nts_weeks(
+            nts_trips, config.parameters.nts_days_of_week
+        )
 
     # Subset individuals and households given filtering of trips
     nts_trips = nts_trips[

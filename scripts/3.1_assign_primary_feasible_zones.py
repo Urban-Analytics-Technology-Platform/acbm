@@ -1,13 +1,13 @@
 import pickle as pkl
 
 import geopandas as gpd
-import numpy as np
 import pandas as pd
 
 from acbm.assigning.feasible_zones_primary import get_possible_zones
 from acbm.assigning.utils import (
     activity_chains_for_assignment,
     get_activities_per_zone,
+    get_chosen_day,
     intrazone_time,
     replace_intrazonal_travel_time,
     zones_to_time_matrix,
@@ -32,15 +32,7 @@ def main(config_file):
     logger.info("Filtering activity chains to a specific day of the week")
 
     # Generate random sample of days by household
-    activity_chains.merge(
-        activity_chains.groupby(["household"])["TravDay"]
-        .apply(np.unique)
-        .apply(np.random.choice)
-        .rename("ChosenTravDay"),
-        left_on=["household", "TravDay"],
-        right_on=["household", "ChosenTravDay"],
-        how="inner",
-    )[["id", "household", "TravDay"]].drop_duplicates().to_parquet(
+    get_chosen_day(config).to_parquet(
         config.output_path / "interim" / "assigning" / "chosen_trav_day.parquet"
     )
 
