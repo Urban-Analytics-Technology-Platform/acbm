@@ -226,21 +226,27 @@ def main(config_file):
 
     logger.info("Filtering NTS data by specified year(s)")
 
+    logger.info(f"Total NTS households: {nts_households.shape[0]:,.0f}")
     years = config.parameters.nts_years
 
     nts_individuals = nts_filter_by_year(nts_individuals, psu, years)
     nts_households = nts_filter_by_year(nts_households, psu, years)
     nts_trips = nts_filter_by_year(nts_trips, psu, years)
 
+    logger.info(
+        f"Total NTS households (after year filtering): {nts_households.shape[0]:,.0f}"
+    )
     # #### Filter by geography
-    #
 
     regions = config.parameters.nts_regions
 
-    # TODO: Currently this only seems to work for 2019, check this
     nts_individuals = nts_filter_by_region(nts_individuals, psu, regions)
     nts_households = nts_filter_by_region(nts_households, psu, regions)
     nts_trips = nts_filter_by_region(nts_trips, psu, regions)
+
+    logger.info(
+        f"Total NTS households (after region filtering): {nts_households.shape[0]:,.0f}"
+    )
 
     # Ensure that the households have at least one day in `nts_days_of_week` that
     # all household members have trips for
