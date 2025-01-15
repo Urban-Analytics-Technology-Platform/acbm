@@ -342,7 +342,7 @@ def match_remaining_individuals(
         rows_df2 = df2
         if show_progress:
             # Print the iteration number and the number of keys in the dict
-            print(
+            logger.info(
                 f"Matching remaining individuals, {i * chunk_size} out of: {len(remaining_ids)}"
             )
 
