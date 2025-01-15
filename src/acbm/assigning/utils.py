@@ -579,6 +579,23 @@ def replace_intrazonal_travel_time(
 def get_chosen_day(config: Config) -> pd.DataFrame:
     """Gets the chosen day for population given config."""
     acs = pl.DataFrame(activity_chains_for_assignment(config))
+
+    if config.parameters.common_household_day:
+        return (
+            acs.join(
+                acs.group_by("household")
+                .agg(pl.col("TravDay").unique().sample(1, with_replacement=True))
+                .explode("TravDay"),
+                on=["household", "TravDay"],
+                how="inner",
+            )
+            .select(["id", "TravDay"])
+            .unique()
+            .sort("id")
+            .to_pandas()
+        )
+
+    # For any TravDay and modelling increased households
     work_days = (
         acs.filter(pl.col("dact").eq("work"))
         .group_by("id")
@@ -662,4 +679,10 @@ def get_chosen_day(config: Config) -> pd.DataFrame:
         ]
     )
 
-    return acs_combine.select(["id", "ChosenTravDay"]).unique().sort("id").to_pandas()
+    return (
+        acs_combine.select(["id", "ChosenTravDay"])
+        .unique()
+        .rename({"ChosenTravDay": "TravDay"})
+        .sort("id")
+        .to_pandas()
+    )

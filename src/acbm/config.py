@@ -32,7 +32,7 @@ class Parameters(BaseModel):
     output_crs: int
     tolerance_work: float | None = None
     tolerance_edu: float | None = None
-    common_household_day: bool = False
+    common_household_day: bool = True
     part_time_work_prob: float = 0.7
 
     @field_validator("output_crs")
