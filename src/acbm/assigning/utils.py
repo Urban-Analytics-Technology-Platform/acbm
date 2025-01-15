@@ -61,7 +61,7 @@ def activity_chains_for_assignment(
         pd.read_parquet(
             config.output_path / "interim" / "assigning" / "chosen_trav_day.parquet"
         ),
-        on=["id", "household", "TravDay"],
+        on=["id", "TravDay"],
         how="inner",
     )
 
