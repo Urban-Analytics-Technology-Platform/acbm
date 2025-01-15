@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import polars as pl
 from sklearn.metrics import mean_squared_error
 
 from acbm.config import Config
@@ -66,5 +67,38 @@ def households_with_common_travel_days(
         .apply(lambda common_days: common_days if common_days else pd.NA)
         .dropna()
         .reset_index()[hid]
+        .to_list()
+    )
+
+
+def households_with_travel_days_in_nts_weeks(
+    nts_trips: pd.DataFrame, days: list[int], hid="HouseholdID", pid="IndividualID"
+) -> list[int]:
+    return (
+        pl.DataFrame(nts_trips)
+        .group_by([hid, pid])
+        .agg(pl.col("TravDay").unique())
+        .select(
+            [
+                hid,
+                pid,
+                pl.col("TravDay").list.drop_nulls().list.set_intersection(pl.lit(days)),
+            ]
+        )
+        .select(
+            [
+                hid,
+                pid,
+                pl.when(pl.col("TravDay").list.len().eq(0))
+                .then(None)
+                .otherwise(pl.col("TravDay"))
+                .alias("TravDay"),
+            ]
+        )
+        .group_by(hid)
+        .agg(pl.col("TravDay").list.len().ne(0).all())
+        .filter(pl.col("TravDay").eq(True))
+        .get_column(hid)
+        .sort()
         .to_list()
     )
