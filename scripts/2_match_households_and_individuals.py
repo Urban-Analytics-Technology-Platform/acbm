@@ -7,7 +7,7 @@ import pandas as pd
 from acbm.assigning.utils import cols_for_assignment_all
 from acbm.cli import acbm_cli
 from acbm.config import load_and_setup_config
-from acbm.matching import MatcherExact, match_individuals
+from acbm.matching import MatcherExact, match_individuals, match_remaining_individuals
 from acbm.preprocessing import (
     count_per_group,
     nts_filter_by_region,
@@ -952,6 +952,19 @@ def main(config_file):
             matches_hh=matches_hh_level_sample,
             show_progress=True,
         )
+
+        # match remaining individuals
+        remaining_ids = spc_edited.loc[
+            ~spc_edited.index.isin(matches_ind.keys()), "id"
+        ].to_list()
+        matches_remaining_ind = match_remaining_individuals(
+            df1=spc_edited,
+            df2=nts_individuals,
+            matching_columns=["age_group", "sex"],
+            remaining_ids=remaining_ids,
+            show_progress=True,
+        )
+        matches_ind.update(matches_remaining_ind)
 
         # save random sample
         with open(
