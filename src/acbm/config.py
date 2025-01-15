@@ -9,6 +9,7 @@ from typing import Tuple
 import geopandas as gpd
 import jcs
 import numpy as np
+import polars as pl
 import tomlkit
 from pydantic import BaseModel, Field, field_serializer, field_validator
 from pyproj import CRS
@@ -31,6 +32,8 @@ class Parameters(BaseModel):
     output_crs: int
     tolerance_work: float | None = None
     tolerance_edu: float | None = None
+    common_household_day: bool = False
+    part_time_work_prob: float = 0.7
 
     @field_validator("output_crs")
     def validate_output_crs(output_crs: int) -> int:
@@ -371,6 +374,8 @@ class Config(BaseModel):
         try:
             np.random.seed(self.seed)
             random.seed(self.seed)
+            pl.set_random_seed(self.seed)
+
         except Exception as err:
             msg = f"config does not provide a rng seed with err: {err}"
             raise ValueError(msg) from err

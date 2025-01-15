@@ -42,14 +42,14 @@ def get_travel_times(config: Config, use_estimates: bool = False) -> pd.DataFram
 
 
 def households_with_common_travel_days(
-    nts_trips: pd.DataFrame, days: list[int]
+    nts_trips: pd.DataFrame, days: list[int], hid="HouseholdID", pid="IndividualID"
 ) -> list[int]:
     return (
-        nts_trips.groupby(["HouseholdID", "IndividualID"])["TravDay"]
+        nts_trips.groupby([hid, pid])["TravDay"]
         .apply(list)
         .map(set)
         .to_frame()
-        .groupby(["HouseholdID"])["TravDay"]
+        .groupby([hid])["TravDay"]
         .apply(
             lambda sets_of_days: set.intersection(*sets_of_days)
             if set.intersection(*sets_of_days)
@@ -65,6 +65,6 @@ def households_with_common_travel_days(
         )
         .apply(lambda common_days: common_days if common_days else pd.NA)
         .dropna()
-        .reset_index()["HouseholdID"]
+        .reset_index()[hid]
         .to_list()
     )

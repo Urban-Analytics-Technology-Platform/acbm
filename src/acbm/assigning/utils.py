@@ -3,6 +3,7 @@ from typing import List, Optional
 import geopandas as gpd
 import numpy as np
 import pandas as pd
+import polars as pl
 
 from acbm.config import Config
 
@@ -573,3 +574,92 @@ def replace_intrazonal_travel_time(
 
     # Return the modified DataFrame
     return travel_times_copy
+
+
+def get_chosen_day(config: Config) -> pd.DataFrame:
+    """Gets the chosen day for population given config."""
+    acs = pl.DataFrame(activity_chains_for_assignment(config))
+    work_days = (
+        acs.filter(pl.col("dact").eq("work"))
+        .group_by("id")
+        .agg(pl.col("TravDay").unique())
+        .select(["id", pl.col("TravDay").list.drop_nulls().list.sample(n=1)])
+        .explode("TravDay")
+        .rename({"TravDay": "TravDayWork"})
+    )
+    non_work_days = (
+        acs.filter(~pl.col("dact").eq("work"))
+        .group_by("id")
+        .agg(pl.col("TravDay").unique())
+        .select(["id", pl.col("TravDay").list.drop_nulls().list.sample(n=1)])
+        .explode("TravDay")
+        .rename({"TravDay": "TravDayNonWork"})
+    )
+
+    any_days = (
+        acs.group_by("id")
+        .agg(pl.col("TravDay").unique())
+        .select(["id", pl.col("TravDay").list.drop_nulls()])
+        .select(
+            [
+                "id",
+                pl.when(pl.col("TravDay").list.len() > 0)
+                # Note: this has to be set to with_replacement despite non-empty check
+                .then(pl.col("TravDay").list.sample(n=1, with_replacement=True))
+                .otherwise(None),
+            ]
+        )
+        .explode("TravDay")
+        .rename({"TravDay": "TravDayAny"})
+    ).sort("id")
+
+    # Combine day choices for different conditions
+    acs_combine = (
+        acs.join(work_days, on="id", how="left", coalesce=True)
+        .join(non_work_days, on="id", how="left", coalesce=True)
+        .join(any_days, on="id", how="left", coalesce=True)
+        .join(
+            pl.scan_parquet(config.spc_combined_filepath)
+            .select(["id", "pwkstat"])
+            .collect(),
+            on="id",
+        )
+    )
+
+    # Choose a day given pwkstat
+    acs_combine = acs_combine.with_columns(
+        [
+            # If pwkstat = 1 (full time)
+            # and a work travel day is available
+            pl.when(pl.col("pwkstat").eq(1) & pl.col("TravDayWork").is_not_null())
+            .then(pl.col("TravDayWork"))
+            .otherwise(
+                # If pwkstat = 1 (full time)
+                # and a work travel day is NOT available
+                pl.when(pl.col("pwkstat").eq(1) & pl.col("TravDayWork").is_null())
+                .then(pl.col("TravDayAny"))
+                .otherwise(
+                    # If pwkstat = 2 (part time)
+                    # and a work travel day is available
+                    # and a non-work travel day is available
+                    pl.when(
+                        pl.col("pwkstat").eq(2)
+                        & pl.col("TravDayWork").is_not_null()
+                        & pl.col("TravDayNonWork").is_not_null()
+                    )
+                    .then(
+                        # Sample either TravDayWork or TravDayNonWork
+                        # stochastically given config
+                        pl.col("TravDayWork")
+                        # TODO: update from config
+                        if np.random.random() < 1
+                        else pl.col("TravDayNonWork")
+                    )
+                    .otherwise(pl.col("TravDayAny"))
+                )
+            )
+            .alias("ChosenTravDay")
+        ]
+    )
+
+    return acs_combine.select(["id", "ChosenTravDay"]).unique().sort("id").to_pandas()
