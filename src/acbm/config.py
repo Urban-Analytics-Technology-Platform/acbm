@@ -4,7 +4,7 @@ from hashlib import sha256
 from logging import Logger
 from multiprocessing import cpu_count
 from pathlib import Path
-from typing import Tuple
+from typing import Any, Tuple
 
 import geopandas as gpd
 import jcs
@@ -152,6 +152,23 @@ class Config(BaseModel):
         description="Config: parameters for postprocessing."
     )
     paths: PathParams | None = Field(description="Path overrides.", default=None)
+
+    def flatten(self) -> dict:
+        def _flatten(obj: Any, parent_key: str = "", sep: str = "|") -> dict[str, any]:
+            """Flatten config and return as key values."""
+            items = []
+            if isinstance(obj, BaseModel):
+                obj = obj.model_dump()
+            if isinstance(obj, dict):
+                for key, value in obj.items():
+                    new_key = f"{parent_key}{sep}{key}" if parent_key else key
+                    if isinstance(value, (BaseModel, dict)):
+                        items.extend(_flatten(value, new_key, sep=sep).items())
+                    else:
+                        items.append((new_key, value))
+            return dict(items)
+
+        return _flatten(self)
 
     def make_dirs(self):
         """Makes all directories requried from config"""
