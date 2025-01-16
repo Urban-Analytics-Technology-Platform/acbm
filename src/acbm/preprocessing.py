@@ -73,7 +73,6 @@ def nts_filter_by_year(
     years: list
         The chosen year(s)
     """
-    # return data.loc[data["SurveyYear"].isin(years)]
     # Check that all values of 'years' exist in the 'SurveyYear' column of 'psu'
 
     # Get the unique years in the 'SurveyYear' column of 'psu'
