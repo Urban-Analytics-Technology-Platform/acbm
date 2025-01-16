@@ -1,4 +1,6 @@
+import glob
 import os
+from pathlib import Path
 
 import click
 import numpy as np
@@ -6,7 +8,18 @@ import pandas as pd
 import polars as pl
 
 import acbm
-from acbm.config import load_config
+from acbm.config import Config, load_and_setup_config, load_config
+
+
+def config_summary():
+    configs = {}
+    for path in glob.glob("data/outputs/*"):
+        try:
+            config = load_and_setup_config(Path(path) / "config.toml")
+            configs[config.id] = config.flatten()
+        except Exception:
+            continue
+    print(pd.DataFrame.from_records(configs).to_markdown())
 
 
 def print_stats(counts, lcol, rcol):
@@ -23,18 +36,114 @@ def print_stats(counts, lcol, rcol):
     print("The MAE value is: ", mes)
 
 
+def print_stats_work(config: Config):
+    # SPC
+    print()
+    print("Expected compared to actual numbers of people travelling to work...")
+    print(
+        "Total expected people travelling to work (SPC pwkstat 1 or 2): {:,.0f}".format(
+            pl.scan_parquet(config.spc_combined_filepath)
+            .select(pl.col("pwkstat").is_in([1, 2]).sum())
+            .collect()
+            .to_numpy()
+            .squeeze()
+        )
+    )
+
+    # SPC with nts trips (after matching)
+    print("\nSPC with NTS trips (subsetted to chosen day)")
+    from acbm.assigning.utils import activity_chains_for_assignment
+
+    acs_no_subset = pl.DataFrame(
+        activity_chains_for_assignment(config, subset_to_chosen_day=False)
+    )
+    acs = pl.DataFrame(
+        activity_chains_for_assignment(config, subset_to_chosen_day=True)
+    )
+    print(
+        "Total with travel day: {:,.0f} ({:.1%}), total: {:,.0f}".format(
+            acs.unique("id").shape[0],
+            acs.unique("id").shape[0] / acs_no_subset.unique("id").shape[0],
+            acs_no_subset.unique("id").shape[0],
+        )
+    )
+    df = (
+        acs.select(["id", "dact"])
+        .group_by("id")
+        .agg(pl.lit("work").is_in(pl.col("dact")).alias("any_work_activity"))
+    )
+    any_work_activity = df.select("any_work_activity").sum().to_numpy().squeeze()
+    print(
+        "Any work activity: {:,.0f} ({:,.1%}), Total people: {:,.0f}".format(
+            any_work_activity,
+            (any_work_activity / acs.unique("id").shape[0]),
+            acs.unique("id").shape[0],
+        )
+    )
+
+    # Final output (legs.csv)
+    print("\nFinal legs.csv")
+    legs = pl.scan_csv(config.output_path / "legs.csv")
+    df = (
+        legs.select(["pid", "purp"])
+        .group_by("pid")
+        .agg(pl.lit("work").is_in(pl.col("purp")).alias("any_work_activity"))
+        .collect()
+    )
+    any_work_activity = df.select("any_work_activity").sum().to_numpy().squeeze()
+    print(
+        "Any work activity: {:,.0f} ({:,.1%}), Total people (in legs.csv): {:,.0f}".format(
+            any_work_activity,
+            (any_work_activity / df.unique("pid").shape[0]),
+            df.unique("pid").shape[0],
+        )
+    )
+
+
 @click.command()
-@click.option("--id", prompt="Run ID for stats to be generated from", type=str)
-def main(id: str):
+@click.option(
+    "--id",
+    # prompt="Run ID for stats to be generated from",
+    type=str,
+    required=False,
+    default=None,
+)
+@click.option(
+    "--config-file",
+    # prompt="Config file to generate run ID for stats to be generated from",
+    type=str,
+    default=None,
+    required=False,
+)
+# To view the output table, pipe into less with -S
+# $ python scripts/validation_stats.py --summary | less -S
+@click.option(
+    "--summary",
+    "-s",
+    is_flag=True,
+    required=False,
+)
+def main(id: str | None, config_file: str | None, summary: bool):
+    if summary:
+        config_summary()
+        return
+
+    if id is not None and config_file is not None:
+        print("Specify one of 'id' and 'config-file'.")
+        exit(1)
     pd.options.mode.copy_on_write = True
     os.chdir(acbm.root_path)
-    config = load_config(f"data/outputs/{id}/config.toml")
+    if config_file is None:
+        config = load_config(f"data/outputs/{id}/config.toml")
+    else:
+        config = load_config(config_file)
     trav_day = 3
     spc = pl.read_parquet(config.interim_path / "leeds_people_hh.parquet")
     df = pl.read_parquet(
         config.interim_path / "matching" / "spc_with_nts_trips.parquet"
     ).join(spc.select(["id", "pwkstat"]), on="id", how="left", coalesce=True)
 
+    print(f"> Config ID: {config.id}")
     print("Summary stats for SPC and NTS matched people and activities...")
     print(
         "% of people with a NTS match: {:.1%}".format(
@@ -128,6 +237,9 @@ def main(id: str):
     print(both_norms)
     print("\nStats for proportions (by total origin)...")
     print_stats(both_norms, "census_norm", "acbm_norm")
+
+    # print stats work
+    print_stats_work(config)
 
 
 if __name__ == "__main__":
