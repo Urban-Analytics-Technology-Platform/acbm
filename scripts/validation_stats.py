@@ -138,7 +138,9 @@ def main(id: str | None, config_file: str | None, summary: bool):
     else:
         config = load_config(config_file)
     trav_day = 3
-    spc = pl.read_parquet(config.interim_path / "leeds_people_hh.parquet")
+    spc = pl.read_parquet(
+        config.interim_path / f"{config.region.lower()}_people_hh.parquet"
+    )
     df = pl.read_parquet(
         config.interim_path / "matching" / "spc_with_nts_trips.parquet"
     ).join(spc.select(["id", "pwkstat"]), on="id", how="left", coalesce=True)
