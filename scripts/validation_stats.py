@@ -201,7 +201,9 @@ def main(id: str | None, config_file: str | None, summary: bool):
                 "MSOA of workplace code": "dzone",
             }
         )
-        .filter(pl.col("Place of work indicator (4 categories) code").is_in([1, 3]))
+        # .filter(pl.col("Place of work indicator (4 categories) code").is_in([1, 3]))
+        # Only travelling to work, no working from home
+        .filter(pl.col("Place of work indicator (4 categories) code").is_in([3]))
         .rename({"Count": "census_count"})
         .group_by(["ozone", "dzone"])
         .sum()
