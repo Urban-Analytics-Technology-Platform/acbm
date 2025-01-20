@@ -98,7 +98,7 @@ def main(config_file):
 
         logger.info("Step 4: Filtering rows and dropping unnecessary columns")
         travel_demand_clipped = travel_demand[
-            travel_demand["Place of work indicator (4 categories) code"].isin([1, 3])
+            travel_demand["Place of work indicator (4 categories) code"].isin([3])
         ]
         travel_demand_clipped = travel_demand_clipped.drop(
             columns=[
@@ -139,7 +139,7 @@ def main(config_file):
 
         logger.info("Step 2: Filtering rows and dropping unnecessary columns")
         travel_demand_clipped = travel_demand[
-            travel_demand["Place of work indicator (4 categories) code"].isin([1, 3])
+            travel_demand["Place of work indicator (4 categories) code"].isin([3])
         ]
         travel_demand_clipped = travel_demand_clipped.drop(
             columns=[
