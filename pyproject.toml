@@ -57,6 +57,7 @@ dev = ["pytest", "pytest-cov"]
 
 [tool.poetry.group.dev.dependencies]
 ipykernel = "^6.29.4"
+screeninfo = "^0.8.1"
 
 [tool.pytest.ini_options]
 minversion = "6.0"
