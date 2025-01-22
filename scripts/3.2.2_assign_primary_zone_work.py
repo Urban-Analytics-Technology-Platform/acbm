@@ -200,7 +200,9 @@ def main(config_file):
     #### ASSIGN TO ZONE FROM FEASIBLE ZONES ####
 
     zone_assignment = WorkZoneAssignment(
-        activities_to_assign=possible_zones_work, actual_flows=travel_demand_dict_nomode
+        activities_to_assign=possible_zones_work,
+        actual_flows=travel_demand_dict_nomode,
+        scaling=config.parameters.part_time_work_prob,
     )
 
     assignments_df = zone_assignment.select_work_zone_optimization(
