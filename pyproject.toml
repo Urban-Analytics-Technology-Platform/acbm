@@ -47,17 +47,24 @@ jsonschema = "^4.23.0"
 jcs = "^0.2.1"
 typing-extensions = "^4.12.2"
 
-[tool.poetry.dev-dependencies]
+[poetry.group.dev.dependencies]
 pytest = ">= 6"
 pytest-cov = ">= 3"
+popgetter = { version="^0.1.0", optional = true }
+hvplot = { version="^0.11.2", optional = true }
+ipykernel = {version = "^6.29.4", optional = true }
+xlsx2csv = { version = "^0.8.4", optional = true }
 
 [tool.poetry.extras]
 test = ["pytest", "pytest-cov"]
 dev = ["pytest", "pytest-cov"]
+analysis = ["ipykernel", "popgetter", "hvplot", "xlsx2csv"]
 
 [tool.poetry.group.dev.dependencies]
 ipykernel = "^6.29.4"
 screeninfo = "^0.8.1"
+pytest = ">= 6"
+pytest-cov = ">= 3"
 
 [tool.pytest.ini_options]
 minversion = "6.0"
