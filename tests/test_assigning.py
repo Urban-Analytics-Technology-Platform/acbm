@@ -1,7 +1,8 @@
+import numpy as np
 import pandas as pd
 import pytest
 
-from acbm.assigning.utils import _map_day_to_wkday_binary
+from acbm.assigning.utils import _adjust_distance, _map_day_to_wkday_binary
 
 # applying to a single value
 
@@ -32,3 +33,17 @@ def test_map_day_to_wkday_binary_df_invalid():
     df = pd.DataFrame({"day": [1, 2, 3, 4, 5, 6, 7, 8]})
     with pytest.raises(ValueError, match="Day should be numeric and in the range 1-7"):
         df["wkday"] = df["day"].apply(_map_day_to_wkday_binary)
+
+
+def test_adjust_distance():
+    assert np.isclose(_adjust_distance(0, 1.5, 0.1), 0)
+    assert np.isclose(_adjust_distance(10000, 1.56, 0.0001), 12060.125)
+    assert np.isclose(
+        _adjust_distance(10000, 1.56, 0.0001),
+        10000 * (1 + ((1.56 - 1) * np.exp(-0.0001 * 10000))),
+    )
+    assert np.isclose(_adjust_distance(50000, 1.8, 0.0002), 50001.81599)
+    assert np.isclose(
+        _adjust_distance(50000, 1.8, 0.0002),
+        50000 * (1 + ((1.8 - 1) * np.exp(-0.0002 * 50000))),
+    )
