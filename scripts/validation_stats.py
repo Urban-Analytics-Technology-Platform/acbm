@@ -123,7 +123,8 @@ def print_stats_work(config: Config):
     is_flag=True,
     required=False,
 )
-def main(id: str | None, config_file: str | None, summary: bool):
+@click.option("--scaling", type=float, default=1.0, required=False)
+def main(id: str | None, config_file: str | None, summary: bool, scaling: float):
     if summary:
         config_summary()
         return
@@ -207,7 +208,13 @@ def main(id: str | None, config_file: str | None, summary: bool):
         .rename({"Count": "census_count"})
         .group_by(["ozone", "dzone"])
         .sum()
-        .select(["ozone", "dzone", "census_count"])
+        .select(
+            [
+                "ozone",
+                "dzone",
+                (pl.col("census_count") * scaling).cast(pl.Int64),
+            ]
+        )
         .collect()
     )
 
