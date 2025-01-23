@@ -24,7 +24,15 @@ from acbm.config import load_config
     default=None,
     required=False,
 )
-def main(id: str | None, config_file: str | None):
+@click.option(
+    "--use-percentages",
+    is_flag=True,
+    default=False,
+)
+@click.option("--scaling", type=float, default=1.0, required=False)
+def main(
+    id: str | None, config_file: str | None, use_percentages: bool, scaling: float
+):
     if id is not None and config_file is not None:
         print("Specify one of 'id' and 'config-file'.")
         exit(1)
@@ -61,7 +69,7 @@ def main(id: str | None, config_file: str | None):
         .rename({"Count": "census_count"})
         .group_by(["ozone", "dzone"])
         .sum()
-        .select(["ozone", "dzone", "census_count"])
+        .select(["ozone", "dzone", pl.col("census_count") * scaling])
         .collect()
     )
 
@@ -77,15 +85,50 @@ def main(id: str | None, config_file: str | None):
         (both_counts["acbm_count"] - both_counts["census_count"]).alias("acbm - census")
     )
 
+    # Total flows (by origin): i.e. the sum over dzones for a given ozone
+    acbm_matrix_norm = acbm_matrix.join(
+        acbm_matrix.select(["ozone", "acbm_count"])
+        .group_by("ozone")
+        .sum()
+        .rename({"acbm_count": "acbm_total"}),
+        on=["ozone"],
+    ).with_columns((pl.col("acbm_count") / pl.col("acbm_total")).alias("acbm_norm"))
+
+    census_matrix_norm = census_matrix.join(
+        census_matrix.select(["ozone", "census_count"])
+        .group_by("ozone")
+        .sum()
+        .rename({"census_count": "census_total"}),
+        on=["ozone"],
+    ).with_columns(
+        (pl.col("census_count") / pl.col("census_total")).alias("census_norm")
+    )
+    both_norms = acbm_matrix_norm.join(census_matrix_norm, on=["ozone", "dzone"])
+    both_norms = both_norms.with_columns(
+        (
+            (both_norms["acbm_norm"] - both_norms["census_norm"])
+            / both_norms["census_norm"]
+        ).alias("error")
+    )
+    both_norms = both_norms.with_columns(
+        (both_norms["acbm_norm"] - both_norms["census_norm"]).alias("acbm - census")
+    )
+
     travel_time_estimates = pl.read_parquet(config.travel_times_estimates_filepath)
-    df = both_counts.join(
-        travel_time_estimates.select(
-            ["MSOA21CD_from", "MSOA21CD_to", "distance"]
-        ).unique(),
-        left_on=["ozone", "dzone"],
-        right_on=["MSOA21CD_from", "MSOA21CD_to"],
-        how="left",
-        coalesce=True,
+
+    # Use counts or percentages depending on CLI flag
+    df = (
+        both_norms
+        if use_percentages
+        else both_counts.join(
+            travel_time_estimates.select(
+                ["MSOA21CD_from", "MSOA21CD_to", "distance"]
+            ).unique(),
+            left_on=["ozone", "dzone"],
+            right_on=["MSOA21CD_from", "MSOA21CD_to"],
+            how="left",
+            coalesce=True,
+        )
     )
 
     df.group_by("ozone").agg(
