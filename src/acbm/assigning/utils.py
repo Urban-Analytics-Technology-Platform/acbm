@@ -318,7 +318,7 @@ def zones_to_time_matrix(
     time_units: str,
     id_col: Optional[str] = None,
     detour_factor: float = 1.56,
-    decay_rate: float = 0.00005,
+    decay_rate: float = 0.0001,
 ) -> pd.DataFrame:
     """
     Calculates the distance matrix between the centroids of the given zones and returns it as a DataFrame. The matrix also adds
