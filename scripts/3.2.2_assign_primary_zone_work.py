@@ -98,6 +98,7 @@ def main(config_file):
 
         logger.info("Step 4: Filtering rows and dropping unnecessary columns")
         travel_demand_clipped = travel_demand[
+            # TODO: add source
             travel_demand["Place of work indicator (4 categories) code"].isin([3])
         ]
         travel_demand_clipped = travel_demand_clipped.drop(
@@ -260,9 +261,9 @@ def main(config_file):
         "origin_zone"
     )["demand_actual"].transform(lambda x: (x / x.sum()) * 100)
     workzone_assignment_opt["pct_of_o_total_assigned"] = (
-        workzone_assignment_opt.groupby(
-            "origin_zone"
-        )["demand_assigned"].transform(lambda x: (x / x.sum()) * 100)
+        workzone_assignment_opt.groupby("origin_zone")["demand_assigned"].transform(
+            lambda x: (x / x.sum()) * 100
+        )
     )
 
     # (3) For each OD pair, demand as % of total demand to each destination
@@ -270,9 +271,9 @@ def main(config_file):
         "assigned_zone"
     )["demand_actual"].transform(lambda x: (x / x.sum()) * 100)
     workzone_assignment_opt["pct_of_d_total_assigned"] = (
-        workzone_assignment_opt.groupby(
-            "assigned_zone"
-        )["demand_assigned"].transform(lambda x: (x / x.sum()) * 100)
+        workzone_assignment_opt.groupby("assigned_zone")["demand_assigned"].transform(
+            lambda x: (x / x.sum()) * 100
+        )
     )
 
     # Open the file in write mode
