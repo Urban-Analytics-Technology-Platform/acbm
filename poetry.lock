@@ -1222,6 +1222,33 @@ widgetsnbextension = ">=4.0.12,<4.1.0"
 test = ["ipykernel", "jsonschema", "pytest (>=3.6.0)", "pytest-cov", "pytz"]
 
 [[package]]
+name = "itables"
+version = "2.2.4"
+description = "Pandas and Polar DataFrames as interactive DataTables"
+optional = false
+python-versions = ">=3.7"
+groups = ["main"]
+markers = "python_version <= \"3.11\" or python_version >= \"3.12\""
+files = [
+    {file = "itables-2.2.4-py3-none-any.whl", hash = "sha256:94f0298a4778ac957eef1d0bf0ff6ebffd3c68c7faef741cc083c31c97316952"},
+    {file = "itables-2.2.4.tar.gz", hash = "sha256:6d2810fab5cc67260f69c9fa7c6930bd7a39f92aaff2264dc4e914eaa7a005e5"},
+]
+
+[package.dependencies]
+ipython = "*"
+numpy = "*"
+pandas = "*"
+
+[package.extras]
+all = ["anywidget", "matplotlib", "polars", "pyarrow", "pytz", "traitlets", "world-bank-data"]
+dev = ["anywidget", "ipykernel", "jupyterlab", "jupytext", "matplotlib", "nbconvert", "polars", "pyarrow", "pytest", "pytest-cov", "pytz", "requests", "shiny", "traitlets", "watchfiles", "world-bank-data"]
+polars = ["polars", "pyarrow"]
+samples = ["pytz", "world-bank-data"]
+style = ["matplotlib"]
+test = ["anywidget", "ipykernel", "jupytext", "matplotlib", "nbconvert", "polars", "pyarrow", "pytest", "pytest-cov", "pytz", "requests", "shiny", "traitlets", "world-bank-data"]
+widget = ["anywidget", "traitlets"]
+
+[[package]]
 name = "jcs"
 version = "0.2.1"
 description = "JCS - JSON Canonicalization"
@@ -4416,10 +4443,10 @@ test = ["pytest", "pytest-cov"]
 name = "xlsx2csv"
 version = "0.8.4"
 description = "xlsx to csv converter"
-optional = false
+optional = true
 python-versions = "*"
 groups = ["main"]
-markers = "python_version <= \"3.11\" or python_version >= \"3.12\""
+markers = "(python_version <= \"3.11\" or python_version >= \"3.12\") and extra == \"analysis\""
 files = [
     {file = "xlsx2csv-0.8.4-py3-none-any.whl", hash = "sha256:52ab873fc7b2f2ca75d14aee8bd1985a9f5c1bcb3cc7b80df7a5d57a40a67473"},
     {file = "xlsx2csv-0.8.4.tar.gz", hash = "sha256:2aa809888826f6af5b26c77fc7f613f2bbeada0d8cc09e5a58e0f59684bb6911"},
@@ -4439,11 +4466,11 @@ files = [
 ]
 
 [extras]
-analysis = ["hvplot", "ipykernel", "popgetter"]
+analysis = ["hvplot", "ipykernel", "popgetter", "xlsx2csv"]
 dev = ["pytest", "pytest-cov"]
 test = ["pytest", "pytest-cov"]
 
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.10"
-content-hash = "88bb136728ad132d614940fdbf4cddb9d89d0e17f262ff00cccedc89de446cea"
+content-hash = "59fdedfc6a1c024cd94e242d51bbdb4a65dfb2bf42f42defab273bb248ba8f2c"
