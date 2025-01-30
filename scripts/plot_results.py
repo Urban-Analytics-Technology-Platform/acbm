@@ -1,3 +1,6 @@
+import os
+import re
+
 import click
 import numpy as np
 import pandas as pd
@@ -96,11 +99,15 @@ def get_outs(config, include_wfh=False) -> list[float]:
 )
 def main(config_file_stem: str | None, include_wfh: bool):
     records = []
-    for i in range(1, 14):
-        config = load_and_setup_config(
-            f"./config/{config_file_stem}_{i:02}.toml"
-            # f"./config/2025-01-20_leeds_msoa_new_regions_{i:02}.toml"
-        )
+    for i, config_file in enumerate(
+        sorted(
+            f"./config/{f}"
+            for f in os.listdir("./config/")
+            if re.search(f"{config_file_stem}_[0-9][0-9]\\.toml$", f)
+        ),
+        1,
+    ):
+        config = load_and_setup_config(config_file)
         try:
             params = [
                 "parameters|nts_years",
@@ -134,7 +141,7 @@ def main(config_file_stem: str | None, include_wfh: bool):
             # print("----")
             # print(i)
             # print(_e)
-            pass
+            continue
 
     print(
         pd.DataFrame.from_records(records)
