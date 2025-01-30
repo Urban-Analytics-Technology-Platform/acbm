@@ -39,7 +39,9 @@ def main(config_file):
             "-f",
             "geoparquet",
             "-crs",
-            # TODO: check if this can be specified as the output CRS
+            # For the distances to be accurate, needs to be same CRS as OSM data for the region.
+            # However, distances from osmox are currently not used in the pipeline so any CRS will work.
+            # In general, the CRS is transformed in the pipeline when this data is used.
             # See: https://github.com/arup-group/osmox/blob/82602d411374ebc9fd33443f8f7c9816b63715ec/docs/osmox_run.md#L35-L38
             "epsg:27700",
             "-l",
