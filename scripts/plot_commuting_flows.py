@@ -11,6 +11,55 @@ import acbm
 from acbm.config import load_config
 
 
+def get_abs_max(df_, column) -> int | float:
+    return abs(df_[column].to_numpy()).max()
+
+
+def plot_column(
+    study_area, df, column, ax, origin, vmin=None, vmax=None, cmap="viridis"
+):
+    legend_kwds = {"shrink": 0.3}
+    df.plot(
+        ax=ax,
+        column=column,
+        legend=True,
+        cmap=cmap,
+        legend_kwds=legend_kwds,
+        vmin=vmin,
+        vmax=vmax,
+    )
+    centroid = study_area[study_area["MSOA21CD"].eq(origin)]["geometry"].centroid
+    centroid.plot(ax=ax, c="red", marker="x")
+    study_area.plot(facecolor="none", edgecolor="black", lw=0.2, ax=ax)
+
+    # 20km/h in car
+    (x, y) = (centroid.x.to_numpy()[0], centroid.y.to_numpy()[0])
+    ax.add_patch(plt.Circle((x, y), 20000, ec="grey", fill=False, ls=":"))
+    ax.set_title(column)
+
+
+def plot_all(study_area, df, column, ax, vmin=None, vmax=None, cmap="viridis"):
+    legend_kwds = {"shrink": 0.3}
+    print(df)
+    df.plot(
+        ax=ax,
+        column=column,
+        legend=True,
+        cmap=cmap,
+        legend_kwds=legend_kwds,
+        vmin=vmin,
+        vmax=vmax,
+    )
+    # centroid = study_area[study_area["MSOA21CD"].eq(origin)]["geometry"].centroid
+    # centroid.plot(ax=ax, c="red", marker="x")
+    study_area.plot(facecolor="none", edgecolor="black", lw=0.2, ax=ax)
+
+    # 20km/h in car
+    # (x, y) = (centroid.x.to_numpy()[0], centroid.y.to_numpy()[0])
+    # ax.add_patch(plt.Circle((x, y), 20000, ec="grey", fill=False, ls=":"))
+    ax.set_title(column)
+
+
 @click.command()
 @click.option(
     "--id",
@@ -38,11 +87,11 @@ def main(
         exit(1)
     pd.options.mode.copy_on_write = True
     os.chdir(acbm.root_path)
-    if config_file is None:
-        config = load_config(f"data/outputs/{id}/config.toml")
-    else:
-        config = load_config(config_file)
-
+    config = (
+        load_config(f"data/outputs/{id}/config.toml")
+        if config_file is None
+        else load_config(config_file)
+    )
     acbm_matrix = (
         pl.scan_parquet(config.output_path / "legs_with_locations.parquet")
         .filter(pl.col("purp").eq("work"))
@@ -117,61 +166,65 @@ def main(
     travel_time_estimates = pl.read_parquet(config.travel_times_estimates_filepath)
 
     # Use counts or percentages depending on CLI flag
-    df = (
-        both_norms
-        if use_percentages
-        else both_counts.join(
-            travel_time_estimates.select(
-                ["MSOA21CD_from", "MSOA21CD_to", "distance"]
-            ).unique(),
-            left_on=["ozone", "dzone"],
-            right_on=["MSOA21CD_from", "MSOA21CD_to"],
-            how="left",
-            coalesce=True,
-        )
+    df = (both_norms if use_percentages else both_counts).join(
+        travel_time_estimates.select(
+            ["MSOA21CD_from", "MSOA21CD_to", "distance"]
+        ).unique(),
+        left_on=["ozone", "dzone"],
+        right_on=["MSOA21CD_from", "MSOA21CD_to"],
+        how="left",
+        coalesce=True,
     )
-
     df.group_by("ozone").agg(
         [pl.col("error"), pl.col("acbm - census"), pl.col("dzone"), pl.col("distance")]
     )
-
     study_area = gpd.read_file(config.study_area_filepath)
-    gdf = gpd.GeoDataFrame(
-        df.to_pandas()
-        .merge(study_area, left_on="dzone", right_on="MSOA21CD", how="left")
-        .drop(columns="MSOA21CD")
-    )
-
-    def get_abs_max(df_, column) -> int | float:
-        return abs(df_[column].to_numpy()).max()
-
-    def plot_column(
-        study_area, df, column, ax, origin, vmin=None, vmax=None, cmap="viridis"
-    ):
-        legend_kwds = {"shrink": 0.3}
-        df.plot(
-            ax=ax,
-            column=column,
-            legend=True,
-            cmap=cmap,
-            legend_kwds=legend_kwds,
-            vmin=vmin,
-            vmax=vmax,
-        )
-        centroid = study_area[study_area["MSOA21CD"].eq(origin)]["geometry"].centroid
-        centroid.plot(ax=ax, c="red", marker="x")
-        study_area.plot(facecolor="none", edgecolor="black", lw=0.2, ax=ax)
-
-        # 20km/h in car
-        (x, y) = (centroid.x.to_numpy()[0], centroid.y.to_numpy()[0])
-        ax.add_patch(plt.Circle((x, y), 20000, ec="grey", fill=False, ls=":"))
-        ax.set_title(column)
 
     # Get monitor information
     monitors = get_monitors()
     print("Available monitors:")
     print(monitors)
     monitor = monitors[0]
+
+    # Plot difference in MSOA origins
+    fig, axs = plt.subplots(1, 3)
+    fig.suptitle("Difference in origin zones", size="medium")
+    # Keep the grid for scale
+    # [ax.axis("off") for ax in axs]
+
+    manager = plt.get_current_fig_manager()
+    # Resizing as wide fits better for this plot
+    manager.resize(monitor.width * 5, monitor.height)
+
+    sub = gpd.GeoDataFrame(
+        df.to_pandas()
+        .groupby("ozone")
+        .sum()
+        .drop(columns=["dzone"])
+        .merge(study_area, left_on="ozone", right_on="MSOA21CD", how="inner")
+        .rename(columns={"MSOA21CD": "ozone"})
+        # .reset_index()
+    )
+
+    plot_all(study_area, sub, "census_count", ax=axs[0])
+    plot_all(study_area, sub, "acbm_count", ax=axs[1])
+    plot_all(
+        study_area,
+        sub,
+        "acbm - census",
+        ax=axs[2],
+        vmin=-get_abs_max(sub, "acbm - census"),
+        vmax=get_abs_max(sub, "acbm - census"),
+        cmap="RdBu",
+    )
+    plt.show()
+
+    gdf = gpd.GeoDataFrame(
+        df.to_pandas()
+        .merge(study_area, left_on="dzone", right_on="MSOA21CD", how="left")
+        .drop(columns="MSOA21CD")
+    )
+
     for _i, (origin, sub) in enumerate(gdf.groupby("ozone")):
         # fig, axs = plt.subplots(1, 3, figsize=(20, 16))
         fig, axs = plt.subplots(1, 3)
