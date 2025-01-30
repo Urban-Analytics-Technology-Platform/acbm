@@ -38,10 +38,16 @@ optional_columns = [
 n_matches = 10 # What is the maximum number of NTS matches we want for each SPC household?
 
 [feasible_assignment]
-# detour factor when converting euclidian distance to actual travel distance
+# `actual_distance = distance * (1 + ((detour_factor - 1) * np.exp(-decay_rate * distance)))`
+#
+# `detour factor` when converting Euclidean distance to actual travel distance
 detour_factor = 1.56
-# decay rate when converting euclidian to travel distance (0.0001 is a good value)
-# actual_distance = distance * (1 + ((detour_factor - 1) * np.exp(-decay_rate * distance)))
+
+# `decay rate` is the inverse of the distance (in units of the data, e.g. metres) at which the
+# scaling from using the detour factor to Euclidean distance reduces by `exp(−1)`.
+#
+# 0.0001 is a good value for Leeds when units are metres, choice of decay_rate can be explored in an
+# [interactive plot](https://www.wolframalpha.com/input?i=plot+exp%28-0.0001x%29+from+x%3D0+to+x%3D50000)
 decay_rate = 0.0001
 
 [work_assignment]
