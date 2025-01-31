@@ -152,7 +152,7 @@ def main(config_file):
     activity_chains_all = activity_chains_all.sort_values(by=["household", "id", "seq"])
 
     logger.info(
-        f'PRE-FILTERING: Number of activities: {activity_chains_all.shape[0]}, number of individuals: {activity_chains_all["id"].nunique()}'
+        f"PRE-FILTERING: Number of activities: {activity_chains_all.shape[0]}, number of individuals: {activity_chains_all['id'].nunique()}"
     )
     total_activities = activity_chains_all.shape[0]
 
@@ -161,7 +161,7 @@ def main(config_file):
     )
 
     logger.info(
-        f'POST-FILTERING: Number of activities: {activity_chains_all.shape[0]}, number of individuals: {activity_chains_all["id"].nunique()}'
+        f"POST-FILTERING: Number of activities: {activity_chains_all.shape[0]}, number of individuals: {activity_chains_all['id'].nunique()}"
     )
 
     removed_activities = total_activities - activity_chains_all.shape[0]
@@ -201,7 +201,7 @@ def main(config_file):
     )
 
     logger.info(
-        f'Number of individuals to be removed: {activity_chains_all[mask]["id"].nunique()}'
+        f"Number of individuals to be removed: {activity_chains_all[mask]['id'].nunique()}"
     )
     logger.info(f"Number of activities to be removed: {mask.sum()}")
 
