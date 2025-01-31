@@ -117,6 +117,9 @@ ignore = [
   "ISC001", # Conflicts with formatter
   "E501",   # Line too long
   "G004",   # Logging statement uses f-string, not necessary here
+  "UP006",  # TODO: fix deprecated typing lints, ignoring here
+  "UP035",  # TODO: fix deprecated typing lints, ignoring here
+
 ]
 unfixable = [
   "F401", # Would remove unused imports
