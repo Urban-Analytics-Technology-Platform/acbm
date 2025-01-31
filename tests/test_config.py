@@ -11,4 +11,4 @@ def config():
 
 
 def test_id(config):
-    assert config.id == "e4589718b2"
+    assert config.id == "0ebb8c3ee7"
