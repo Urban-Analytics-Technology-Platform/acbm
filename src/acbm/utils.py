@@ -46,27 +46,33 @@ def households_with_common_travel_days(
     nts_trips: pd.DataFrame, days: list[int], hid="HouseholdID", pid="IndividualID"
 ) -> list[int]:
     return (
-        nts_trips.groupby([hid, pid])["TravDay"]
-        .apply(list)
-        .map(set)
-        .to_frame()
-        .groupby([hid])["TravDay"]
-        .apply(
-            lambda sets_of_days: set.intersection(*sets_of_days)
-            if set.intersection(*sets_of_days)
-            else None
+        pl.DataFrame(nts_trips)
+        # group_by household and individual
+        .group_by([hid, pid])
+        # get unique travel days
+        .agg(pl.col("TravDay").unique())
+        # group by household
+        .group_by(hid)
+        # create aggregates for:
+        # - unique days
+        # - counts of each unique day across household
+        # - number of individuals in household
+        .agg(
+            [
+                pl.col("TravDay").explode().unique(),
+                pl.col("TravDay").explode().unique_counts().alias("day_count"),
+                pl.col(hid).count().alias("count"),
+            ]
         )
-        .to_frame()["TravDay"]
-        .apply(
-            lambda common_days: [day for day in common_days if day in days]
-            if common_days is not None
-            and common_days != {pd.NA}
-            and common_days != {np.nan}
-            else []
-        )
-        .apply(lambda common_days: common_days if common_days else pd.NA)
-        .dropna()
-        .reset_index()[hid]
+        # explode lists
+        .explode(["TravDay", "day_count"])
+        # filter for days that are common across all individuals
+        .filter(pl.col("day_count").eq(pl.col("count")))
+        # filter for days in given set of days
+        .filter(pl.col("TravDay").is_in(days))
+        # return list of unique household ids
+        .get_column(hid)
+        .unique()
         .to_list()
     )
 
