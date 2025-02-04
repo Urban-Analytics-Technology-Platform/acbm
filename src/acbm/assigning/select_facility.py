@@ -174,6 +174,7 @@ def select_facility(
     neighboring_zones: Optional[dict] = None,
     fallback_type: Optional[str] = None,
     fallback_to_random: bool = False,
+    n_processes: int = max(int(cpu_count() * 0.75), 1),
 ) -> dict[str, Tuple[str, Point] | Tuple[float, float]]:
     """
     Select facilities for each row in the DataFrame based on the provided logic.
@@ -205,8 +206,7 @@ def select_facility(
         keys with selected facility ID and facility ID's geometry, or (np.nan, np.nan)
     """
     # TODO: check if this is deterministic for a given seed (or pass seed to pool)
-    # TODO: update to be configurable
-    with Pool(max(int(cpu_count() * 0.75), 1)) as p:
+    with Pool(n_processes) as p:
         # Set to a large enough chunk size so that each process
         # has a sufficiently large amount of processing to do.
         chunk_size = 16_000
