@@ -47,6 +47,7 @@ def households_with_common_travel_days(
 ) -> list[int]:
     return (
         pl.DataFrame(nts_trips)
+        .lazy()
         # group_by household and individual
         .group_by([hid, pid])
         # get unique travel days
@@ -70,9 +71,11 @@ def households_with_common_travel_days(
         .filter(pl.col("day_count").eq(pl.col("count")))
         # filter for days in given set of days
         .filter(pl.col("TravDay").is_in(days))
+        .collect()
         # return list of unique household ids
         .get_column(hid)
         .unique()
+        .sort()
         .to_list()
     )
 
