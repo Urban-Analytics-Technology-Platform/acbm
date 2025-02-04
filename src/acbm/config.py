@@ -1,8 +1,8 @@
 import os
 import random
-from dataclasses import dataclass
 from hashlib import sha256
 from logging import Logger
+from multiprocessing import cpu_count
 from pathlib import Path
 from typing import Tuple
 
@@ -11,14 +11,13 @@ import jcs
 import numpy as np
 import polars as pl
 import tomlkit
-from pydantic import BaseModel, Field, field_serializer, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_validator
 from pyproj import CRS
 
 import acbm
 from acbm.logger_config import create_logger
 
 
-@dataclass(frozen=True)
 class Parameters(BaseModel):
     seed: int
     region: str
@@ -34,6 +33,15 @@ class Parameters(BaseModel):
     tolerance_edu: float | None = None
     common_household_day: bool = True
     part_time_work_prob: float = 0.7
+    n_processes: int = Field(
+        description="Number of processes to use in multiprocessing",
+        default_factory=lambda: max(int(cpu_count() * 0.75), 1),
+        exclude=True,
+    )
+
+    model_config = ConfigDict(frozen=True)
+
+
 
     @field_validator("output_crs")
     def validate_output_crs(output_crs: int) -> int:
@@ -47,21 +55,22 @@ class Parameters(BaseModel):
         return output_crs
 
 
-@dataclass(frozen=True)
 class MatchingParams(BaseModel):
     required_columns: Tuple[str, ...]
     optional_columns: Tuple[str, ...]
     n_matches: int | None = None
     chunk_size: int = 50_000
 
+    model_config = ConfigDict(frozen=True)
 
-@dataclass(frozen=True)
+
 class FeasibleAssignmentParams(BaseModel):
     detour_factor: float
     decay_rate: float
 
+    model_config = ConfigDict(frozen=True)
 
-@dataclass(frozen=True)
+
 class WorkAssignmentParams(BaseModel):
     use_percentages: bool
     weight_max_dev: float
@@ -69,12 +78,13 @@ class WorkAssignmentParams(BaseModel):
     max_zones: int
     commute_level: str
 
+    model_config = ConfigDict(frozen=True)
+
     @field_validator("commute_level")
     def validate_commute_level(commute_level: str) -> str:
         return commute_level.upper()
 
 
-@dataclass(frozen=True)
 class Postprocessing(BaseModel):
     pam_jitter: int
     pam_min_duration: int
@@ -84,13 +94,16 @@ class Postprocessing(BaseModel):
     pt_subscription_age: int
     state_pension: int
 
+    model_config = ConfigDict(frozen=True)
 
-@dataclass(frozen=True)
+
 class PathParams(BaseModel):
     root_path: Path | None = acbm.root_path
     output_path: Path | None = None
     osm_path: Path | None = None
     study_areas_filepath: Path | None = None
+
+    model_config = ConfigDict(frozen=True)
 
     @field_serializer(
         "root_path",
