@@ -1,5 +1,4 @@
 import pandas as pd
-import polars as pl
 import pytest
 
 from acbm.assigning.utils import get_chosen_day
@@ -74,10 +73,11 @@ def test_households_with_travel_days_in_nts_weeks(nts_trips):
 
 
 def test_get_chosen_day_with_common_travel_day(nts_trips_with_aliases):
-    pl.set_random_seed(0)
-    hids = households_with_common_travel_days(nts_trips_with_aliases, [1, 3, 4])
+    days = [1, 3, 4]
+    hids = households_with_common_travel_days(nts_trips_with_aliases, days)
     nts_trips_with_aliases = nts_trips_with_aliases[
         nts_trips_with_aliases["household"].isin(hids)
+        & nts_trips_with_aliases["TravDay"].isin(days)
     ]
     df = get_chosen_day(nts_trips_with_aliases, True)
     print(df)
@@ -85,13 +85,12 @@ def test_get_chosen_day_with_common_travel_day(nts_trips_with_aliases):
 
 
 def test_get_chosen_day_with_travel_days_in_nts_weeks(nts_trips_with_aliases):
-    pl.set_random_seed(0)
-    hids = households_with_travel_days_in_nts_weeks(
-        nts_trips_with_aliases, [1, 3, 4, 5]
-    )
+    days = [1, 3, 4, 5]
+    hids = households_with_travel_days_in_nts_weeks(nts_trips_with_aliases, days)
     nts_trips_with_aliases = nts_trips_with_aliases[
         nts_trips_with_aliases["household"].isin(hids)
+        & nts_trips_with_aliases["TravDay"].isin(days)
     ]
     df = get_chosen_day(nts_trips_with_aliases, False)
     print(df)
-    assert df.to_numpy().prod(1).sum() == 370
+    assert df.to_numpy().prod(1).sum() == 378
