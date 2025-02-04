@@ -32,7 +32,7 @@ def main(config_file):
     logger.info("Filtering activity chains to a specific day of the week")
 
     # Generate random sample of days by household
-    get_chosen_day(config).to_parquet(
+    get_chosen_day(activity_chains, config.parameters.common_household_day).to_parquet(
         config.output_path / "interim" / "assigning" / "chosen_trav_day.parquet"
     )
 

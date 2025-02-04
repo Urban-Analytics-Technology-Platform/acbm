@@ -576,11 +576,10 @@ def replace_intrazonal_travel_time(
     return travel_times_copy
 
 
-def get_chosen_day(config: Config) -> pd.DataFrame:
+def get_chosen_day(acs: pd.DataFrame, common_household_day: bool) -> pd.DataFrame:
     """Gets the chosen day for population given config."""
-    acs = pl.DataFrame(activity_chains_for_assignment(config))
-
-    if config.parameters.common_household_day:
+    acs: pl.DataFrame = pl.DataFrame(acs)
+    if common_household_day:
         return (
             acs.join(
                 acs.group_by("household")
@@ -594,26 +593,7 @@ def get_chosen_day(config: Config) -> pd.DataFrame:
             .sort("id")
             .to_pandas()
         )
-
-    # For any TravDay and modelling increased households
-    work_days = (
-        acs.filter(pl.col("dact").eq("work"))
-        .group_by("id")
-        .agg(pl.col("TravDay").unique())
-        .select(["id", pl.col("TravDay").list.drop_nulls().list.sample(n=1)])
-        .explode("TravDay")
-        .rename({"TravDay": "TravDayWork"})
-    )
-    non_work_days = (
-        acs.filter(~pl.col("dact").eq("work"))
-        .group_by("id")
-        .agg(pl.col("TravDay").unique())
-        .select(["id", pl.col("TravDay").list.drop_nulls().list.sample(n=1)])
-        .explode("TravDay")
-        .rename({"TravDay": "TravDayNonWork"})
-    )
-
-    any_days = (
+    return (
         acs.group_by("id")
         .agg(pl.col("TravDay").unique())
         .select(["id", pl.col("TravDay").list.drop_nulls()])
@@ -627,62 +607,8 @@ def get_chosen_day(config: Config) -> pd.DataFrame:
             ]
         )
         .explode("TravDay")
-        .rename({"TravDay": "TravDayAny"})
-    ).sort("id")
-
-    # Combine day choices for different conditions
-    acs_combine = (
-        acs.join(work_days, on="id", how="left", coalesce=True)
-        .join(non_work_days, on="id", how="left", coalesce=True)
-        .join(any_days, on="id", how="left", coalesce=True)
-        .join(
-            pl.scan_parquet(config.spc_combined_filepath)
-            .select(["id", "pwkstat"])
-            .collect(),
-            on="id",
-        )
-    )
-
-    # Choose a day given pwkstat
-    acs_combine = acs_combine.with_columns(
-        [
-            # If pwkstat = 1 (full time)
-            # and a work travel day is available
-            pl.when(pl.col("pwkstat").eq(1) & pl.col("TravDayWork").is_not_null())
-            .then(pl.col("TravDayWork"))
-            .otherwise(
-                # If pwkstat = 1 (full time)
-                # and a work travel day is NOT available
-                pl.when(pl.col("pwkstat").eq(1) & pl.col("TravDayWork").is_null())
-                .then(pl.col("TravDayAny"))
-                .otherwise(
-                    # If pwkstat = 2 (part time)
-                    # and a work travel day is available
-                    # and a non-work travel day is available
-                    pl.when(
-                        pl.col("pwkstat").eq(2)
-                        & pl.col("TravDayWork").is_not_null()
-                        & pl.col("TravDayNonWork").is_not_null()
-                    )
-                    .then(
-                        # Sample either TravDayWork or TravDayNonWork
-                        # stochastically given config
-                        pl.col("TravDayWork")
-                        # TODO: update from config
-                        if np.random.random() < 1
-                        else pl.col("TravDayNonWork")
-                    )
-                    .otherwise(pl.col("TravDayAny"))
-                )
-            )
-            .alias("ChosenTravDay")
-        ]
-    )
-
-    return (
-        acs_combine.select(["id", "ChosenTravDay"])
-        .unique()
-        .rename({"ChosenTravDay": "TravDay"})
+        .drop_nulls()
+        .select(["id", "TravDay"])
         .sort("id")
         .to_pandas()
     )
