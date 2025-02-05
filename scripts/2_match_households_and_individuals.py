@@ -931,11 +931,57 @@ def main(config_file):
         .fillna(-8)
     )
 
-    # rename nts columns in preparation for matching
-
-    nts_individuals.rename(
-        columns={"Age_B04ID": "age_group", "Sex_B01ID": "sex"}, inplace=True
+    # create new column in spc to match EcoStat_B02ID (and map EcoState_B02ID)
+    spc_edited["eco_stat"] = spc_edited["pwkstat"].map(
+        {0: 0, 1: 1, 2: 2, 3: 2, 4: 1, 5: 3, 6: 4, 7: 6, 8: 5, 9: 4, 10: 6}
     )
+    nts_individuals["eco_stat"] = nts_individuals["EcoStat_B02ID"].map(
+        {-10: 0, -9: 0, -8: 0, 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6}
+    )
+    nts_individuals = nts_individuals.merge(
+        nts_households[["HouseholdID", "NumCar_SPC_match", "tenure_nts_for_matching"]],
+        on="HouseholdID",
+        how="left",
+    )
+    # rename nts columns in preparation for matching
+    nts_individuals.rename(
+        columns={
+            "Age_B04ID": "age_group",
+            "Sex_B01ID": "sex",
+            "NumCar_SPC_match": "num_cars",
+            "tenure_nts_for_matching": "tenure_for_matching",
+        },
+        inplace=True,
+    )
+    spc_edited.rename(
+        columns={
+            "tenure_spc_for_matching": "tenure_for_matching",
+        },
+        inplace=True,
+    )
+
+    def add_dummies(df) -> pd.DataFrame:
+        for col in ["eco_stat", "tenure_for_matching", "num_cars"]:
+            df = df.join(
+                pd.get_dummies(df[col], drop_first=False, prefix=col).mul(1), how="left"
+            ).drop(columns=[col])
+        return df
+
+    spc_ind_matching = spc_edited.copy(deep=True)
+    nts_ind_matching = nts_individuals.copy(deep=True)
+    # Fix column dtypes
+    nts_ind_matching["tenure_for_matching"] = (
+        nts_ind_matching["tenure_for_matching"].replace({-8: 0}).astype(int)
+    )
+    spc_ind_matching["tenure_for_matching"] = (
+        spc_ind_matching["tenure_for_matching"].fillna(0).astype(int)
+    )
+    # Assume 0 if missing (only a few are missing)
+    nts_ind_matching["num_cars"] = nts_ind_matching["num_cars"].fillna(0).astype(int)
+
+    # Add dummies
+    spc_ind_matching = add_dummies(spc_ind_matching)
+    nts_ind_matching = add_dummies(nts_ind_matching)
 
     # TODO: remove once refactored into two scripts
     load_individuals = False
@@ -958,9 +1004,15 @@ def main(config_file):
             ~spc_edited.index.isin(matches_ind.keys()), "id"
         ].to_list()
         matches_remaining_ind = match_remaining_individuals(
-            df1=spc_edited,
-            df2=nts_individuals,
-            matching_columns=["age_group", "sex"],
+            df1=spc_ind_matching,
+            df2=nts_ind_matching,
+            matching_columns=[
+                "age_group",
+                "sex",
+                "tenure_for_matching",
+                "num_cars",
+                "eco_stat",
+            ],
             remaining_ids=remaining_ids,
             show_progress=True,
         )

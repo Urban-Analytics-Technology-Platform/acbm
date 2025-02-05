@@ -172,7 +172,12 @@ class MatcherExact:
 # propensity score matching - (for individual level)
 
 
-def match_psm(df1: pd.DataFrame, df2: pd.DataFrame, matching_columns: list) -> dict:
+def match_psm(
+    df1: pd.DataFrame,
+    df2: pd.DataFrame,
+    matching_columns: list,
+    starts_with: bool = False,
+) -> dict:
     """
     Use the Propensity Score Matching (PSM) method to match the rows in two DataFrames
     The distances between columns is calculated using the NearestNeighbors algorithm
@@ -194,6 +199,17 @@ def match_psm(df1: pd.DataFrame, df2: pd.DataFrame, matching_columns: list) -> d
 
     # Initialize an empty dict to store the matches
     matches = {}
+    if starts_with:
+        matching_columns_df1 = sorted(
+            col for start in matching_columns for col in df1 if col.startswith(start)
+        )
+        matching_columns_df2 = sorted(
+            col for start in matching_columns for col in df2 if col.startswith(start)
+        )
+        if matching_columns_df1 != matching_columns_df2:
+            err_msg = f"'matching_columns_df1' ({matching_columns_df1}) do not equal 'matching_columns_df2' ({matching_columns_df2})"
+            raise ValueError(err_msg)
+        matching_columns = matching_columns_df1
 
     # Matching without replacement
     while not df1.empty:
@@ -347,7 +363,7 @@ def match_remaining_individuals(
             )
 
         # apply the matching
-        match = match_psm(rows_df1, rows_df2, matching_columns)
+        match = match_psm(rows_df1, rows_df2, matching_columns, starts_with=True)
 
         # append the results to the main dict
         matches.update(match)
