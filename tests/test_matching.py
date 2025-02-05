@@ -1,7 +1,11 @@
 import pandas as pd
 import pytest
 
-from acbm.matching import MatcherExact, match_psm  # noqa: F401
+from acbm.matching import (
+    MatcherExact,
+    match_individuals,
+    match_remaining_individuals,
+)
 
 
 @pytest.fixture
@@ -99,11 +103,99 @@ def test_iterative_match_categorical(setup_data):
     assert result == expected_result
 
 
-@pytest.mark.skip(reason="todo")
-def test_match_individuals():
-    pass
+def get_test_dfs_and_mapping(mapping):
+    samples = [
+        [0, 1, 3, 1, 0],
+        [1, 2, 0, 2, 1],
+        [2, 2, 1, 1, 2],
+        [3, 2, 2, 2, 3],
+        [4, 3, 0, 1, 4],
+        [5, 3, 1, 2, 5],
+        [6, 3, 3, 1, 6],
+        [7, 4, 1, 2, 7],
+        [8, 4, 1, 1, 8],
+        [9, 4, 3, 2, 9],
+    ]
+    columns = ["id", "hid", "age_group", "sex", "eco_stat_0"]
+    return (
+        pd.DataFrame(
+            samples,
+            columns=columns,
+        ),
+        pd.DataFrame(
+            [
+                # Use eneumerate for ids, keep hids in same order
+                [id, samples[id][1], *samples[idx][2:]]
+                for id, idx in enumerate(mapping)
+            ],
+            columns=columns,
+        ),
+        mapping,
+    )
 
 
-@pytest.mark.skip(reason="todo")
-def test_match_psm():
-    pass
+@pytest.fixture
+def ind_hh():
+    mapping_ind_within_hh = [0, 3, 1, 2, 4, 6, 5, 9, 8, 7]
+    return get_test_dfs_and_mapping(mapping_ind_within_hh)
+
+
+@pytest.fixture
+def ind_rem():
+    mapping_ind = [1, 7, 9, 3, 0, 5, 2, 6, 8, 4]
+    return get_test_dfs_and_mapping(mapping_ind)
+
+
+def combine_dfs_with_matches(df1, df2, matches_dict) -> pd.DataFrame:
+    """Merges matched rows from df2 with df1"""
+    df1["matched_id"] = df1.index.map(matches_dict).map(df2["id"])
+    return df1.merge(df2, left_on="matched_id", right_on="id", how="left")
+
+
+def check_matches(df1, mapping, matches_dict, remaining_ids=None):
+    """Checks that the expected indices are present in the returned matches dict"""
+    expected = {
+        k: v
+        for k, v in {mapping[i]: i for i in range(df1.shape[0])}.items()
+        if k < (len(remaining_ids) if remaining_ids is not None else df1.shape[0])
+    }
+    # Check equal after sorting by key
+    assert dict(sorted(matches_dict.items())) == dict(sorted(expected.items()))
+
+
+def check_equals(df1, df2, matches_dict, expect_hid_equals=True):
+    """Checks that series are equal after merging the two dataframes with matches"""
+    df = combine_dfs_with_matches(df1, df2, matches_dict).dropna().astype(int)
+    if expect_hid_equals:
+        assert df["hid_x"].equals(df["hid_y"])
+    assert df["age_group_x"].equals(df["age_group_y"])
+    assert df["sex_x"].equals(df["sex_y"])
+    assert df["eco_stat_0_x"].equals(df["eco_stat_0_y"])
+
+
+def test_individual_matching(ind_hh):
+    df1, df2, mapping = ind_hh
+    matches_dict = match_individuals(
+        df1,
+        df2,
+        df1_id="hid",
+        df2_id="hid",
+        matching_columns=["age_group", "sex"],
+        matches_hh={i: i for i in df1["hid"].unique()},
+    )
+    check_matches(df1, mapping, matches_dict, remaining_ids=None)
+    check_equals(df1, df2, matches_dict)
+
+
+def test_remaining_individual_matching(ind_rem):
+    df1, df2, mapping = ind_rem
+    remaining_ids = [0, 1, 2, 3, 4, 5, 6]
+    matches_dict = match_remaining_individuals(
+        df1,
+        df2,
+        # A sample of remaining_ids
+        remaining_ids=remaining_ids,
+        matching_columns=["age_group", "sex", "eco_stat_0"],
+    )
+    check_matches(df1, mapping, matches_dict, remaining_ids)
+    check_equals(df1, df2, matches_dict, expect_hid_equals=False)
