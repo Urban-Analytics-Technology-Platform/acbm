@@ -71,10 +71,6 @@ The pipeline is a series of scripts that are run in sequence to generate the act
 │   │   │   └── Output_Areas_Dec_2011_PWC_2022.csv
 │   │   ├── MSOA_2011_MSOA_2021_Lookup_for_England_and_Wales.csv
 │   │   ├── nts
-│   │   │   ├── filtered
-│   │   │   │   ├── nts_households.parquet
-│   │   │   │   ├── nts_individuals.parquet
-│   │   │   │   └── nts_trips.parquet
 │   │   │   └── UKDA-5340-tab
 │   │   │       ├── 5340_file_information.rtf
 │   │   │       ├── mrdoc
@@ -120,6 +116,9 @@ The pipeline is a series of scripts that are run in sequence to generate the act
 │           ├── plots
 │           │   ├── assigning
 │           │   └── validation
+│           ├── nts_households.parquet
+│           ├── nts_individuals.parquet
+│           └── nts_trips.parquet
 ```
 
 ## Step 1: Prepare Data Inputs
