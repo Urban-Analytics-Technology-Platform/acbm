@@ -1,8 +1,8 @@
 from dataclasses import dataclass
-from typing import Self
 
 import numpy as np
 import pandas as pd
+from typing_extensions import Self
 
 from acbm.config import Config
 
