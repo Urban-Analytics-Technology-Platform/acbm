@@ -183,8 +183,7 @@ def main(config_file):
 
     sequence_nts = process_sequences(
         df=legs_nts,
-        pid_col="IndividualID",
-        seq_col="seq",
+        groupby_cols=["IndividualID", "DayID"],
         origin_activity_col="oact_abr",
         destination_activity_col="dact_abr",
         suffix="nts",
@@ -192,8 +191,7 @@ def main(config_file):
 
     sequence_acbm = process_sequences(
         df=legs_acbm,
-        pid_col="pid",
-        seq_col="seq",
+        groupby_cols=["pid"],
         origin_activity_col="oact_abr",
         destination_activity_col="dact_abr",
         suffix="acbm",
