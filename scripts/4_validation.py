@@ -59,8 +59,8 @@ def main(config_file):
 
     # acbm - tst is in datetime format
     # Convert tst to datetime format and extract the hour component in one step
-    legs_acbm["tst_hour"] = legs_acbm["tst"].apply(lambda x: pd.to_datetime(x).hour)
-    legs_acbm["tet_hour"] = legs_acbm["tet"].apply(lambda x: pd.to_datetime(x).hour)
+    legs_acbm["tst_hour"] = pd.to_datetime(legs_acbm["tst"]).dt.hour
+    legs_acbm["tet_hour"] = pd.to_datetime(legs_acbm["tet"]).dt.hour
 
     # nts - tst is in minutes
     # Convert legs_nts["tst"] from minutes to hours
