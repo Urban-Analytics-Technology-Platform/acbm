@@ -42,11 +42,9 @@ def main(config_file):
 
     # --- Activity chains
     logger.info("Loading activity chains")
-
-    activity_chains = activity_chains_for_assignment(config, cols_for_assignment_work())
-    activity_chains = activity_chains[
-        activity_chains["TravDay"] == config.parameters.nts_day_of_week
-    ]
+    activity_chains = activity_chains_for_assignment(
+        config, cols_for_assignment_work(), subset_to_chosen_day=True
+    )
 
     logger.info("Filtering activity chains for trip purpose: work")
     activity_chains_work = activity_chains[activity_chains["dact"] == "work"]
@@ -100,7 +98,7 @@ def main(config_file):
 
         logger.info("Step 4: Filtering rows and dropping unnecessary columns")
         travel_demand_clipped = travel_demand[
-            travel_demand["Place of work indicator (4 categories) code"].isin([1, 3])
+            travel_demand["Place of work indicator (4 categories) code"].isin([3])
         ]
         travel_demand_clipped = travel_demand_clipped.drop(
             columns=[
@@ -141,7 +139,7 @@ def main(config_file):
 
         logger.info("Step 2: Filtering rows and dropping unnecessary columns")
         travel_demand_clipped = travel_demand[
-            travel_demand["Place of work indicator (4 categories) code"].isin([1, 3])
+            travel_demand["Place of work indicator (4 categories) code"].isin([3])
         ]
         travel_demand_clipped = travel_demand_clipped.drop(
             columns=[
@@ -202,7 +200,9 @@ def main(config_file):
     #### ASSIGN TO ZONE FROM FEASIBLE ZONES ####
 
     zone_assignment = WorkZoneAssignment(
-        activities_to_assign=possible_zones_work, actual_flows=travel_demand_dict_nomode
+        activities_to_assign=possible_zones_work,
+        actual_flows=travel_demand_dict_nomode,
+        scaling=config.parameters.part_time_work_prob,
     )
 
     assignments_df = zone_assignment.select_work_zone_optimization(

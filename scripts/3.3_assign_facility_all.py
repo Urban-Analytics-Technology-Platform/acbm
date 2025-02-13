@@ -91,6 +91,7 @@ def main(config_file):
         gdf_facility_type_col="activities",
         gdf_sample_col="floor_area",
         neighboring_zones=zone_neighbors,
+        n_processes=config.parameters.n_processes,
     )
 
     # Map the activity_id and activity_geometry to the activity_chains_home_df DataFrame
@@ -113,6 +114,7 @@ def main(config_file):
         gdf_facility_type_col="activities",
         gdf_sample_col="floor_area",
         neighboring_zones=zone_neighbors,
+        n_processes=config.parameters.n_processes,
     )
 
     # Map the activity_id and activity_geometry to the activity_chains_df DataFrame
@@ -156,6 +158,7 @@ def main(config_file):
         gdf_sample_col="floor_area",
         neighboring_zones=zone_neighbors,
         fallback_type="education",
+        n_processes=config.parameters.n_processes,
     )
 
     logger.info(f"Shape of activity chains edu: {activity_chains_edu.shape}")
@@ -196,6 +199,7 @@ def main(config_file):
         gdf_sample_col="floor_area",
         neighboring_zones=zone_neighbors,
         fallback_to_random=True,
+        n_processes=config.parameters.n_processes,
     )
 
     # Map the activity_id and activity_geometry to the activity_chains_home_df DataFrame
