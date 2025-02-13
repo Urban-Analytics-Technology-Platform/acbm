@@ -41,7 +41,30 @@ class Parameters(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
+    @field_validator("nts_regions")
+    def validate_nts_regions(nts_regions: list[str]) -> list[str]:
+        # "PSUStatsReg_B01ID" regions
+        B01ID_REGIONS = [
+            "Northern, Metropolitan",
+            "Northern, Non-metropolitan",
+            "Yorkshire / Humberside, Metropolitan",
+            "Yorkshire / Humberside, Non-metropolitan",
+            "East Midlands",
+            "East Anglia",
+            "South East (excluding London Boroughs)",
+            "London Boroughs",
+            "South West",
+            "West Midlands, Metropolitan",
+            "West Midlands, Non-metropolitan",
+            "North West, Metropolitan",
+            "North West, Non-metropolitan",
+        ]
 
+        for region in nts_regions:
+            if region not in B01ID_REGIONS:
+                msg = f"Region ('{region}') is not in valid regions: {B01ID_REGIONS}"
+                raise ValueError(msg)
+        return nts_regions
 
     @field_validator("output_crs")
     def validate_output_crs(output_crs: int) -> int:
