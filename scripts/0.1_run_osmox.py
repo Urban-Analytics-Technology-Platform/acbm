@@ -27,7 +27,9 @@ def main(config_file):
             for chunk in response.iter_content(chunk_size=8192):
                 file.write(chunk)
         logger.info(f"Region ({config.region}) successfully downloaded to: {fp}")
-    logger.info("Running osmox")
+    # Use the CRS value from the config
+    crs_value = f"epsg:{config.output_crs}"
+    logger.info(f"Running osmox with output crs: {crs_value}")
     subprocess.run(
         [
             "osmox",
@@ -43,7 +45,7 @@ def main(config_file):
             # However, distances from osmox are currently not used in the pipeline so any CRS will work.
             # In general, the CRS is transformed in the pipeline when this data is used.
             # See: https://github.com/arup-group/osmox/blob/82602d411374ebc9fd33443f8f7c9816b63715ec/docs/osmox_run.md#L35-L38
-            "epsg:27700",
+            crs_value,
             "-l",
         ],
         check=False,
