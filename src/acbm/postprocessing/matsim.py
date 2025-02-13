@@ -410,9 +410,9 @@ def get_hhlIncome(
         .sum()
         .reset_index()
     )
-    household_income.rename(columns={"income_modeled": "hhlIncome"}, inplace=True)
+    household_income.rename(columns={"income_modeled": "hhlIncomeSPC"}, inplace=True)
     # round hhlIncome to the nearest whole number
-    household_income["hhlIncome"] = household_income["hhlIncome"].round()
+    household_income["hhlIncomeSPC"] = household_income["hhlIncomeSPC"].round()
 
     # Merge the household_income data onto the individuals data
     individuals_income = pd.merge(
