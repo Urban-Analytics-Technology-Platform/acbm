@@ -51,6 +51,7 @@ class WorkZoneAssignment:
     remaining_flows: Dict[Tuple[str, str], int] = field(init=False)
     total_flows: Dict[str, int] = field(init=False)
     percentages: Dict[Tuple[str, str], float] = field(init=False)
+    scaling: float = field(init=True)
 
     def __post_init__(self):
         """
@@ -75,9 +76,9 @@ class WorkZoneAssignment:
         total_flows = {}
         for (from_zone, _), flow in self.actual_flows.items():
             if from_zone in total_flows:
-                total_flows[from_zone] += flow
+                total_flows[from_zone] += int(flow * self.scaling)
             else:
-                total_flows[from_zone] = flow
+                total_flows[from_zone] = int(flow * self.scaling)
         return total_flows
 
     def _calculate_percentages(self) -> Dict[Tuple[str, str], float]:
