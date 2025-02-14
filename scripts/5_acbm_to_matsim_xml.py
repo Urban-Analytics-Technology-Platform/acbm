@@ -53,14 +53,14 @@ def main(config_file):
     # change spc["sex"] column: 1 = male, 2 = female
     spc["sex"] = spc["sex"].map({1: "male", 2: "female"})
     # merge it on
-    individuals = population.individuals.merge(
-        spc[["id", "sex"]], left_on="pid", right_on="id", how="left"
+    population.individuals = population.individuals.merge(
+        spc[["id", "sex", "salary_yearly"]], left_on="pid", right_on="id", how="left"
     )
-    individuals = individuals.drop(columns="id")
+    population.individuals = population.individuals.drop(columns="id")
 
     # isStudent
-    individuals = get_students(
-        individuals=individuals,
+    population.individuals = get_students(
+        individuals=population.individuals,
         activities=population.activities,
         age_base_threshold=config.postprocessing.student_age_base,
         # age_upper_threshold = config.postprocessing.student_age_upper,
@@ -68,21 +68,22 @@ def main(config_file):
     )
 
     # isPassenger
-    individuals = get_passengers(
+    population.individuals = get_passengers(
         legs=population.legs,
-        individuals=individuals,
+        individuals=population.individuals,
         modes=config.postprocessing.modes_passenger,
     )
 
     # hasPTsubscription
 
-    individuals = get_pt_subscription(
-        individuals=individuals, age_threshold=config.postprocessing.pt_subscription_age
+    population.individuals = get_pt_subscription(
+        individuals=population.individuals,
+        age_threshold=config.postprocessing.pt_subscription_age,
     )
 
     ## hhlIncome
-    individuals = get_hhlIncome(
-        individuals=individuals,
+    population.individuals = get_hhlIncome(
+        individuals=population.individuals,
         individuals_with_salary=spc,
         pension_age=config.postprocessing.pt_subscription_age,
         pension=config.postprocessing.state_pension,
@@ -153,9 +154,18 @@ def main(config_file):
     nts_individuals.rename(columns={"id": "spc_id"}, inplace=True)
 
     # d. merge nts_individuals with individuals to get the vehicle ownership data
-    individuals = individuals.merge(
+    population.individuals = population.individuals.merge(
         nts_individuals, left_on="pid", right_on="spc_id", how="left"
     ).drop(columns=["spc_id", "IndividualID"])
+
+    # rename salary_yearly to indicate source
+    population.individuals.rename(
+        columns={"salary_yearly": "indIncomeSPC"}, inplace=True
+    )
+    # replace NaN with 0
+    population.individuals["indIncomeSPC"] = population.individuals[
+        "indIncomeSPC"
+    ].fillna(0)
 
     # We will be removing some rows in each planning operation. This function helps keep a
     # record of the number of rows in each table after each operation.
