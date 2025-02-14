@@ -165,6 +165,10 @@ def main(config_file):
     population.individuals["indIncomeSPC"] = population.individuals[
         "indIncomeSPC"
     ].round(0)
+    # replace NaN with 0
+    population.individuals["indIncomeSPC"] = population.individuals[
+        "indIncomeSPC"
+    ].fillna(0)
 
     # We will be removing some rows in each planning operation. This function helps keep a
     # record of the number of rows in each table after each operation.
