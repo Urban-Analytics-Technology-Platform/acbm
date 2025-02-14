@@ -162,6 +162,7 @@ def main(config_file):
     population.individuals.rename(
         columns={"salary_yearly": "indIncomeSPC"}, inplace=True
     )
+
     # replace NaN with 0
     population.individuals["indIncomeSPC"] = population.individuals[
         "indIncomeSPC"

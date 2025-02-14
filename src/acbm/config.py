@@ -11,6 +11,7 @@ import jcs
 import numpy as np
 import tomlkit
 from pydantic import BaseModel, Field, field_serializer, field_validator
+from pyproj import CRS
 
 import acbm
 from acbm.logger_config import create_logger
@@ -30,6 +31,17 @@ class Parameters(BaseModel):
     output_crs: int
     tolerance_work: float | None = None
     tolerance_edu: float | None = None
+
+    @field_validator("output_crs")
+    def validate_output_crs(output_crs: int) -> int:
+        if not CRS(output_crs).is_projected:
+            msg = (
+                f"Output CRS is expected to be projected. Output CRS was {output_crs}. "
+                "We recommend 27700 for a metric CRS for England "
+                "(the currently supported region)."
+            )
+            raise ValueError(msg)
+        return output_crs
 
 
 @dataclass(frozen=True)
