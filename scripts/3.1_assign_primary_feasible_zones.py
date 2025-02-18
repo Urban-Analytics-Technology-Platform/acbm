@@ -87,9 +87,6 @@ def main(config_file):
     )
     logger.info("Travel time estimates created")
 
-    # save travel_time_etstimates as parquet
-    travel_time_estimates.to_parquet(config.travel_times_estimates_filepath)
-
     if config.parameters.travel_times:
         logger.info("Loading travel time matrix")
         try:
@@ -137,6 +134,9 @@ def main(config_file):
     )
 
     logger.info("Intrazonal travel times replaced")
+
+    # save travel_time_etstimates as parquet
+    travel_times.to_parquet(config.travel_times_estimates_filepath)
 
     # --- Activity locations (Facilities)
     #
