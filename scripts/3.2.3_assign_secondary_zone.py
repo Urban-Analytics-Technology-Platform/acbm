@@ -354,7 +354,7 @@ def main(config_file):
     # Calculate the visit_probability: it is a funciton of floor_area and travel time
     merged_df["visit_prob"] = np.where(
         merged_df["time"] != 0,  # avoid division by zero
-        round(merged_df["floor_area"] / np.sqrt(merged_df["time"])),
+        round(merged_df["floor_area"] / (merged_df["time"] ** 2)),
         round(merged_df["floor_area"]),
     )
 
