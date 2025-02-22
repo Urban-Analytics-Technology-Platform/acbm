@@ -108,6 +108,12 @@ class WorkAssignmentParams(BaseModel):
         return commute_level.upper()
 
 
+class SecondaryAssignmentParams(BaseModel):
+    visit_probability_power: float = 2.0
+
+    model_config = ConfigDict(frozen=True)
+
+
 class Postprocessing(BaseModel):
     pam_jitter: int
     pam_min_duration: int
@@ -148,6 +154,11 @@ class Config(BaseModel):
     work_assignment: WorkAssignmentParams = Field(
         description="Config: parameters for work assignment."
     )
+
+    secondary_assignment: SecondaryAssignmentParams = Field(
+        description="Config: parameters for secondary assignment."
+    )
+
     postprocessing: Postprocessing = Field(
         description="Config: parameters for postprocessing."
     )
