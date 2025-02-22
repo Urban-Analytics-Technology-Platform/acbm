@@ -58,6 +58,11 @@ weight_max_dev = 0.2
 weight_total_dev = 0.8
 max_zones = 8          # maximum number of feasible zones to include in the optimization problem (less zones makes problem smaller - so faster, but at the cost of a better solution)
 
+[secondary_assignment]
+# Probablity of choosing a secondary zone. Same idea as a gravity model. We use floor_space / distance^n, where n is the power value used here
+# See here to understand how this probability matrix is used https://github.com/arup-group/pam/blob/main/examples/17_advanced_discretionary_locations.ipynb
+visit_probability_power = 2.0  # Default power value
+
 [postprocessing]
 pam_jitter = 30
 pam_min_duration = 10
