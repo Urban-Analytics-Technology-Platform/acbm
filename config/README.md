@@ -3,15 +3,11 @@ The config.toml file has an explanation for each parameter. You can copy the tom
 ``` toml
 [parameters]
 seed = 0
- # this is used to query poi data from osm and to load in SPC data
-region = "leeds"
-# how many people from the SPC do we want to run the model for? Comment out if you want to run the analysis on the entire SPC populaiton
-number_of_households = 2500
-# "OA21CD": OA level, "MSOA11CD": MSOA level
-zone_id = "MSOA21CD"
- # Only set to true if you have travel time matrix at the level specified in boundary_geography
-travel_times = false
-boundary_geography = "MSOA"
+region = "leeds"            # this is used to query poi data from osm and to load in SPC data
+number_of_households = 5000 # how many people from the SPC do we want to run the model for? Comment out if you want to run the analysis on the entire SPC populaiton
+zone_id = "OA21CD"          # "OA21CD": OA level, "MSOA11CD": MSOA level
+travel_times = true         # Only set to true if you have travel time matrix at the level specified in boundary_geography
+boundary_geography = "OA"
 # NTS years to use
 nts_years = [2019, 2021, 2022]
 # NTS regions to use
@@ -23,7 +19,8 @@ nts_regions = [
     'West Midlands',
     'East of England',
     'South East',
-    'South West']
+    'South West',
+]
 # nts day of the week to use
 # 1: Monday, 2: Tuesday, 3: Wednesday, 4: Thursday, 5: Friday, 6: Saturday, 7: Sunday
 nts_day_of_week = 3
@@ -33,29 +30,41 @@ output_crs = 3857
 [matching]
 # for optional and required columns, see the [iterative_match_categorical](https://github.com/Urban-Analytics-Technology-Platform/acbm/blob/ca181c54d7484ebe44706ff4b43c26286b22aceb/src/acbm/matching.py#L110) function
 # Do not add any column not listed below. You can only move a column from optional to require (or vise versa)
-required_columns = [
-    "number_adults",
-    "number_children",
-    "num_pension_age",
-]
+required_columns = ["number_adults", "number_children"]
 optional_columns = [
     "number_cars",
+    "num_pension_age",
     "rural_urban_2_categories",
     "employment_status",
     "tenure_status",
 ]
-# What is the maximum number of NTS matches we want for each SPC household?
-n_matches = 10
+n_matches = 10 # What is the maximum number of NTS matches we want for each SPC household?
+
+[feasible_assignment]
+# `actual_distance = distance * (1 + ((detour_factor - 1) * np.exp(-decay_rate * distance)))`
+#
+# `detour factor` when converting Euclidean distance to actual travel distance
+detour_factor = 1.56
+
+# `decay rate` is the inverse of the distance (in units of the data, e.g. metres) at which the
+# scaling from using the detour factor to Euclidean distance reduces by `exp(−1)`.
+#
+# 0.0001 is a good value for Leeds when units are metres, choice of decay_rate can be explored in an
+# [interactive plot](https://www.wolframalpha.com/input?i=plot+exp%28-0.0001x%29+from+x%3D0+to+x%3D50000)
+decay_rate = 0.0001
 
 [work_assignment]
-commute_level = "MSOA"
-# if true, optimization problem will try to minimize percentage difference at OD level (not absolute numbers). Recommended to set it to true
-use_percentages = true
+commute_level = "OA"
+use_percentages = true # if true, optimization problem will try to minimize percentage difference at OD level (not absolute numbers). Recommended to set it to true
 # weights to add for each objective in the optimization problem
 weight_max_dev = 0.2
 weight_total_dev = 0.8
-# maximum number of feasible zones to include in the optimization problem (less zones makes problem smaller - so faster, but at the cost of a better solution)
-max_zones = 10
+max_zones = 8          # maximum number of feasible zones to include in the optimization problem (less zones makes problem smaller - so faster, but at the cost of a better solution)
+
+[secondary_assignment]
+# Probablity of choosing a secondary zone. Same idea as a gravity model. We use floor_space / distance^n, where n is the power value used here
+# See here to understand how this probability matrix is used https://github.com/arup-group/pam/blob/main/examples/17_advanced_discretionary_locations.ipynb
+visit_probability_power = 2.0  # Default power value
 
 [postprocessing]
 pam_jitter = 30
@@ -72,5 +81,6 @@ student_age_upper = 30
 modes_passenger =  ['car_passenger', 'taxi']
 # yearly state pension: for getting hhlIncome of pensioners
 state_pension = 11502
+
 
 ```
