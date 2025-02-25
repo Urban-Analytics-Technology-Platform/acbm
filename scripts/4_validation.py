@@ -58,9 +58,12 @@ def main(config_file):
     logger.info("3c. Preprocessing: Adding hour of day column")
 
     # acbm - tst is in datetime format
-    # Convert tst to datetime format and extract the hour component in one step
-    legs_acbm["tst_hour"] = legs_acbm["tst"].apply(lambda x: pd.to_datetime(x).hour)
-    legs_acbm["tet_hour"] = legs_acbm["tet"].apply(lambda x: pd.to_datetime(x).hour)
+    # Convert tst to datetime format and then extract the hour component
+    legs_acbm["tst_dt"] = pd.to_datetime(legs_acbm["tst"])
+    legs_acbm["tet_dt"] = pd.to_datetime(legs_acbm["tet"])
+
+    legs_acbm["tst_hour"] = legs_acbm["tst_dt"].dt.hour
+    legs_acbm["tet_hour"] = legs_acbm["tet_dt"].dt.hour
 
     # nts - tst is in minutes
     # Convert legs_nts["tst"] from minutes to hours
@@ -112,9 +115,8 @@ def main(config_file):
 
     plt.figure()
 
-    sns.barplot(data=purpose_compare, x="dact", y="percentage", hue="source")
-    plt.xlabel("Trip purpose")
-    plt.ylabel("Percentage of total trips")
+    sns.barplot(data=purpose_compare, x="percentage", y="dact", hue="source")
+    plt.ylabel("")
     plt.title("Percentage of Trips by Purpose for NTS and ACBM")
     # plt.show()
 
@@ -143,8 +145,8 @@ def main(config_file):
     # Plot
     plt.figure()
 
-    sns.barplot(data=modeshare_compare, x="mode", y="percentage", hue="source")
-    plt.ylabel("Percentage of total trips")
+    sns.barplot(data=modeshare_compare, x="percentage", y="mode", hue="source")
+    plt.ylabel("")
     plt.title("Percentage of Trips by Mode for NTS and ACBM")
     # plt.show()
 
