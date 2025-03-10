@@ -72,6 +72,11 @@ class WorkAssignmentParams(BaseModel):
 
 
 @dataclass(frozen=True)
+class SecondaryAssignmentParams(BaseModel):
+    visit_probability_power: float = 2.0
+
+
+@dataclass(frozen=True)
 class Postprocessing(BaseModel):
     pam_jitter: int
     pam_min_duration: int
@@ -109,6 +114,11 @@ class Config(BaseModel):
     work_assignment: WorkAssignmentParams = Field(
         description="Config: parameters for work assignment."
     )
+
+    secondary_assignment: SecondaryAssignmentParams = Field(
+        description="Config: parameters for secondary assignment."
+    )
+
     postprocessing: Postprocessing = Field(
         description="Config: parameters for postprocessing."
     )
