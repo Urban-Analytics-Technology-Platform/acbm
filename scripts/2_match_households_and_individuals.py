@@ -1035,8 +1035,7 @@ def main(config_file):
         ) as f:
             matches_ind = pkl.load(f)
 
-    # Add matches_ind values to spc_edited using map and add the nts_individuals.IndividualID to spc_edit.
-    # The current nts_ind_id is the row index of nts_individuals
+    # Add matched `IndividualID` from `nts_individuals` to to `spc_edited`
     spc_edited["nts_ind_id"] = matched_ids_from_right_for_left(
         spc_edited, nts_individuals, matches_ind, right_id="IndividualID"
     )
