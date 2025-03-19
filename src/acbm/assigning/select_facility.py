@@ -1,5 +1,5 @@
 import logging
-from multiprocessing import Pool
+from multiprocessing import Pool, cpu_count
 from typing import Optional, Tuple
 
 import geopandas as gpd
@@ -174,6 +174,7 @@ def select_facility(
     neighboring_zones: Optional[dict] = None,
     fallback_type: Optional[str] = None,
     fallback_to_random: bool = False,
+    n_processes: int = max(int(cpu_count() * 0.75), 1),
 ) -> dict[str, Tuple[str, Point] | Tuple[float, float]]:
     """
     Select facilities for each row in the DataFrame based on the provided logic.
@@ -204,9 +205,8 @@ def select_facility(
     dict[str, Tuple[str, Point ] | Tuple[float, float]]: Unique ID column as
         keys with selected facility ID and facility ID's geometry, or (np.nan, np.nan)
     """
-    # TODO: update this to be configurable, `None` is os.process_cpu_count()
     # TODO: check if this is deterministic for a given seed (or pass seed to pool)
-    with Pool(None) as p:
+    with Pool(n_processes) as p:
         # Set to a large enough chunk size so that each process
         # has a sufficiently large amount of processing to do.
         chunk_size = 16_000

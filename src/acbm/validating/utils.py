@@ -7,8 +7,7 @@ from acbm.assigning.utils import _adjust_distance
 
 def process_sequences(
     df: pd.DataFrame,
-    pid_col: str,
-    seq_col: str,
+    groupby_cols: list[str],
     origin_activity_col: str,
     destination_activity_col: str,
     suffix: str,
@@ -44,13 +43,13 @@ def process_sequences(
         home - school - home                    3
         home - work - home                     20
     """
-    # Step 1: Sort the DataFrame by 'pid' and 'seq'
-    sorted_df = df.sort_values(by=[pid_col, seq_col])
+    # Step 1: Sort the DataFrame by `groupby_cols` and 'seq'
+    sorted_df = df.sort_values(by=[*groupby_cols, "seq"])
 
     # Step 2: Group by 'pid' and concatenate 'origin activity' values followed by the
     # last 'destination activity' value
     activity_sequence_df = (
-        sorted_df.groupby(pid_col)
+        sorted_df.groupby(groupby_cols)
         .apply(
             lambda x: " - ".join(
                 [*x[origin_activity_col], x[destination_activity_col].iloc[-1]]
@@ -60,7 +59,10 @@ def process_sequences(
     )
 
     # Rename the columns for clarity
-    activity_sequence_df.columns = [pid_col, "activity_sequence"]
+    activity_sequence_df.columns = [
+        *activity_sequence_df.columns[:-1],
+        "activity_sequence",
+    ]
 
     # Step 3: Group by the resulting 'activity_sequence' column and count the number of
     # values in each group

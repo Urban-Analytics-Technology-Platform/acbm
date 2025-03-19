@@ -29,7 +29,7 @@ def main(config_file):
     # NTS data
     legs_nts = pd.read_parquet(config.output_path / "nts_trips.parquet")
 
-    legs_nts = legs_nts[legs_nts["TravDay"] == config.parameters.nts_day_of_week]
+    legs_nts = legs_nts[legs_nts["TravDay"].isin(config.parameters.nts_days_of_week)]
 
     # Model outputs
     legs_acbm = pd.read_csv(config.output_path / "legs.csv")
@@ -59,8 +59,8 @@ def main(config_file):
 
     # acbm - tst is in datetime format
     # Convert tst to datetime format and extract the hour component in one step
-    legs_acbm["tst_hour"] = legs_acbm["tst"].apply(lambda x: pd.to_datetime(x).hour)
-    legs_acbm["tet_hour"] = legs_acbm["tet"].apply(lambda x: pd.to_datetime(x).hour)
+    legs_acbm["tst_hour"] = pd.to_datetime(legs_acbm["tst"]).dt.hour
+    legs_acbm["tet_hour"] = pd.to_datetime(legs_acbm["tet"]).dt.hour
 
     # nts - tst is in minutes
     # Convert legs_nts["tst"] from minutes to hours
@@ -183,8 +183,7 @@ def main(config_file):
 
     sequence_nts = process_sequences(
         df=legs_nts,
-        pid_col="IndividualID",
-        seq_col="seq",
+        groupby_cols=["IndividualID", "DayID"],
         origin_activity_col="oact_abr",
         destination_activity_col="dact_abr",
         suffix="nts",
@@ -192,8 +191,7 @@ def main(config_file):
 
     sequence_acbm = process_sequences(
         df=legs_acbm,
-        pid_col="pid",
-        seq_col="seq",
+        groupby_cols=["pid"],
         origin_activity_col="oact_abr",
         destination_activity_col="dact_abr",
         suffix="acbm",
