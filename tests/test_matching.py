@@ -5,6 +5,7 @@ from acbm.matching import (
     MatcherExact,
     match_individuals,
     match_remaining_individuals,
+    matched_ids_from_right_for_left,
 )
 
 
@@ -146,12 +147,6 @@ def ind_rem():
     return get_test_dfs_and_mapping(mapping_ind)
 
 
-def combine_dfs_with_matches(df1, df2, matches_dict) -> pd.DataFrame:
-    """Merges matched rows from df2 with df1"""
-    df1["matched_id"] = df1.index.map(matches_dict).map(df2["id"])
-    return df1.merge(df2, left_on="matched_id", right_on="id", how="left")
-
-
 def check_matches(df1, mapping, matches_dict, remaining_ids=None):
     """Checks that the expected indices are present in the returned matches dict"""
     expected = {
@@ -165,7 +160,14 @@ def check_matches(df1, mapping, matches_dict, remaining_ids=None):
 
 def check_equals(df1, df2, matches_dict, expect_hid_equals=True):
     """Checks that series are equal after merging the two dataframes with matches"""
-    df = combine_dfs_with_matches(df1, df2, matches_dict).dropna().astype(int)
+    df1["matched_id"] = matched_ids_from_right_for_left(
+        df1, df2, matches_dict, right_id="id"
+    )
+    df = (
+        df1.merge(df2, left_on="matched_id", right_on="id", how="left")
+        .dropna()
+        .astype(int)
+    )
     if expect_hid_equals:
         assert df["hid_x"].equals(df["hid_y"])
     assert df["age_group_x"].equals(df["age_group_y"])

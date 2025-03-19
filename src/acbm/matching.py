@@ -369,3 +369,10 @@ def match_remaining_individuals(
         matches.update(match)
 
     return matches
+
+
+def matched_ids_from_right_for_left(
+    left, right, matches_dict, right_id: str = "id"
+) -> pd.DataFrame:
+    """Gets the matched rows from right for left"""
+    return left.index.map(matches_dict).map(right[right_id])

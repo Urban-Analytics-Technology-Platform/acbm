@@ -7,7 +7,12 @@ import pandas as pd
 from acbm.assigning.utils import cols_for_assignment_all
 from acbm.cli import acbm_cli
 from acbm.config import load_and_setup_config
-from acbm.matching import MatcherExact, match_individuals, match_remaining_individuals
+from acbm.matching import (
+    MatcherExact,
+    match_individuals,
+    match_remaining_individuals,
+    matched_ids_from_right_for_left,
+)
 from acbm.preprocessing import (
     count_per_group,
     nts_filter_by_region,
@@ -1030,12 +1035,10 @@ def main(config_file):
         ) as f:
             matches_ind = pkl.load(f)
 
-    # Add matches_ind values to spc_edited using map
-    spc_edited["nts_ind_id"] = spc_edited.index.map(matches_ind)
-
-    # add the nts_individuals.IndividualID to spc_edit. The current nts_ind_id is the row index of nts_individuals
-    spc_edited["nts_ind_id"] = spc_edited["nts_ind_id"].map(
-        nts_individuals["IndividualID"]
+    # Add matches_ind values to spc_edited using map and add the nts_individuals.IndividualID to spc_edit.
+    # The current nts_ind_id is the row index of nts_individuals
+    spc_edited["nts_ind_id"] = matched_ids_from_right_for_left(
+        spc_edited, nts_individuals, matches_ind, right_id="IndividualID"
     )
 
     logger.info("Statistical matching: Matching complete")
