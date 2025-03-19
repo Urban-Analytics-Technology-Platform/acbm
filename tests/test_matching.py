@@ -137,12 +137,16 @@ def get_test_dfs_and_mapping(mapping):
 
 @pytest.fixture
 def ind_hh():
+    """Returns a new population where the order of individuals within households is
+    shuffled to test matching of individuals grouped by household"""
     mapping_ind_within_hh = [0, 3, 1, 2, 4, 6, 5, 9, 8, 7]
     return get_test_dfs_and_mapping(mapping_ind_within_hh)
 
 
 @pytest.fixture
 def ind_rem():
+    """Returns a new population where the order of individuals is shuffled to test
+    matching of remaining individuals"""
     mapping_ind = [1, 7, 9, 3, 0, 5, 2, 6, 8, 4]
     return get_test_dfs_and_mapping(mapping_ind)
 
