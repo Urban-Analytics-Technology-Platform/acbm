@@ -99,12 +99,16 @@ def get_outs(config, include_wfh=False) -> list[float]:
 )
 def main(config_file_stem: str | None, include_wfh: bool):
     records = []
+    paths = sorted(
+        f"./config/{f}"
+        for f in os.listdir("./config/")
+        if re.search(f"{config_file_stem}_[0-9][0-9]\\.toml$", f)
+    )
+    if len(paths) == 0:
+        msg = f"No config files found for the given stem: '{config_file_stem}'"
+        raise ValueError(msg)
     for i, config_file in enumerate(
-        sorted(
-            f"./config/{f}"
-            for f in os.listdir("./config/")
-            if re.search(f"{config_file_stem}_[0-9][0-9]\\.toml$", f)
-        ),
+        paths,
         1,
     ):
         config = load_and_setup_config(config_file)
