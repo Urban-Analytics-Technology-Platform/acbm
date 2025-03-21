@@ -224,7 +224,6 @@ def main(
     )
 
     for _i, (origin, sub) in enumerate(gdf.groupby("ozone")):
-        # fig, axs = plt.subplots(1, 3, figsize=(20, 16))
         fig, axs = plt.subplots(1, 3)
         fig.suptitle(
             f"Counts from origin zone '{origin}' to destination zones", size="medium"
