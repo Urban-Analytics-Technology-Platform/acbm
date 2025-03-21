@@ -111,8 +111,6 @@ def main(
                 "MSOA of workplace code": "dzone",
             }
         )
-        # Work From Home (1) and Travel to work (3)
-        # .filter(pl.col("Place of work indicator (4 categories) code").is_in([1, 3]))
         # Only travelling to work, no working from home
         .filter(pl.col("Place of work indicator (4 categories) code").is_in([3]))
         .rename({"Count": "census_count"})
