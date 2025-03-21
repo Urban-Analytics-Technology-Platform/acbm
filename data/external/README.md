@@ -75,7 +75,7 @@ You have two options:
         ```shell
         cargo run --release -- \
             --rng-seed 0 \
-            --flat-output \
+            --output-formats parquet \
             --year 2020 \
             config/England/west-yorkshire.txt
         ```
