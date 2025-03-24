@@ -19,8 +19,14 @@
 ## Validation
 
 - `4_validation.py`: Validate the synthetic population by comparing the distribution of activity chains in the NTS to our model outputs. The output is a number of plots that look at self-consistency
-- `validation_stats.py`: Provides statistics for work assignment and commuting flows for validation purposes.
-- `plot_commuting_flows.py`: Provides plots of commuting flows between zones for visual comparison of census and AcBM.
+- `validation_stats.py`: Provides statistics for work assignment and commuting flows for validation purposes. For example:
+    ```shell
+    python scripts/validation_stats.py --config-file config/base.toml
+    ```
+- `plot_commuting_flows.py`: Provides plots of commuting flows between zones for visual comparison of census and AcBM. For example:
+    ```shell
+    python scripts/plot_commuting_flows.py --config-file config/base.toml
+    ```
 
 ## Postprocessing
 
@@ -28,4 +34,7 @@
 
 ## Results summary
 
-- `summary_stats.py`: Generates a markdown table of config parameters and validation statistics across different runs of the pipeline.
+- `summary_stats.py`: Generates a markdown table of config parameters and validation statistics across different runs of the pipeline. For example:
+    ```shell
+    python scripts/summary_stats.py --config-file-stem common_config_file_stem | less -S
+    ```
