@@ -1,15 +1,16 @@
 [build-system]
-requires = ["poetry_core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+requires = ["poetry_core>=1.0.0"]
+
 [tool.poetry]
-name = "acbm"
-version = "0.1.0"
 authors = ["Hussein Mahfouz <husseinmahfouz93@gmail.com>"]
-homepage = "https://github.com/alan-turing-institute/acbm"
-repository = "https://github.com/alan-turing-institute/acbm"
-license = "Apache-2.0"
 description = "A package to create activity-based models (for transport demand modelling)"
+homepage = "https://github.com/alan-turing-institute/acbm"
+license = "Apache-2.0"
+name = "acbm"
 readme = "README.md"
+repository = "https://github.com/alan-turing-institute/acbm"
+version = "0.1.0"
 
 classifiers = [
   "Development Status :: 1 - Planning",
@@ -17,64 +18,92 @@ classifiers = [
   "Intended Audience :: Developers",
   "Operating System :: OS Independent",
   "Topic :: Scientific/Engineering",
-
 ]
 
 [tool.poetry.dependencies]
-python = "^3.10"
-
-pytest = { version = ">=6", optional = true }
-pytest-cov = { version = ">=3", optional = true }
-pandas = "^2.2.0"
-uatk-spc = { git = "https://github.com/alan-turing-institute/uatk-spc.git", subdirectory = "python" }
-geopandas = "^0.14.3"
-matplotlib = "^3.8.3"
-scikit-learn = "^1.4.1.post1"
-seaborn = "^0.13.2"
-pandarallel = "^1.6.5"
-ipywidgets = "^8.1.2"
-tqdm = "^4.66.2"
-pulp = "^2.8.0"
-libpysal = "^4.11.0"
 click = "^8.1.7"
-tomlkit = "^0.13.0"
 cml-pam = "0.3.2"
 gdal = "<=3.8.4"
-pandera = "^0.20.4"
-osmox = { git = "https://github.com/arup-group/osmox" }
-pyrosm = "^0.6.2"
-jsonschema = "^4.23.0"
+geopandas = "^0.14.3"
+ipywidgets = "^8.1.2"
 jcs = "^0.2.1"
+jsonschema = "^4.23.0"
+libpysal = "^4.11.0"
+matplotlib = "^3.8.3"
+osmox = { git = "https://github.com/arup-group/osmox" }
+pandarallel = "^1.6.5"
+pandas = "^2.2.0"
+pandera = "^0.20.4"
+pulp = "^2.8.0"
+pyrosm = "^0.6.2"
+# Currently Python 3.13 is not supported with: "Failed to build `levenshtein==0.25.1`"
+python = ">=3.10,<3.13"
+scikit-learn = "^1.4.1.post1"
+seaborn = "^0.13.2"
+tomlkit = "^0.13.0"
+tqdm = "^4.66.2"
 typing-extensions = "^4.12.2"
-
-[tool.poetry.dev-dependencies]
-pytest = ">= 6"
-pytest-cov = ">= 3"
-
-[tool.poetry.extras]
-test = ["pytest", "pytest-cov"]
-dev = ["pytest", "pytest-cov"]
+uatk-spc = { git = "https://github.com/alan-turing-institute/uatk-spc.git", subdirectory = "python" }
+pytest = { version = ">=6", optional = true }
+pytest-cov = { version = ">=3", optional = true }
+ipykernel = { version = "^6.29.4", optional = true }
+hvplot = { version = "^0.11.2", optional = true }
+itables = { version = "^2.2.4", optional = true }
+popgetter = { version = "^0.1.0", optional = true }
+screeninfo = { version = "^0.8.1", optional = true }
+tabulate = { version = "^0.9.0", optional = true }
+xlsx2csv = { version = "^0.8.4", optional = true }
 
 [tool.poetry.group.dev.dependencies]
-ipykernel = "^6.29.4"
+pytest = { version = ">=6" }
+pytest-cov = { version = ">=3" }
+ipykernel = { version = "^6.29.4" }
+hvplot = { version = "^0.11.2" }
+itables = { version = "^2.2.4" }
+popgetter = { version = "^0.1.0" }
+screeninfo = { version = "^0.8.1" }
+tabulate = { version = "^0.9.0" }
+xlsx2csv = { version = "^0.8.4" }
+
+[tool.poetry.extras]
+analysis = [
+  "ipykernel",
+  "popgetter",
+  "hvplot",
+  "xlsx2csv",
+  "itables",
+  "tabulate",
+  "screeninfo",
+]
+dev = [
+  "pytest",
+  "pytest-cov",
+  "ipykernel",
+  "popgetter",
+  "hvplot",
+  "xlsx2csv",
+  "itables",
+  "tabulate",
+  "screeninfo",
+]
+test = ["pytest", "pytest-cov"]
 
 [tool.pytest.ini_options]
-minversion = "6.0"
 addopts = ["-ra", "--showlocals", "--strict-markers", "--strict-config"]
-xfail_strict = true
 filterwarnings = ["error"]
 log_cli_level = "INFO"
+minversion = "6.0"
 testpaths = ["tests"]
+xfail_strict = true
 
 [tool.coverage]
-run.source = ["acbm"]
 port.exclude_lines = ['pragma: no cover', '\.\.\.', 'if typing.TYPE_CHECKING:']
-
+run.source = ["acbm"]
 
 [tool.ruff]
-src = ["src"]
 exclude = []
 line-length = 88 # how long you want lines to be
+src = ["src"]
 
 [tool.ruff.format]
 docstring-code-format = true # code snippets in docstrings will be formatted
@@ -103,14 +132,16 @@ select = [
   "EXE", # flake8-executable
 ]
 
+flake8-unused-arguments.ignore-variadic-names = true # allow unused *args/**kwargs
 ignore = [
   "PLR",    # Design related pylint codes
   "ISC001", # Conflicts with formatter
   "E501",   # Line too long
   "G004",   # Logging statement uses f-string, not necessary here
+  "UP006",  # TODO: fix deprecated typing lints, ignoring here
+  "UP035",  # TODO: fix deprecated typing lints, ignoring here
 ]
 unfixable = [
   "F401", # Would remove unused imports
   "F841", # Would remove unused variables
 ]
-flake8-unused-arguments.ignore-variadic-names = true # allow unused *args/**kwargs
