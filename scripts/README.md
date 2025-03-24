@@ -17,8 +17,15 @@
 - `3.3_assign_facility_all.py`: Assign activities to specific facilities with point locations. For each activity, facilities of the relevant type inside the zone assigned to the activity are sampled. Sampling can be random or based on floor area
 
 ## Validation
-- `4_validate.py`: Validate the synthetic population by comparing the distribution of activity chains in the NTS to our model outputs. The output is a number of plots that look at self-consistency
+
+- `4_validation.py`: Validate the synthetic population by comparing the distribution of activity chains in the NTS to our model outputs. The output is a number of plots that look at self-consistency
+- `validation_stats.py`: Provides statistics for work assignment and commuting flows for validation purposes.
+- `plot_commuting_flows.py`: Provides plots of commuting flows between zones for visual comparison of census and AcBM.
 
 ## Postprocessing
 
 - `5_acbm_to_matsim_xml.py`: Convert dataframe outputs of pipeline to an xml that can be used as input to MATSim. This also includes adding some individual attributes (e.g whether the person is a student)
+
+## Results summary
+
+- `summary_stats.py`: Generates a markdown table of config parameters and validation statistics across different runs of the pipeline.
