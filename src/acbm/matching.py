@@ -206,10 +206,20 @@ def match_psm(
         matching_columns_df2 = sorted(
             col for start in matching_columns for col in df2 if col.startswith(start)
         )
+
+        # Set matching columns as intersection if not equal
+        matching_columns = (
+            matching_columns_df1
+            if matching_columns_df1 == matching_columns_df2
+            else [col for col in matching_columns_df1 if col in matching_columns_df2]
+        )
         if matching_columns_df1 != matching_columns_df2:
-            err_msg = f"'matching_columns_df1' ({matching_columns_df1}) do not equal 'matching_columns_df2' ({matching_columns_df2})"
-            raise ValueError(err_msg)
-        matching_columns = matching_columns_df1
+            msg = (
+                f"'matching_columns_df1' ({matching_columns_df1}) do not equal "
+                f"'matching_columns_df2' ({matching_columns_df2}). "
+                f"Using the intersection: {matching_columns}"
+            )
+            logger.warning(msg)
 
     # Matching without replacement
     while not df1.empty:
