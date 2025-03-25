@@ -112,9 +112,8 @@ def main(config_file):
 
     plt.figure()
 
-    sns.barplot(data=purpose_compare, x="dact", y="percentage", hue="source")
-    plt.xlabel("Trip purpose")
-    plt.ylabel("Percentage of total trips")
+    sns.barplot(data=purpose_compare, x="percentage", y="dact", hue="source")
+    plt.ylabel("")
     plt.title("Percentage of Trips by Purpose for NTS and ACBM")
     # plt.show()
 
@@ -143,8 +142,8 @@ def main(config_file):
     # Plot
     plt.figure()
 
-    sns.barplot(data=modeshare_compare, x="mode", y="percentage", hue="source")
-    plt.ylabel("Percentage of total trips")
+    sns.barplot(data=modeshare_compare, x="percentage", y="mode", hue="source")
+    plt.ylabel("")
     plt.title("Percentage of Trips by Mode for NTS and ACBM")
     # plt.show()
 
