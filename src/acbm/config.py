@@ -109,7 +109,7 @@ class WorkAssignmentParams(BaseModel):
 
 
 class SecondaryAssignmentParams(BaseModel):
-    visit_probability_power: float = 2.0
+    visit_probability_power: float | None = 2.0
 
     model_config = ConfigDict(frozen=True)
 
@@ -156,7 +156,8 @@ class Config(BaseModel):
     )
 
     secondary_assignment: SecondaryAssignmentParams = Field(
-        description="Config: parameters for secondary assignment."
+        description="Config: parameters for secondary assignment.",
+        default=SecondaryAssignmentParams(),
     )
 
     postprocessing: Postprocessing = Field(
