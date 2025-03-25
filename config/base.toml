@@ -87,6 +87,12 @@ weight_total_dev = 0.8
 # smaller - so faster, but at the cost of a better solution)
 max_zones = 8
 
+[secondary_assignment]
+# Probablity of choosing a secondary zone. Same idea as a gravity model. We use floor_space / distance^n, where n is the power value used here
+# See here to understand how this probability matrix is used https://github.com/arup-group/pam/blob/main/examples/17_advanced_discretionary_locations.ipynb
+# Different values for the exponent can be tried to match the NTS data. Validation plots produced enable comparison of model distance distribution (by trip purpose) with the NTS
+visit_probability_power = 2.0  # Default power value
+
 [postprocessing]
 pam_jitter = 30
 pam_min_duration = 10
