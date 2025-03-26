@@ -11,7 +11,14 @@ import jcs
 import numpy as np
 import polars as pl
 import tomlkit
-from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    field_serializer,
+    field_validator,
+    model_validator,
+)
 from pyproj import CRS
 
 import acbm
@@ -164,6 +171,19 @@ class Config(BaseModel):
         description="Config: parameters for postprocessing."
     )
     paths: PathParams | None = Field(description="Path overrides.", default=None)
+
+    @model_validator(mode="after")
+    def commute_level_and_boundary_geography_match(self):
+        commute_level = self.work_assignment.commute_level
+        boundary_geography = self.parameters.boundary_geography
+        if boundary_geography != commute_level:
+            msg = (
+                f"Currently boundary_geography and commute_level must be the same. "
+                f"The values provided are {boundary_geography} and {commute_level} "
+                f"respectively."
+            )
+            raise NotImplementedError(msg)
+        return self
 
     def flatten(self) -> dict:
         def _flatten(obj: Any, parent_key: str = "", sep: str = "|") -> dict[str, any]:
