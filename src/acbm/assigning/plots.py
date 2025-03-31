@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Optional
 
 import geopandas as gpd
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -12,6 +13,9 @@ from matplotlib import patches as mpatches
 from shapely.geometry import LineString
 
 from acbm.assigning.utils import _adjust_distance
+
+# Increase the chunksize to avoid OverflowError
+mpl.rcParams["agg.path.chunksize"] = 10000
 
 
 def plot_workzone_assignment_line(
