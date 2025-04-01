@@ -260,14 +260,23 @@ def map_activity_locations(
     -------
     pd.DataFrame
         DataFrame with mapped activity locations.
+        It adds the following columns:
+        - 'end_location_id': The ID of the facility
+        - 'end_location_linkID': The id of the nearest road link to the facility
+        - 'end_location_geometry': The geometry of the facility
     """
     activity_chains_df["end_location_id"] = activity_chains_df[id_col].map(
         lambda pid: activity_locations_dict[pid][0]
         if pid in activity_locations_dict
         else pd.NA
     )
-    activity_chains_df["end_location_geometry"] = activity_chains_df[id_col].map(
+    activity_chains_df["end_location_link_id"] = activity_chains_df[id_col].map(
         lambda pid: activity_locations_dict[pid][1]
+        if pid in activity_locations_dict
+        else pd.NA
+    )
+    activity_chains_df["end_location_geometry"] = activity_chains_df[id_col].map(
+        lambda pid: activity_locations_dict[pid][2]
         if pid in activity_locations_dict
         else pd.NA
     )

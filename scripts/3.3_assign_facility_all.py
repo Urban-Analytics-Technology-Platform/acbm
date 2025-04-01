@@ -269,6 +269,7 @@ def main(config_file):
             "start_location_id",
             "start_location_geometry",
             "end_location_id",
+            "end_location_link_id",
             "end_location_geometry",
         ]
     ]
