@@ -230,6 +230,9 @@ def main(config_file):
     activity_chains_all["start_location_id"] = activity_chains_all.groupby("pid")[
         "end_location_id"
     ].shift(1)
+    activity_chains_all["start_location_link_id"] = activity_chains_all.groupby("pid")[
+        "end_location_link_id"
+    ].shift(1)
     activity_chains_all["start_location_geometry"] = activity_chains_all.groupby("pid")[
         "end_location_geometry"
     ].shift(1)
@@ -243,6 +246,9 @@ def main(config_file):
     activity_chains_all.loc[mask, "start_location_id"] = activity_chains_all.loc[
         mask, "hid"
     ].map(activity_chains_home_agg.set_index("hid")["end_location_id"])
+    activity_chains_all.loc[mask, "start_location_link_id"] = activity_chains_all.loc[
+        mask, "hid"
+    ].map(activity_chains_home_agg.set_index("hid")["end_location_link_id"])
     activity_chains_all.loc[mask, "start_location_geometry"] = activity_chains_all.loc[
         mask, "hid"
     ].map(activity_chains_home_agg.set_index("hid")["end_location_geometry"])
@@ -267,6 +273,7 @@ def main(config_file):
             "tet",
             "duration",
             "start_location_id",
+            "start_location_link_id",
             "start_location_geometry",
             "end_location_id",
             "end_location_link_id",
