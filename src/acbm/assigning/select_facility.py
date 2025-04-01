@@ -73,7 +73,7 @@ def _select_facility(
         logger.debug(f"Activity {row.name}: Destination zone is NA")
         # return {"id": np.nan, "geometry": np.nan}
         # TODO: check this replacement is correct
-        return {row[unique_id_col]: (np.nan, np.nan)}
+        return {row[unique_id_col]: (np.nan, np.nan, np.nan)}
 
     # Filter facilities within the specified destination zone
     facilities_in_zone = facilities_gdf[
@@ -134,7 +134,7 @@ def _select_facility(
         logger.debug(
             f"Activity {row.name}: No facilities in zone {destination_zone} with {gdf_facility_type_col} '{fallback_type or row[row_activity_type_col]}'"
         )
-        return {row[unique_id_col]: (np.nan, np.nan)}
+        return {row[unique_id_col]: (np.nan, np.nan, np.nan)}
 
     # ----- Step 2. Sample a facility from the valid facilities
 
@@ -158,7 +158,11 @@ def _select_facility(
 
     # Return the id and geometry of the selected facility
     return {
-        row[unique_id_col]: (facility["id"].values[0], facility["geometry"].values[0])
+        row[unique_id_col]: (
+            facility["id"].values[0],
+            facility["linkId"].values[0],
+            facility["geometry"].values[0],
+        )
     }
 
 
@@ -202,8 +206,9 @@ def select_facility(
 
     Returns
     -------
-    dict[str, Tuple[str, Point ] | Tuple[float, float]]: Unique ID column as
-        keys with selected facility ID and facility ID's geometry, or (np.nan, np.nan)
+    dict[str, Tuple[str, str, Point ] | Tuple[float, float, float]]: Unique ID column as
+        keys with selected facility ID, linkID (nearest road link), and facility ID's geometry,
+        or (np.nan, np.nan, np.nan)
     """
     # TODO: check if this is deterministic for a given seed (or pass seed to pool)
     with Pool(n_processes) as p:
