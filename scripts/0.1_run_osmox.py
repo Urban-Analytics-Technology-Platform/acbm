@@ -1,8 +1,9 @@
 import os
 import subprocess
 
+import geopandas as gpd
 import requests
-from pyrosm import get_data
+from pyrosm import OSM, get_data
 
 from acbm.cli import acbm_cli
 from acbm.config import load_and_setup_config
@@ -50,6 +51,53 @@ def main(config_file):
         ],
         check=False,
     )
+    logger.info("osmox run complete")
+
+    logger.info("Assigning linkID to facilities")
+    # Add linkID column (closest road to the facility). See #https://github.com/Urban-Analytics-Technology-Platform/acbm/issues/109
+
+    logger.info("Step 1: reading the poi data prepared by osmox")
+    # Read in the poi data
+    poi_fp = os.path.join(
+        config.osmox_path, f"{config.region}_epsg_{config.output_crs}.parquet"
+    )
+    pois = gpd.read_parquet(poi_fp)
+
+    logger.info("Step 2: reading the osm road network data from the pbf file")
+    # Read in the road data
+    osm = OSM(fp)
+    osm_roads = osm.get_network(network_type="driving")
+    osm_roads = osm_roads.to_crs(crs_value)
+
+    logger.info(
+        "Step 3: Addign a road linkID to each facility (based on the closest osm link)"
+    )
+    # Find the nearest road to each facility
+    pois_with_links = gpd.sjoin_nearest(
+        pois,
+        osm_roads[
+            ["id", "geometry"]
+        ],  # Only include the 'id' and 'geometry' columns from osm_roads
+        how="left",
+        max_distance=1000,
+        lsuffix="",  # No suffix for pois_sample
+        # rsuffix="roads"   # No suffix for osm_roads
+    ).drop(columns=["index_right"])
+
+    # Rename the columns to remove the trailing _ created by the sjoin
+    pois_with_links = pois_with_links.rename(
+        columns={"id_": "id", "id_right": "linkId"}
+    )
+
+    pois_with_links = pois_with_links.reset_index(drop=True)
+
+    logger.info(
+        "Step 4: Saving the POIs with links, overwriting the original pois file"
+    )
+    # Save the file (overwrite the original pois file)
+    pois_with_links.to_parquet(poi_fp, index=False)
+
+    logger.info(f"pois_with_links saved to: {poi_fp}")
 
 
 if __name__ == "__main__":
