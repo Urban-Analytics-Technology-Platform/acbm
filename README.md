@@ -176,7 +176,7 @@ There are a number of open-source tools for different parts of the activity-base
 ### Entire Pipeline
 - [Eqasim](https://github.com/eqasim-org/eqasim-java)
 - [ActivitySim](https://activitysim.github.io/activitysim/v1.3.1/index.html)
-- [PAM](https://github.com/arup-group/pam): PAM has functionality for different parts of the pipeline, but itis not clear how to use it to create an activity-based model for an entire population. Specifically, it does not yet have functionality for activity generation (e.g. statistical matching or generative approaches), or constrained primary location assignment.
+- [PAM](https://github.com/arup-group/pam): PAM has functionality for different parts of the pipeline, but itis not clear how to use it to create an activity-based model for an entire population. <!--# Specifically, it does not yet have functionality for activity generation (e.g. statistical matching or generative approaches), or constrained primary location assignment. -->
 
 
 # Contributing
