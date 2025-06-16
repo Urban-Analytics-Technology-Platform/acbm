@@ -111,12 +111,10 @@ You have two options:
   - time_of_day: ['morning', 'afternoon', 'evening', 'night']
   - time: time in minutes
 
-There is an [open issue](https://github.com/Urban-Analytics-Technology-Platform/acbm/issues/20#issuecomment-2317037441) on denerating travel times which the user can use as a starting point IF they wish to generate the travel time matrix. In the future, we aim to add a script to generate the travel time matrix.
+There is an [open issue](https://github.com/Urban-Analytics-Technology-Platform/acbm/issues/20#issuecomment-2317037441) on generating travel times which the user can use as a starting point IF they wish to generate the travel time matrix. In the future, we aim to add a script to generate the travel time matrix.
 
 Other datasets (to be places in the root of the `external` folder):
 
 - `ODWP01EW_OA.zip` & `ODWP15EW_MSOA_v1.zip`: These are commuting matrices from the census. They can be found in WICID data service. Go to [this link](https://wicid.ukdataservice.ac.uk/flowdata/cider/wicid/downloads.php), and search for `ODWP01EW_OA` and `ODWP15EW_MSOA` under 2021 Census
 - `MSOA_2011_MSOA_2021_Lookup_for_England_and_Wales.csv`: This is the lookup table between MSOA 2011 and MSOA 2021. It can be downloaded from [Data-Gov-UK](https://www.data.gov.uk/dataset/da36cac8-51c4-4d68-a4a9-37ac47d2a4ba/msoa-2011-to-msoa-2021-to-local-authority-district-2022-exact-fit-lookup-for-ew-v2)
 - `census_2011_rural_urban.csv`: OA level rural-urban classification. It can be downloaded from [ONS](https://geoportal.statistics.gov.uk/datasets/53360acabd1e4567bc4b8d35081b36ff/about). The classification is based on the 2011 Census, and the categories are: 'Urban major conurbation', 'Urban minor conurbation', 'Urban city and town', 'Urban city and town in a sparse setting': 'Rural town and fringe', 'Rural town and fringe in a sparse setting', 'Rural village', 'Rural village in a sparse setting', 'Rural hamlets and isolated dwellings', 'Rural hamlets and isolated dwellings in a sparse setting'
-
-```
