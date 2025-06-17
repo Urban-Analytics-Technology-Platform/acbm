@@ -80,6 +80,7 @@ You have two options:
             config/England/west-yorkshire.txt
         ```
         and replace `west-yorkshire` and `2020` with your preferred option.
+   3. Retrive the data from `data/raw_data/` direcetory in `uatk-spc` and place it in `spc_output/raw` directory in `acbm`
 
 `boundaries/`
 
