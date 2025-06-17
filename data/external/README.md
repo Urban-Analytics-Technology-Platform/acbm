@@ -63,7 +63,7 @@ The structure of the folder is as follows:
 
 `spc_output/`
 
-Use the code in the `Quickstart` [here](https://github.com/alan-turing-institute/uatk-spc/blob/55-output-formats-python/python/README.md)
+Use the code in the `Quickstart` [here](https://github.com/alan-turing-institute/uatk-spc/tree/main/python/README.md)
 to get a parquet file and convert it to JSON.
 
 You have two options:
