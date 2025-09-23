@@ -145,6 +145,14 @@ where your config file is the file you created in Step 2.
 
 For details on what each script does, you can check the [scrips/README.md](https://github.com/Urban-Analytics-Technology-Platform/acbm/tree/main/scripts) and the [WIKI](https://github.com/Urban-Analytics-Technology-Platform/acbm/wiki)
 
+# Recommended Citation 
+
+If you use `acbm` for research purposes, please consider citing it
+
+## Paper 
+
+Mahfouz, H., Greenbury, S. F., Zhang, B., Lynn, S., & Cheng, T. (2025). A reproducible pipeline for activity-based travel demand generation in England. Environment and Planning B: Urban Analytics and City Science, https://doi.org/10.1177/23998083251379620
+
 # Future Work
 
 We aim to include different options for each step of the pipeline. Some hopes for the future include:
